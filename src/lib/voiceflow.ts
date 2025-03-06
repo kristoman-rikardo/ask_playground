@@ -1,8 +1,8 @@
 
 // Voiceflow API integration
 
-// Replace with your own Voiceflow credentials
-const VF_KEY = "VF.DM.67c57e75bd87daaf0917d8fc.SAMPLE_KEY";
+// Correct Voiceflow credentials
+const VF_KEY = "VF.DM.67c57e75bd87daaf0917d8fc.2hw3bJ5KRILKyZbf";
 const VF_PROJECT_ID = "67bee8ec99721b58fcb5ea3e";
 
 // Create a random userID for session

@@ -203,66 +203,86 @@ const ChatInterface: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white shadow-lg rounded-2xl overflow-hidden transform transition-all">
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-xl font-medium text-center text-gray-800">How can we help?</h2>
-      </div>
-      
-      <div 
-        ref={chatBoxRef}
-        className="flex flex-col p-4 h-[400px] overflow-y-auto space-y-4"
-      >
-        {messages.map((message, index) => (
-          <div
-            key={message.id}
-            id={`message-${message.id}`}
-            ref={index === messages.length - 1 ? lastMessageRef : null}
-            className={`px-4 py-3 rounded-xl max-w-[85%] ${
-              message.type === 'user' 
-                ? 'chat-message-user ml-auto' 
-                : 'chat-message-agent mr-auto'
-            }`}
-            dangerouslySetInnerHTML={{ 
-              __html: parseMarkdown(message.content || '') 
-            }}
-          />
-        ))}
-        
-        {isTyping && <TypingIndicator />}
-        
-        <div ref={messagesEndRef} />
-      </div>
-      
-      {buttons.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-4 border-t border-gray-100">
-          {buttons.map((button, index) => (
-            <button
-              key={index}
-              onClick={() => handleButtonClick(button)}
-              className="choice-button"
-            >
-              {button.name}
-            </button>
-          ))}
+    <div className="w-full mx-auto bg-white shadow-lg rounded-2xl overflow-hidden transition-all">
+      {/* Horizontal 16:9 aspect ratio container */}
+      <div className="flex flex-col md:flex-row" style={{ aspectRatio: '16/9' }}>
+        {/* Chat messages container - takes 2/3 of the width */}
+        <div className="w-full md:w-2/3 flex flex-col">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="text-xl font-medium text-center text-gray-800">How can we help?</h2>
+          </div>
+          
+          <div 
+            ref={chatBoxRef}
+            className="flex-1 overflow-y-auto p-4 space-y-4"
+            style={{ maxHeight: 'calc(100% - 60px)' }}
+          >
+            {messages.map((message, index) => (
+              <div
+                key={message.id}
+                id={`message-${message.id}`}
+                ref={index === messages.length - 1 ? lastMessageRef : null}
+                className={`px-4 py-3 rounded-xl max-w-[85%] ${
+                  message.type === 'user' 
+                    ? 'chat-message-user ml-auto' 
+                    : 'chat-message-agent mr-auto'
+                }`}
+                dangerouslySetInnerHTML={{ 
+                  __html: parseMarkdown(message.content || '') 
+                }}
+              />
+            ))}
+            
+            {isTyping && <TypingIndicator />}
+            
+            <div ref={messagesEndRef} />
+          </div>
         </div>
-      )}
-      
-      <div className="p-4 border-t border-gray-200 flex items-center space-x-2">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleUserSend()}
-          placeholder="Type your question..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
-        />
-        <button
-          onClick={handleUserSend}
-          disabled={!inputValue.trim()}
-          className="px-4 py-2 bg-gray-800 text-white rounded-xl transition-colors hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Send
-        </button>
+        
+        {/* Right side panel - 1/3 of the width for inputs and buttons */}
+        <div className="w-full md:w-1/3 flex flex-col bg-gray-50 border-l border-gray-200">
+          <div className="flex-1 p-4 overflow-y-auto">
+            {/* Input area */}
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Ask a question</h3>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleUserSend()}
+                  placeholder="Type your question..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+                />
+                <button
+                  onClick={handleUserSend}
+                  disabled={!inputValue.trim()}
+                  className="px-4 py-2 bg-gray-800 text-white rounded-xl transition-colors hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+            
+            {/* Buttons section */}
+            {buttons.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Quick replies</h3>
+                <div className="flex flex-col gap-2">
+                  {buttons.map((button, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleButtonClick(button)}
+                      className="choice-button text-left"
+                    >
+                      {button.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
