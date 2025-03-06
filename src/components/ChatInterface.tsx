@@ -204,18 +204,14 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div className="w-full mx-auto bg-white shadow-lg rounded-2xl overflow-hidden transition-all">
-      {/* Horizontal 16:9 aspect ratio container */}
-      <div className="flex flex-col md:flex-row" style={{ aspectRatio: '16/9' }}>
-        {/* Chat messages container - takes 2/3 of the width */}
-        <div className="w-full md:w-2/3 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-xl font-medium text-center text-gray-800">How can we help?</h2>
-          </div>
-          
+      {/* Vertical layout with 16:9 aspect ratio */}
+      <div className="flex flex-col" style={{ aspectRatio: '16/9' }}>
+        {/* Chat messages container - takes the top area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Chat messages */}
           <div 
             ref={chatBoxRef}
             className="flex-1 overflow-y-auto p-4 space-y-4"
-            style={{ maxHeight: 'calc(100% - 60px)' }}
           >
             {messages.map((message, index) => (
               <div
@@ -224,8 +220,8 @@ const ChatInterface: React.FC = () => {
                 ref={index === messages.length - 1 ? lastMessageRef : null}
                 className={`px-4 py-3 rounded-xl max-w-[85%] ${
                   message.type === 'user' 
-                    ? 'chat-message-user ml-auto' 
-                    : 'chat-message-agent mr-auto'
+                    ? 'chat-message-user ml-auto bg-gray-200' 
+                    : 'chat-message-agent mr-auto bg-gray-200'
                 }`}
                 dangerouslySetInnerHTML={{ 
                   __html: parseMarkdown(message.content || '') 
@@ -239,48 +235,40 @@ const ChatInterface: React.FC = () => {
           </div>
         </div>
         
-        {/* Right side panel - 1/3 of the width for inputs and buttons */}
-        <div className="w-full md:w-1/3 flex flex-col bg-gray-50 border-l border-gray-200">
-          <div className="flex-1 p-4 overflow-y-auto">
-            {/* Input area */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Ask a question</h3>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleUserSend()}
-                  placeholder="Type your question..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
-                />
+        {/* Bottom section for buttons and input */}
+        <div className="w-full bg-gray-50 border-t border-gray-200 p-4">
+          {/* Buttons section - horizontal row */}
+          {buttons.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4 justify-center">
+              {buttons.map((button, index) => (
                 <button
-                  onClick={handleUserSend}
-                  disabled={!inputValue.trim()}
-                  className="px-4 py-2 bg-gray-800 text-white rounded-xl transition-colors hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  key={index}
+                  onClick={() => handleButtonClick(button)}
+                  className="choice-button"
                 >
-                  Send
+                  {button.name}
                 </button>
-              </div>
+              ))}
             </div>
-            
-            {/* Buttons section */}
-            {buttons.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Quick replies</h3>
-                <div className="flex flex-col gap-2">
-                  {buttons.map((button, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleButtonClick(button)}
-                      className="choice-button text-left"
-                    >
-                      {button.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+          )}
+          
+          {/* Input area at the bottom */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleUserSend()}
+              placeholder="Type your question..."
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+            />
+            <button
+              onClick={handleUserSend}
+              disabled={!inputValue.trim()}
+              className="px-4 py-2 bg-gray-800 text-white rounded-xl transition-colors hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send
+            </button>
           </div>
         </div>
       </div>
