@@ -8,6 +8,7 @@ import {
   fakeStreamMessage
 } from '@/lib/voiceflow';
 import TypingIndicator from './TypingIndicator';
+import ButtonPanel from './ButtonPanel';
 
 interface Message {
   id: string;
@@ -26,6 +27,7 @@ const ChatInterface: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [buttons, setButtons] = useState<Button[]>([]);
+  const [isButtonsLoading, setIsButtonsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -48,6 +50,7 @@ const ChatInterface: React.FC = () => {
 
   const startChatSession = async () => {
     setIsTyping(true);
+    setIsButtonsLoading(true);
     try {
       await vfSendLaunch({ pageSlug: 'faq-page', productName: 'faq' }, handleStreamChunk);
     } catch (error) {
@@ -55,6 +58,7 @@ const ChatInterface: React.FC = () => {
       addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
     } finally {
       setIsTyping(false);
+      setIsButtonsLoading(false);
     }
   };
 
@@ -96,6 +100,7 @@ const ChatInterface: React.FC = () => {
     addUserMessage(userMessage);
     setButtons([]);
     setIsTyping(true);
+    setIsButtonsLoading(true);
 
     try {
       await vfSendMessage(userMessage, handleStreamChunk);
@@ -111,6 +116,7 @@ const ChatInterface: React.FC = () => {
     addUserMessage(button.name);
     setButtons([]);
     setIsTyping(true);
+    setIsButtonsLoading(true);
 
     try {
       await vfSendAction(button.request, handleStreamChunk);
@@ -188,11 +194,13 @@ const ChatInterface: React.FC = () => {
           // Handle choice buttons
           else if (trace.type === 'choice') {
             setButtons(trace.payload.buttons);
+            setIsButtonsLoading(false);
           }
 
           // Handle end of conversation
           else if (trace.type === 'end') {
             setIsTyping(false);
+            setIsButtonsLoading(false);
           }
 
         } catch (err) {
@@ -235,24 +243,15 @@ const ChatInterface: React.FC = () => {
           </div>
         </div>
         
-        {/* Bottom section for buttons and input */}
+        {/* Button panel */}
+        <ButtonPanel 
+          buttons={buttons} 
+          isLoading={isButtonsLoading} 
+          onButtonClick={handleButtonClick} 
+        />
+        
+        {/* Input area at the bottom */}
         <div className="w-full bg-gray-50 border-t border-gray-200 p-4">
-          {/* Buttons section - horizontal row */}
-          {buttons.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4 justify-center">
-              {buttons.map((button, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleButtonClick(button)}
-                  className="choice-button"
-                >
-                  {button.name}
-                </button>
-              ))}
-            </div>
-          )}
-          
-          {/* Input area at the bottom */}
           <div className="flex items-center space-x-2">
             <input
               type="text"
