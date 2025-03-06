@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,22 +33,15 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -96,6 +90,28 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .chat-message-user {
+    @apply bg-faq-user text-gray-800 self-end animate-fade-in;
+  }
+
+  .chat-message-agent {
+    @apply bg-faq-agent text-gray-800 self-start animate-fade-in;
+  }
+
+  .choice-button {
+    @apply bg-faq-light text-gray-800 hover:bg-faq-medium transition-all 
+           shadow-sm border border-gray-200 rounded-xl px-4 py-2.5
+           transform hover:scale-[1.02] active:scale-[0.98] duration-200;
+  }
+
+  .shimmer-effect {
+    @apply bg-gradient-to-r from-faq-agent via-faq-light to-faq-agent 
+           bg-[length:400%_100%] animate-shimmer;
   }
 }
