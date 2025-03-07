@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   vfSendLaunch, 
@@ -9,6 +8,7 @@ import {
 } from '@/lib/voiceflow';
 import TypingIndicator from './TypingIndicator';
 import ButtonPanel from './ButtonPanel';
+import { Send } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -28,11 +28,17 @@ const ChatInterface: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
+  const [isInputStreaming, setIsInputStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto scroll to bottom of messages
+  const suggestions = [
+    "Spør om produktet egner seg godt løper",
+    "Spør om returvilkårene for denne varen"
+  ];
+
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -43,10 +49,40 @@ const ChatInterface: React.FC = () => {
     scrollToBottom();
   }, [messages, buttons]);
 
-  // Start chat session on component mount
   useEffect(() => {
     startChatSession();
-  }, []);
+    
+    const interval = setInterval(() => {
+      if (!isInputStreaming && inputValue === '' && !isTyping) {
+        streamSuggestion();
+      }
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [inputValue, isInputStreaming, isTyping]);
+
+  const streamSuggestion = async () => {
+    if (isInputStreaming || inputValue !== '') return;
+    
+    setIsInputStreaming(true);
+    const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+    let currentText = '';
+    
+    for (let i = 0; i < randomSuggestion.length; i++) {
+      currentText += randomSuggestion[i];
+      setInputValue(currentText);
+      await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 30));
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    for (let i = currentText.length; i >= 0; i--) {
+      setInputValue(currentText.substring(0, i));
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    
+    setIsInputStreaming(false);
+  };
 
   const startChatSession = async () => {
     setIsTyping(true);
@@ -71,7 +107,6 @@ const ChatInterface: React.FC = () => {
   };
 
   const addAgentMessage = (text: string, isPartial = false) => {
-    // If we're updating an existing partial message
     if (isPartial && messages.length > 0 && messages[messages.length - 1].isPartial) {
       setMessages(prev => {
         const newMessages = [...prev];
@@ -82,7 +117,6 @@ const ChatInterface: React.FC = () => {
         return newMessages;
       });
     } else {
-      // Add a new message
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         type: 'agent',
@@ -139,21 +173,17 @@ const ChatInterface: React.FC = () => {
         try {
           const trace = JSON.parse(jsonStr);
 
-          // Handle LLM streaming completion
           if (trace.type === 'completion') {
             if (trace.payload.state === 'start') {
-              // Start a new partial message
               addAgentMessage('', true);
             } 
             else if (trace.payload.state === 'content') {
-              // Get the last message and append content
               const lastMessage = messages[messages.length - 1];
               if (lastMessage && lastMessage.isPartial) {
                 addAgentMessage(lastMessage.content + trace.payload.content, true);
               }
             }
             else if (trace.payload.state === 'end') {
-              // Update the last message to not be partial anymore
               if (messages.length > 0) {
                 setMessages(prev => {
                   const newMessages = [...prev];
@@ -167,7 +197,6 @@ const ChatInterface: React.FC = () => {
             }
           }
 
-          // Handle static text message with fake streaming
           else if (trace.type === 'text') {
             const messageId = Date.now().toString();
             setMessages(prev => [...prev, {
@@ -177,7 +206,6 @@ const ChatInterface: React.FC = () => {
               isPartial: true
             }]);
 
-            // Use timeout to let React render the new empty message first
             setTimeout(() => {
               const messageEl = document.getElementById(`message-${messageId}`);
               if (messageEl) {
@@ -191,13 +219,11 @@ const ChatInterface: React.FC = () => {
             }, 100);
           }
 
-          // Handle choice buttons
           else if (trace.type === 'choice') {
             setButtons(trace.payload.buttons);
             setIsButtonsLoading(false);
           }
 
-          // Handle end of conversation
           else if (trace.type === 'end') {
             setIsTyping(false);
             setIsButtonsLoading(false);
@@ -212,11 +238,8 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div className="w-full mx-auto bg-white shadow-lg rounded-2xl overflow-hidden transition-all">
-      {/* Vertical layout with 16:9 aspect ratio */}
       <div className="flex flex-col" style={{ aspectRatio: '16/9' }}>
-        {/* Chat messages container - takes the top area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Chat messages */}
           <div 
             ref={chatBoxRef}
             className="flex-1 overflow-y-auto p-4 space-y-4"
@@ -243,30 +266,31 @@ const ChatInterface: React.FC = () => {
           </div>
         </div>
         
-        {/* Button panel */}
         <ButtonPanel 
           buttons={buttons} 
           isLoading={isButtonsLoading} 
           onButtonClick={handleButtonClick} 
         />
         
-        {/* Input area at the bottom */}
         <div className="w-full bg-gray-50 border-t border-gray-200 p-4">
           <div className="flex items-center space-x-2">
             <input
+              ref={inputRef}
               type="text"
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e) => !isInputStreaming && setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleUserSend()}
               placeholder="Type your question..."
               className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+              disabled={isInputStreaming}
             />
             <button
               onClick={handleUserSend}
               disabled={!inputValue.trim()}
-              className="px-4 py-2 bg-gray-800 text-white rounded-xl transition-colors hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 bg-gray-800 text-white rounded-xl transition-colors hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center h-10 w-10"
+              aria-label="Send message"
             >
-              Send
+              <Send size={18} />
             </button>
           </div>
         </div>

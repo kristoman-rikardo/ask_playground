@@ -18,30 +18,27 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading, 
   onButtonClick 
 }) => {
-  // State to track which buttons should pulsate
-  const [pulsatingButtons, setPulsatingButtons] = useState<number[]>([]);
+  // State to track which button should pulsate
+  const [pulsatingButton, setPulsatingButton] = useState<number | null>(null);
 
-  // Effect to randomly pulsate buttons
+  // Effect to randomly pulsate a single button
   useEffect(() => {
     if (buttons.length === 0) return;
     
     // Function to randomly select a button to pulsate
     const pulsateRandomButton = () => {
-      const randomIndex = Math.floor(Math.random() * buttons.length);
-      setPulsatingButtons(prev => {
-        // Remove the button from pulsating if it's already there
-        if (prev.includes(randomIndex)) {
-          return prev.filter(idx => idx !== randomIndex);
-        }
-        // Add the button to pulsating buttons, limit to 2 at a time
-        else {
-          return [...prev, randomIndex].slice(-2);
-        }
-      });
+      // Either select a random button or set to null to pause pulsation briefly
+      const shouldPulsate = Math.random() > 0.2; // 80% chance of showing a pulsation
+      if (shouldPulsate) {
+        const randomIndex = Math.floor(Math.random() * buttons.length);
+        setPulsatingButton(randomIndex);
+      } else {
+        setPulsatingButton(null);
+      }
     };
 
-    // Set up interval for random pulsating
-    const interval = setInterval(pulsateRandomButton, 2000);
+    // Set up interval for random pulsating - slower at 3500ms
+    const interval = setInterval(pulsateRandomButton, 3500);
     return () => clearInterval(interval);
   }, [buttons]);
 
@@ -60,8 +57,8 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
             <button
               key={index}
               onClick={() => onButtonClick(button)}
-              className={`choice-button whitespace-nowrap transition-all duration-300 ${
-                pulsatingButtons.includes(index) ? 'animate-pulse shadow-md' : ''
+              className={`choice-button whitespace-nowrap transition-all duration-500 ${
+                pulsatingButton === index ? 'shadow-md scale-[1.02]' : ''
               }`}
             >
               {button.name}
