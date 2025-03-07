@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   vfSendLaunch, 
@@ -29,6 +30,7 @@ const ChatInterface: React.FC = () => {
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
   const [isInputStreaming, setIsInputStreaming] = useState(false);
+  const [placeholder, setPlaceholder] = useState('Type your question...');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -54,30 +56,35 @@ const ChatInterface: React.FC = () => {
     
     const interval = setInterval(() => {
       if (!isInputStreaming && inputValue === '' && !isTyping) {
-        streamSuggestion();
+        streamPlaceholder();
       }
     }, 8000);
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming, isTyping]);
 
-  const streamSuggestion = async () => {
+  const streamPlaceholder = async () => {
     if (isInputStreaming || inputValue !== '') return;
     
     setIsInputStreaming(true);
     const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
     let currentText = '';
     
+    // Clear the placeholder first
+    setPlaceholder('');
+    
+    // Stream the characters into the placeholder
     for (let i = 0; i < randomSuggestion.length; i++) {
       currentText += randomSuggestion[i];
-      setInputValue(currentText);
+      setPlaceholder(currentText);
       await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 30));
     }
     
     await new Promise(resolve => setTimeout(resolve, 2000));
     
+    // Stream the characters back out
     for (let i = currentText.length; i >= 0; i--) {
-      setInputValue(currentText.substring(0, i));
+      setPlaceholder(currentText.substring(0, i) || 'Type your question...');
       await new Promise(resolve => setTimeout(resolve, 20));
     }
     
@@ -280,7 +287,7 @@ const ChatInterface: React.FC = () => {
               value={inputValue}
               onChange={(e) => !isInputStreaming && setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleUserSend()}
-              placeholder="Type your question..."
+              placeholder={placeholder}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
               disabled={isInputStreaming}
             />

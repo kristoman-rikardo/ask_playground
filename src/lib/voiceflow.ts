@@ -1,4 +1,3 @@
-
 // Voiceflow API integration
 
 // Correct Voiceflow credentials
@@ -41,20 +40,48 @@ export async function vfInteractStream(
     });
 
     if (!response.ok) throw new Error(`Stream HTTP error: ${response.status}`);
+    if (!response.body) throw new Error('Response body is null');
 
-    const reader = response.body!.getReader();
+    const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
+    let buffer = '';
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      if (onSseTrace) onSseTrace(chunk);
+      
+      // Decode the current chunk and add it to our buffer
+      buffer += decoder.decode(value, { stream: true });
+      
+      // Process any complete SSE messages in the buffer
+      if (buffer.includes('\n\n')) {
+        const parts = buffer.split('\n\n');
+        // The last part might be incomplete, so we keep it in the buffer
+        buffer = parts.pop() || '';
+        
+        // Process each complete SSE message
+        for (const part of parts) {
+          if (part.trim()) {
+            onSseTrace(part + '\n\n');
+          }
+        }
+      }
+    }
+
+    // Process any remaining data in the buffer
+    if (buffer.trim()) {
+      onSseTrace(buffer);
     }
 
     return [];
   } catch (error) {
     console.error('Voiceflow API error:', error);
+    // Add retry logic for network errors
+    if (error instanceof TypeError && error.message.includes('network')) {
+      console.log('Network error detected, retrying in 2 seconds...');
+      await delay(2000);
+      return vfInteractStream(user, userAction, onSseTrace);
+    }
     throw error;
   }
 }
