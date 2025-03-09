@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Loader } from 'lucide-react';
 import { usePulsatingButton } from '@/hooks/usePulsatingButton';
 
@@ -22,37 +22,9 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   // Use our custom hook for the pulsating button effect
   const pulsatingButton = usePulsatingButton({ 
     itemsCount: buttons.length,
-    interval: 3000, // Slightly more frequent
-    pulsationChance: 0.8
+    interval: 5000, // Less frequent to avoid distracting animations
+    pulsationChance: 0.6  // Lower chance of pulsation
   });
-
-  // State for tracking which button to animate
-  const [animatedButton, setAnimatedButton] = useState<number | null>(null);
-
-  // Set up animation interval for random button animations
-  useEffect(() => {
-    if (buttons.length === 0) return;
-    
-    const interval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * buttons.length);
-      setAnimatedButton(randomIndex);
-      
-      // Reset animation after a short delay
-      setTimeout(() => {
-        setAnimatedButton(null);
-      }, 1000);
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [buttons.length]);
-
-  // Generate animation class based on random choice
-  const getAnimationClass = (index: number) => {
-    if (index !== animatedButton) return '';
-    
-    // Randomly choose between wiggle and bump animations
-    return Math.random() > 0.5 ? 'animate-wiggle' : 'animate-bump';
-  };
 
   // Loading state component
   const LoadingIndicator = () => (
@@ -64,16 +36,15 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </div>
   );
 
-  // Button list component with improved grid layout
+  // Button list component with stable layout
   const ButtonList = () => (
     <div className="h-[120px] grid grid-cols-2 gap-3 p-3 content-start overflow-hidden">
       {buttons.map((button, index) => (
         <button
-          key={index}
+          key={button.name} // More stable key to prevent respawning
           onClick={() => onButtonClick(button)}
-          className={`choice-button whitespace-normal text-left transition-all duration-500 animate-fade-in ${
-            pulsatingButton === index ? 'shadow-md scale-[1.02]' : ''
-          } ${getAnimationClass(index)}`}
+          className={`choice-button whitespace-normal text-left transition-all duration-300 
+            ${pulsatingButton === index ? 'shadow-md scale-[1.02]' : ''}`}
         >
           {button.name}
         </button>

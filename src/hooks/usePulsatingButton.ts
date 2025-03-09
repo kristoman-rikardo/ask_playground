@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface UsePulsatingButtonOptions {
   itemsCount: number;
@@ -12,13 +11,25 @@ interface UsePulsatingButtonOptions {
  */
 export function usePulsatingButton({ 
   itemsCount, 
-  interval = 3000, 
-  pulsationChance = 0.8 
+  interval = 5000, 
+  pulsationChance = 0.6 
 }: UsePulsatingButtonOptions) {
   const [pulsatingIndex, setPulsatingIndex] = useState<number | null>(null);
+  const prevItemsCountRef = useRef(itemsCount);
 
   useEffect(() => {
-    if (itemsCount === 0) return;
+    if (itemsCount === 0) {
+      setPulsatingIndex(null);
+      return;
+    }
+    
+    // Keep the same pulsating index if possible when items change
+    if (prevItemsCountRef.current !== itemsCount) {
+      if (pulsatingIndex !== null && pulsatingIndex >= itemsCount) {
+        setPulsatingIndex(null);
+      }
+      prevItemsCountRef.current = itemsCount;
+    }
     
     // Function to randomly select an item to pulsate
     const pulsateRandomItem = () => {
@@ -31,9 +42,6 @@ export function usePulsatingButton({
         setPulsatingIndex(null);
       }
     };
-
-    // Initial pulsation without delay
-    pulsateRandomItem();
 
     // Set up interval for random pulsating
     const intervalId = setInterval(pulsateRandomItem, interval);
