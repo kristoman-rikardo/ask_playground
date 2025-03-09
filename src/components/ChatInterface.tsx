@@ -16,7 +16,7 @@ const ChatInterface: React.FC = () => {
   } = useChatSession();
 
   return (
-    <div className="w-full mx-auto bg-white shadow-lg rounded-2xl overflow-hidden transition-all">
+    <div className="w-full mx-auto bg-white shadow-lg rounded-2xl overflow-hidden transition-all font-sans">
       <div className="flex flex-col" style={{ aspectRatio: '16/9' }}>
         <div className="flex-1 flex flex-col overflow-hidden">
           <ChatMessages 

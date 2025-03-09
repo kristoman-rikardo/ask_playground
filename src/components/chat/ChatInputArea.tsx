@@ -14,12 +14,12 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = [
-    "Spør meg om returvilkårene for denne varen.",
-    "Spør meg om materialbruk og teknologier i dette produktet.",
-    "Spør meg om bærekraft i produksjonen av denne varen.",
-    "Spør meg om størrelsesanbefalinger for dette produktet.",
-    "Spør meg om vedlikeholdstips for denne varen.",
-    "Spør meg om garanti og reklamasjonsrettigheter for dette produktet."
+    "Spør meg om returvilkårene for denne varen...",
+    "Spør meg om materialbruk og teknologier i dette produktet...",
+    "Spør meg om bærekraft i produksjonen av denne varen...",
+    "Spør meg om størrelsesanbefalinger for dette produktet...",
+    "Spør meg om vedlikeholdstips for denne varen...",
+    "Spør meg om garanti og reklamasjonsrettigheter for dette produktet..."
   ];
 
   useEffect(() => {
@@ -27,7 +27,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
       if (!isInputStreaming && inputValue === '') {
         streamPlaceholder();
       }
-    }, 5000); // More frequent streaming (reduced from 8000ms to 5000ms)
+    }, 4000); // Even more frequent streaming
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming]);
@@ -37,26 +37,26 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
     
     setIsInputStreaming(true);
     const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
-    const baseText = 'Spør meg om '; // Note the space after "om"
+    const baseText = 'Spør meg om '; // Base text with space but no ellipsis
     
-    // Set the base text first without dots
-    setPlaceholder(baseText);
+    // Set the base text first
+    setPlaceholder(baseText + '...');
     
-    // Stream the remaining characters into the placeholder
-    const remainingText = randomSuggestion.substring('Spør meg om '.length);
+    // Stream the remaining characters into the placeholder (minus the ellipsis at the end)
+    const remainingText = randomSuggestion.substring(baseText.length, randomSuggestion.length - 3);
     let currentText = baseText;
     
     for (let i = 0; i < remainingText.length; i++) {
       currentText += remainingText[i];
-      setPlaceholder(currentText);
-      await delay(50 + Math.random() * 30);
+      setPlaceholder(currentText + '...');
+      await delay(40 + Math.random() * 20); // Slightly faster streaming
     }
     
     // Wait when fully written
     await delay(2000);
     
-    // Stream the characters back out quickly without pauses
-    setPlaceholder(baseText);
+    // Reset to base text with ellipsis without animation
+    setPlaceholder('Spør meg om...');
     setIsInputStreaming(false);
   };
 
@@ -73,11 +73,10 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
           ref={inputRef}
           type="text"
           value={inputValue}
-          onChange={(e) => !isInputStreaming && setInputValue(e.target.value)}
+          onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder={placeholder}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
-          disabled={isInputStreaming}
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all font-normal"
         />
         <button
           onClick={handleSend}

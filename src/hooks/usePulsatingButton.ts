@@ -12,7 +12,7 @@ interface UsePulsatingButtonOptions {
  */
 export function usePulsatingButton({ 
   itemsCount, 
-  interval = 3500, 
+  interval = 3000, 
   pulsationChance = 0.8 
 }: UsePulsatingButtonOptions) {
   const [pulsatingIndex, setPulsatingIndex] = useState<number | null>(null);
@@ -24,13 +24,16 @@ export function usePulsatingButton({
     const pulsateRandomItem = () => {
       // Either select a random item or set to null to pause pulsation briefly
       const shouldPulsate = Math.random() < pulsationChance;
-      if (shouldPulsate) {
+      if (shouldPulsate && itemsCount > 0) {
         const randomIndex = Math.floor(Math.random() * itemsCount);
         setPulsatingIndex(randomIndex);
       } else {
         setPulsatingIndex(null);
       }
     };
+
+    // Initial pulsation without delay
+    pulsateRandomItem();
 
     // Set up interval for random pulsating
     const intervalId = setInterval(pulsateRandomItem, interval);
