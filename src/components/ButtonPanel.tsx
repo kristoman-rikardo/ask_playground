@@ -36,14 +36,14 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </div>
   );
 
-  // Button list component
+  // Button list component with grid layout
   const ButtonList = () => (
-    <div className="h-[96px] flex flex-wrap gap-2 justify-end content-start p-2">
+    <div className="h-[96px] grid grid-cols-2 gap-2 content-start p-2 justify-start overflow-y-auto">
       {buttons.map((button, index) => (
         <button
           key={index}
           onClick={() => onButtonClick(button)}
-          className={`choice-button whitespace-nowrap transition-all duration-500 ${
+          className={`choice-button whitespace-normal text-left transition-all duration-500 animate-fade-in ${
             pulsatingButton === index ? 'shadow-md scale-[1.02]' : ''
           }`}
         >

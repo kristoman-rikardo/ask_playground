@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { delay } from '@/lib/voiceflow';
@@ -26,7 +27,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
       if (!isInputStreaming && inputValue === '') {
         streamPlaceholder();
       }
-    }, 8000);
+    }, 5000); // More frequent streaming (reduced from 8000ms to 5000ms)
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming]);
@@ -36,13 +37,14 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
     
     setIsInputStreaming(true);
     const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
-    let currentText = 'Spør meg om...';
+    const baseText = 'Spør meg om '; // Note the space after "om"
     
-    // Set the base text first
-    setPlaceholder(currentText);
+    // Set the base text first without dots
+    setPlaceholder(baseText);
     
     // Stream the remaining characters into the placeholder
-    const remainingText = randomSuggestion.substring(currentText.length);
+    const remainingText = randomSuggestion.substring('Spør meg om '.length);
+    let currentText = baseText;
     
     for (let i = 0; i < remainingText.length; i++) {
       currentText += remainingText[i];
@@ -50,14 +52,11 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
       await delay(50 + Math.random() * 30);
     }
     
+    // Wait when fully written
     await delay(2000);
     
-    // Stream the characters back out, but keep the base text
-    for (let i = currentText.length; i > 'Spør meg om...'.length; i--) {
-      setPlaceholder(currentText.substring(0, i));
-      await delay(20);
-    }
-    
+    // Stream the characters back out quickly without pauses
+    setPlaceholder(baseText);
     setIsInputStreaming(false);
   };
 
