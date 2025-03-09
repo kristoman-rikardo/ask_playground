@@ -53,7 +53,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   };
   return <div className="w-full bg-gray-50 border-t border-gray-200 p-4">
       <div className="flex items-center space-x-2">
-        <input ref={inputRef} type="text" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleSend()} placeholder={placeholder} className="flex-1 px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all font-normal bg-slate-100 rounded-2xl" />
+        <input ref={inputRef} type="text" value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleSend()} placeholder={placeholder} className="flex-1 px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all font-normal rounded-2xl bg-gray-50" />
         <button onClick={handleSend} disabled={!inputValue.trim()} className="p-2 bg-gray-800 text-white rounded-xl transition-colors hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center h-10 w-10" aria-label="Send message">
           <Send size={18} />
         </button>
