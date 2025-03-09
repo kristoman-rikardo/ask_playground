@@ -36,15 +36,16 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </div>
   );
 
-  // Button list component with stable layout
+  // Button list component with responsive layout
   const ButtonList = () => (
-    <div className="h-[120px] grid grid-cols-2 gap-3 p-3 content-start overflow-hidden">
+    <div className="h-auto min-h-[120px] grid grid-cols-2 gap-3 p-3 content-start overflow-hidden">
       {buttons.map((button, index) => (
         <button
-          key={button.name} // More stable key to prevent respawning
+          key={`button-${button.name}`} // Stable key to prevent respawning
           onClick={() => onButtonClick(button)}
-          className={`choice-button whitespace-normal text-left transition-all duration-300 
+          className={`choice-button whitespace-normal text-left overflow-hidden transition-all duration-300
             ${pulsatingButton === index ? 'shadow-md scale-[1.02]' : ''}`}
+          title={button.name} // Show full text on hover if truncated
         >
           {button.name}
         </button>

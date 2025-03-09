@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -125,5 +126,19 @@
 
   .feedback-icon-negative:hover {
     @apply text-red-500;
+  }
+  
+  /* Enhanced input field styling */
+  .chat-input {
+    @apply border border-gray-300 rounded-lg px-4 py-3 w-full outline-none
+           transition-all duration-200 bg-white;
+  }
+  
+  .chat-input:hover {
+    @apply border-gray-400 shadow-sm;
+  }
+  
+  .chat-input:focus {
+    @apply border-gray-500 ring-1 ring-gray-300;
   }
 }

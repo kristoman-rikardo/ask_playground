@@ -12,7 +12,7 @@ interface UsePulsatingButtonOptions {
 export function usePulsatingButton({ 
   itemsCount, 
   interval = 5000, 
-  pulsationChance = 0.6 
+  pulsationChance = 0.4 
 }: UsePulsatingButtonOptions) {
   const [pulsatingIndex, setPulsatingIndex] = useState<number | null>(null);
   const prevItemsCountRef = useRef(itemsCount);
