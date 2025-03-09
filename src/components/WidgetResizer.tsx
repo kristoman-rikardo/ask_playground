@@ -83,7 +83,7 @@ const WidgetResizer: React.FC<WidgetResizerProps> = ({ children }) => {
       {/* Resizable container for the widget */}
       <div 
         className="transition-all duration-300 mx-auto"
-        style={{ width: `${width}%` }}
+        style={{ width: `${Math.max(width, 25)}%` }}
       >
         {children}
       </div>

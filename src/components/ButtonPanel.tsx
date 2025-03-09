@@ -38,10 +38,10 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   // Button list component with responsive layout
   const ButtonList = () => (
-    <div className="h-auto min-h-[120px] grid grid-cols-2 gap-3 p-3 content-start overflow-hidden">
+    <div className="h-auto min-h-[120px] grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 content-start">
       {buttons.map((button, index) => (
         <button
-          key={`button-${button.name}`} // Stable key to prevent respawning
+          key={`button-${index}-${button.name.substring(0, 10)}`}
           onClick={() => onButtonClick(button)}
           className={`choice-button whitespace-normal text-left overflow-hidden transition-all duration-300
             ${pulsatingButton === index ? 'shadow-md scale-[1.02]' : ''}`}
@@ -55,7 +55,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   return (
     <div className="w-full bg-gray-50 border-t border-gray-200 p-3">
-      {isLoading ? <LoadingIndicator /> : <ButtonList />}
+      {isLoading ? <LoadingIndicator /> : (buttons.length > 0 ? <ButtonList /> : <div className="h-[120px]"></div>)}
     </div>
   );
 };

@@ -16,20 +16,38 @@ const MessageFeedback = ({ messageId }: { messageId: string }) => {
   
   const handleFeedback = (type: 'positive' | 'negative') => {
     setFeedback(type);
-    // Here you could send the feedback to your backend
+    // Send feedback to backend
     console.log(`Feedback for message ${messageId}: ${type}`);
+    
+    // Here we would normally send this to a backend API
+    // For now, we'll just log it and store in localStorage as an example
+    const existingFeedback = JSON.parse(localStorage.getItem('messageFeedback') || '{}');
+    existingFeedback[messageId] = type;
+    localStorage.setItem('messageFeedback', JSON.stringify(existingFeedback));
   };
   
   return (
-    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-      <ThumbsUp 
-        className={`feedback-icon feedback-icon-positive ${feedback === 'positive' ? 'text-green-500' : ''}`} 
+    <div className="flex flex-col gap-2 absolute right-2 top-1/2 -translate-y-1/2">
+      <button 
         onClick={() => handleFeedback('positive')}
-      />
-      <ThumbsDown 
-        className={`feedback-icon feedback-icon-negative ${feedback === 'negative' ? 'text-red-500' : ''}`} 
+        className="p-1 hover:scale-110 transition-all duration-200"
+        aria-label="Thumbs up"
+      >
+        <ThumbsUp 
+          size={18}
+          className={`${feedback === 'positive' ? 'text-green-500' : 'text-gray-400'} hover:text-green-500`} 
+        />
+      </button>
+      <button 
         onClick={() => handleFeedback('negative')}
-      />
+        className="p-1 hover:scale-110 transition-all duration-200"
+        aria-label="Thumbs down"
+      >
+        <ThumbsDown 
+          size={18}
+          className={`${feedback === 'negative' ? 'text-red-500' : 'text-gray-400'} hover:text-red-500`} 
+        />
+      </button>
     </div>
   );
 };
@@ -59,10 +77,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping }) => {
           key={message.id}
           id={`message-${message.id}`}
           ref={index === messages.length - 1 ? lastMessageRef : null}
-          className={`px-4 py-3 rounded-xl max-w-[85%] ${
+          className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
             message.type === 'user' 
               ? 'chat-message-user ml-auto bg-gray-200' 
-              : 'chat-message-agent mr-auto bg-gray-200'
+              : 'chat-message-agent mr-auto bg-gray-200 pr-12'
           }`}
         >
           <div

@@ -17,8 +17,8 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div className="w-full mx-auto bg-white shadow-lg rounded-2xl overflow-hidden transition-all font-sans">
-      <div className="flex flex-col" style={{ aspectRatio: '16/9' }}>
-        <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex flex-col" style={{ minHeight: '400px' }}>
+        <div className="flex-1 flex flex-col overflow-hidden min-h-[200px]">
           <ChatMessages 
             messages={messages} 
             isTyping={isTyping} 
