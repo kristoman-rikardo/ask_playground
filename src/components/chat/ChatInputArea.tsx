@@ -30,7 +30,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       if (!isInputStreaming && inputValue === '' && !isFocused) {
         streamPlaceholder();
       }
-    }, 4000); // Even more frequent streaming
+    }, 2500); // More frequent streaming
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming, isFocused]);
@@ -44,13 +44,15 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     // Set the base text first
     setPlaceholder(baseText + '...');
 
-    // Stream the remaining characters into the placeholder (minus the ellipsis at the end)
-    const remainingText = randomSuggestion.substring(baseText.length, randomSuggestion.length - 3);
+    // Stream the remaining characters word by word
+    const remainingText = randomSuggestion.substring(baseText.length);
+    const words = remainingText.split(' ');
     let currentText = baseText;
-    for (let i = 0; i < remainingText.length; i++) {
-      currentText += remainingText[i];
-      setPlaceholder(currentText + '...');
-      await delay(40 + Math.random() * 20); // Slightly faster streaming
+    
+    for (let i = 0; i < words.length; i++) {
+      currentText += words[i] + ' ';
+      setPlaceholder(currentText.trim() + '...');
+      await delay(150); // Delay between words
     }
 
     // Wait when fully written
@@ -79,7 +81,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className={`flex-1 px-4 py-2 border font-light transition-all duration-300 rounded-2xl bg-gray-50
+          className={`flex-1 px-4 py-2 border font-light font-sans transition-all duration-300 rounded-2xl bg-gray-50
             ${isFocused 
               ? 'border-gray-500 ring-2 ring-gray-200' 
               : inputValue 

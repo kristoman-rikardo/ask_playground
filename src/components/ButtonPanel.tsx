@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { Loader } from 'lucide-react';
-import { usePulsatingButton } from '@/hooks/usePulsatingButton';
+import { Loader, Bot } from 'lucide-react';
 
 interface Button {
   name: string;
@@ -19,13 +18,6 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading, 
   onButtonClick 
 }) => {
-  // Use our custom hook for the pulsating button effect
-  const pulsatingButton = usePulsatingButton({ 
-    itemsCount: buttons.length,
-    interval: 5000, // Less frequent to avoid distracting animations
-    pulsationChance: 0.6  // Lower chance of pulsation
-  });
-
   // Loading state component
   const LoadingIndicator = () => (
     <div className="h-[120px] flex items-center justify-center">
@@ -38,14 +30,13 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   // Button list component with responsive layout
   const ButtonList = () => (
-    <div className="h-auto min-h-[120px] grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 content-start">
+    <div className="h-auto min-h-[120px] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 p-3 content-start">
       {buttons.map((button, index) => (
         <button
           key={`button-${index}-${button.name.substring(0, 10)}`}
           onClick={() => onButtonClick(button)}
-          className={`choice-button whitespace-normal text-left overflow-hidden transition-all duration-300
-            ${pulsatingButton === index ? 'shadow-md scale-[1.02]' : ''}`}
-          title={button.name} // Show full text on hover if truncated
+          className="choice-button whitespace-normal text-left overflow-hidden transition-all duration-300 w-auto inline-block"
+          title={button.name}
         >
           {button.name}
         </button>
@@ -54,7 +45,12 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   );
 
   return (
-    <div className="w-full bg-gray-50 border-t border-gray-200 p-3">
+    <div className="w-full bg-gray-50 border-t border-gray-200 p-3 relative">
+      {/* AI Icon in top left corner */}
+      <div className="absolute top-3 left-3">
+        <Bot className="w-6 h-6 text-gray-500" />
+      </div>
+      
       {isLoading ? <LoadingIndicator /> : (buttons.length > 0 ? <ButtonList /> : <div className="h-[120px]"></div>)}
     </div>
   );

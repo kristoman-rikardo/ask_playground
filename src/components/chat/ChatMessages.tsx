@@ -14,16 +14,29 @@ interface ChatMessagesProps {
 const MessageFeedback = ({ messageId }: { messageId: string }) => {
   const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
   
-  const handleFeedback = (type: 'positive' | 'negative') => {
-    setFeedback(type);
-    // Send feedback to backend
-    console.log(`Feedback for message ${messageId}: ${type}`);
-    
-    // Here we would normally send this to a backend API
-    // For now, we'll just log it and store in localStorage as an example
+  useEffect(() => {
+    // Check for existing feedback when component mounts
     const existingFeedback = JSON.parse(localStorage.getItem('messageFeedback') || '{}');
-    existingFeedback[messageId] = type;
+    if (existingFeedback[messageId]) {
+      setFeedback(existingFeedback[messageId]);
+    }
+  }, [messageId]);
+  
+  const handleFeedback = (type: 'positive' | 'negative') => {
+    // Toggle feedback if already selected
+    const newFeedback = feedback === type ? null : type;
+    setFeedback(newFeedback);
+    
+    // Store feedback in localStorage
+    const existingFeedback = JSON.parse(localStorage.getItem('messageFeedback') || '{}');
+    if (newFeedback === null) {
+      delete existingFeedback[messageId];
+    } else {
+      existingFeedback[messageId] = newFeedback;
+    }
     localStorage.setItem('messageFeedback', JSON.stringify(existingFeedback));
+    
+    console.log(`Feedback for message ${messageId}: ${newFeedback || 'removed'}`);
   };
   
   return (
@@ -35,7 +48,7 @@ const MessageFeedback = ({ messageId }: { messageId: string }) => {
       >
         <ThumbsUp 
           size={18}
-          className={`${feedback === 'positive' ? 'text-green-500' : 'text-gray-400'} hover:text-green-500`} 
+          className={`${feedback === 'positive' ? 'text-green-500' : 'text-gray-300'} hover:text-green-500`} 
         />
       </button>
       <button 
@@ -45,7 +58,7 @@ const MessageFeedback = ({ messageId }: { messageId: string }) => {
       >
         <ThumbsDown 
           size={18}
-          className={`${feedback === 'negative' ? 'text-red-500' : 'text-gray-400'} hover:text-red-500`} 
+          className={`${feedback === 'negative' ? 'text-red-500' : 'text-gray-300'} hover:text-red-500`} 
         />
       </button>
     </div>
@@ -70,7 +83,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping }) => {
   return (
     <div 
       ref={chatBoxRef}
-      className="flex-1 overflow-y-auto p-4 space-y-4"
+      className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]"
     >
       {messages.map((message, index) => (
         <div

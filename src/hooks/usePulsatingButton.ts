@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 
 interface UsePulsatingButtonOptions {
@@ -8,45 +9,12 @@ interface UsePulsatingButtonOptions {
 
 /**
  * Custom hook that manages the pulsating button effect
+ * Note: This hook is now deprecated as the pulsating animation has been removed.
+ * Keeping this file for backward compatibility.
  */
 export function usePulsatingButton({ 
-  itemsCount, 
-  interval = 5000, 
-  pulsationChance = 0.4 
+  itemsCount
 }: UsePulsatingButtonOptions) {
-  const [pulsatingIndex, setPulsatingIndex] = useState<number | null>(null);
-  const prevItemsCountRef = useRef(itemsCount);
-
-  useEffect(() => {
-    if (itemsCount === 0) {
-      setPulsatingIndex(null);
-      return;
-    }
-    
-    // Keep the same pulsating index if possible when items change
-    if (prevItemsCountRef.current !== itemsCount) {
-      if (pulsatingIndex !== null && pulsatingIndex >= itemsCount) {
-        setPulsatingIndex(null);
-      }
-      prevItemsCountRef.current = itemsCount;
-    }
-    
-    // Function to randomly select an item to pulsate
-    const pulsateRandomItem = () => {
-      // Either select a random item or set to null to pause pulsation briefly
-      const shouldPulsate = Math.random() < pulsationChance;
-      if (shouldPulsate && itemsCount > 0) {
-        const randomIndex = Math.floor(Math.random() * itemsCount);
-        setPulsatingIndex(randomIndex);
-      } else {
-        setPulsatingIndex(null);
-      }
-    };
-
-    // Set up interval for random pulsating
-    const intervalId = setInterval(pulsateRandomItem, interval);
-    return () => clearInterval(intervalId);
-  }, [itemsCount, interval, pulsationChance]);
-
-  return pulsatingIndex;
+  // Always return null to disable pulsating effect
+  return null;
 }

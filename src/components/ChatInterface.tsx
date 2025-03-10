@@ -16,8 +16,11 @@ const ChatInterface: React.FC = () => {
   } = useChatSession();
 
   return (
-    <div className="w-full mx-auto bg-white shadow-lg rounded-2xl overflow-hidden transition-all font-sans">
-      <div className="flex flex-col" style={{ minHeight: '400px' }}>
+    <div 
+      className="w-full mx-auto bg-[var(--widget-bg-color,white)] shadow-lg rounded-2xl overflow-hidden transition-all font-sans"
+      style={{ height: '100%' }}
+    >
+      <div className="flex flex-col h-full">
         <div className="flex-1 flex flex-col overflow-hidden min-h-[200px]">
           <ChatMessages 
             messages={messages} 
