@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { delay } from '@/lib/voiceflow';
 
 interface ChatInputAreaProps {
@@ -14,6 +14,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   const [isInputStreaming, setIsInputStreaming] = useState(false);
   const [placeholder, setPlaceholder] = useState('Spør meg om...');
   const [isFocused, setIsFocused] = useState(false);
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   // Short and long suggestion variations based on widget width
@@ -40,9 +41,12 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   
   useEffect(() => {
     const checkWidth = () => {
-      // When container is less than 400px wide, use short suggestions
+      // When container is less than 70% of the max width, use short suggestions
       const widgetWidth = document.querySelector('.widget-container')?.clientWidth || 0;
-      setUseShortSuggestions(widgetWidth < 400);
+      const windowWidth = window.innerWidth;
+      const widgetPercentage = (widgetWidth / windowWidth) * 100;
+      
+      setUseShortSuggestions(widgetPercentage < 70);
     };
     
     checkWidth();
@@ -59,6 +63,18 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming, isFocused, useShortSuggestions]);
+  
+  // Handle button visibility with animation delay
+  useEffect(() => {
+    if (inputValue.trim()) {
+      setIsButtonVisible(true);
+    } else {
+      const timer = setTimeout(() => {
+        setIsButtonVisible(false);
+      }, 300); // Match the exit animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [inputValue]);
 
   const streamPlaceholder = async () => {
     if (isInputStreaming || inputValue !== '') return;
@@ -125,19 +141,22 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
         
-        {/* Animated circular send button - visible only when input has content */}
-        {inputValue.trim() && (
+        {/* Animated circular send button with scale-in/out and ripple effect */}
+        <div 
+          className={`absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-300 transform 
+            ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}
+        >
           <button 
             onClick={handleSend}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-gray-800 text-white rounded-full 
+            className="p-1.5 bg-gray-800 text-white rounded-full 
                      transition-all duration-300 transform hover:scale-110 active:scale-95
                      hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400
-                     animate-scale-in hover:shadow-md"
+                     send-button-ripple"
             aria-label="Send message"
           >
-            <Send size={14} className="transform rotate-0 hover:rotate-45 transition-transform duration-300" />
+            <ArrowRight size={14} className="transform transition-transform duration-300" />
           </button>
-        )}
+        </div>
       </div>
     </div>
   );

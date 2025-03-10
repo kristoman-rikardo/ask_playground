@@ -93,7 +93,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isTyping }) => {
           className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
             message.type === 'user' 
               ? 'chat-message-user ml-auto bg-gray-200' 
-              : 'chat-message-agent mr-auto bg-gray-200 pr-12'
+              : 'chat-message-agent mr-auto shadow-sm bg-[#F6F6F7]'
           }`}
         >
           <div
