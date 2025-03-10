@@ -30,7 +30,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       if (!isInputStreaming && inputValue === '' && !isFocused) {
         streamPlaceholder();
       }
-    }, 2500); // More frequent streaming
+    }, 2000); // More frequent streaming
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming, isFocused]);
@@ -58,7 +58,14 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     // Wait when fully written
     await delay(2000);
 
-    // Reset to base text with ellipsis without animation
+    // Erase letter by letter with animation
+    const fullText = currentText.trim() + '...';
+    for (let i = fullText.length; i > baseText.length; i--) {
+      setPlaceholder(fullText.substring(0, i));
+      await delay(50); // Faster deletion animation
+    }
+
+    // Reset to base text with ellipsis
     setPlaceholder('Spør meg om...');
     setIsInputStreaming(false);
   };
@@ -88,6 +95,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                 ? 'border-gray-400' 
                 : 'border-gray-300 hover:border-gray-400'
             }`} 
+          style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
         <button 
           onClick={handleSend} 
