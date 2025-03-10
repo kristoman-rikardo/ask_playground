@@ -30,7 +30,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       if (!isInputStreaming && inputValue === '' && !isFocused) {
         streamPlaceholder();
       }
-    }, 2000); // More frequent streaming
+    }, 1800); // More frequent streaming
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming, isFocused]);
@@ -44,25 +44,24 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     // Set the base text first
     setPlaceholder(baseText + '...');
 
-    // Stream the remaining characters word by word
+    // Stream the remaining characters letter by letter
     const remainingText = randomSuggestion.substring(baseText.length);
-    const words = remainingText.split(' ');
     let currentText = baseText;
     
-    for (let i = 0; i < words.length; i++) {
-      currentText += words[i] + ' ';
-      setPlaceholder(currentText.trim() + '...');
-      await delay(150); // Delay between words
+    for (let i = 0; i < remainingText.length; i++) {
+      currentText += remainingText[i];
+      setPlaceholder(currentText + '...');
+      await delay(80); // Delay between letters
     }
 
     // Wait when fully written
     await delay(2000);
 
     // Erase letter by letter with animation
-    const fullText = currentText.trim() + '...';
+    const fullText = currentText + '...';
     for (let i = fullText.length; i > baseText.length; i--) {
       setPlaceholder(fullText.substring(0, i));
-      await delay(50); // Faster deletion animation
+      await delay(40); // Faster deletion animation (smaller delay)
     }
 
     // Reset to base text with ellipsis
