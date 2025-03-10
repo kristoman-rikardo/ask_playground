@@ -16,7 +16,17 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const suggestions = [
+  // Short and long suggestion variations based on widget width
+  const shortSuggestions = [
+    "Spør meg om returvilkår...", 
+    "Spør meg om materialer...", 
+    "Spør meg om bærekraft...", 
+    "Spør meg om størrelser...", 
+    "Spør meg om vedlikehold...", 
+    "Spør meg om garantier..."
+  ];
+  
+  const longSuggestions = [
     "Spør meg om returvilkårene for denne varen...", 
     "Spør meg om materialbruk og teknologier i dette produktet...", 
     "Spør meg om bærekraft i produksjonen av denne varen...", 
@@ -24,6 +34,21 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     "Spør meg om vedlikeholdstips for denne varen...", 
     "Spør meg om garanti og reklamasjonsrettigheter for dette produktet..."
   ];
+  
+  // Detect widget width to use appropriate suggestion length
+  const [useShortSuggestions, setUseShortSuggestions] = useState(false);
+  
+  useEffect(() => {
+    const checkWidth = () => {
+      // When container is less than 400px wide, use short suggestions
+      const widgetWidth = document.querySelector('.widget-container')?.clientWidth || 0;
+      setUseShortSuggestions(widgetWidth < 400);
+    };
+    
+    checkWidth();
+    window.addEventListener('resize', checkWidth);
+    return () => window.removeEventListener('resize', checkWidth);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,11 +58,14 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     }, 1800); // More frequent streaming
 
     return () => clearInterval(interval);
-  }, [inputValue, isInputStreaming, isFocused]);
+  }, [inputValue, isInputStreaming, isFocused, useShortSuggestions]);
 
   const streamPlaceholder = async () => {
     if (isInputStreaming || inputValue !== '') return;
     setIsInputStreaming(true);
+    
+    // Choose suggestion set based on widget width
+    const suggestions = useShortSuggestions ? shortSuggestions : longSuggestions;
     const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
     const baseText = 'Spør meg om '; // Base text with space but no ellipsis
 
@@ -77,7 +105,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 
   return (
     <div className="w-full bg-gray-50 border-t border-gray-200 p-4">
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 relative">
         <input 
           ref={inputRef} 
           type="text" 
@@ -87,7 +115,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className={`flex-1 px-4 py-2 border font-light font-sans transition-all duration-300 rounded-2xl bg-gray-50
+          className={`flex-1 px-4 py-2 pr-10 border font-light font-sans transition-all duration-300 rounded-2xl bg-gray-50
             ${isFocused 
               ? 'border-gray-500 ring-2 ring-gray-200' 
               : inputValue 
@@ -96,14 +124,20 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             }`} 
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
-        <button 
-          onClick={handleSend} 
-          disabled={!inputValue.trim()} 
-          className="p-2 bg-gray-800 text-white rounded-xl transition-colors hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center h-10 w-10" 
-          aria-label="Send message"
-        >
-          <Send size={18} />
-        </button>
+        
+        {/* Animated circular send button - visible only when input has content */}
+        {inputValue.trim() && (
+          <button 
+            onClick={handleSend}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-gray-800 text-white rounded-full 
+                     transition-all duration-300 transform hover:scale-110 active:scale-95
+                     hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400
+                     animate-scale-in hover:shadow-md"
+            aria-label="Send message"
+          >
+            <Send size={14} className="transform rotate-0 hover:rotate-45 transition-transform duration-300" />
+          </button>
+        )}
       </div>
     </div>
   );

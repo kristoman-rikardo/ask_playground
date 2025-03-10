@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -152,5 +153,19 @@
   /* Widget container */
   .widget-container {
     @apply flex flex-col h-full;
+  }
+  
+  /* Send button ripple effect */
+  @keyframes ripple {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.3);
+    }
+    100% {
+      box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+  }
+  
+  .send-button-ripple:active {
+    animation: ripple 0.6s linear;
   }
 }
