@@ -23,8 +23,8 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </div>;
 
   // Button list component with enhanced responsive layout
-  const ButtonList = () => <div className="h-auto min-h-[120px] flex flex-wrap gap-3 p-3 content-start">
-      {buttons.map((button, index) => <button key={`button-${index}-${button.name.substring(0, 10)}`} onClick={() => onButtonClick(button)} title={button.name} className="choice-button whitespace-normal overflow-hidden transition-all duration-300 text-base text-left bg-neutral-100 rounded-2xl my-0 mx-[5px] px-[15px] py-[8px]">
+  const ButtonList = () => <div className="h-auto min-h-[120px] flex flex-wrap gap-3 p-3 content-start py-[10px] px-[10px] mx-[5px] my-0">
+      {buttons.map((button, index) => <button key={`button-${index}-${button.name.substring(0, 10)}`} onClick={() => onButtonClick(button)} title={button.name} className="choice-button whitespace-normal overflow-hidden transition-all duration-300 text-base text-left bg-neutral-100 rounded-2xl my-0 px-[15px] py-[8px] mx-0">
           {button.name}
         </button>)}
     </div>;
