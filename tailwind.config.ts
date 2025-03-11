@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -154,6 +155,13 @@ export default {
 				'bump': {
 					'0%, 100%': { transform: 'translateY(0)' },
 					'50%': { transform: 'translateY(-4px)' },
+				},
+				'random-orbit': {
+					'0%': { transform: 'translate(0, 0) scale(1)', opacity: '0.6' },
+					'25%': { transform: 'translate(-30px, 40px) scale(1.2)', opacity: '0.9' },
+					'50%': { transform: 'translate(50px, -20px) scale(1.1)', opacity: '1' },
+					'75%': { transform: 'translate(-20px, -50px) scale(1.3)', opacity: '0.8' },
+					'100%': { transform: 'translate(0, 0) scale(1)', opacity: '0.6' }
 				}
 			},
 			animation: {
@@ -168,7 +176,8 @@ export default {
 				'pulse-dot-3': 'pulse-dot 1.5s ease-in-out 0.4s infinite',
 				'shimmer': 'shimmer 4s infinite linear',
 				'wiggle': 'wiggle 1s ease-in-out',
-				'bump': 'bump 1s ease-in-out'
+				'bump': 'bump 1s ease-in-out',
+				'random-orbit': 'random-orbit 3s infinite ease-in-out'
 			}
 		}
 	},

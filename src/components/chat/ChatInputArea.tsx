@@ -95,17 +95,17 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     for (let i = 0; i < remainingText.length; i++) {
       currentText += remainingText[i];
       setPlaceholder(currentText + '...');
-      await delay(50); // Faster letter streaming (was 80)
+      await delay(30); // Faster letter streaming (was 50)
     }
 
     // Wait when fully written
-    await delay(1500); // Slightly shorter pause (was 2000)
+    await delay(1000); // Shorter pause (was 1500)
 
-    // Erase letter by letter with animation
+    // Erase letter by letter with animation, faster going back
     const fullText = currentText + '...';
     for (let i = fullText.length; i > baseText.length; i--) {
       setPlaceholder(fullText.substring(0, i));
-      await delay(20); // Much faster deletion animation (was 40)
+      await delay(10); // Much faster deletion (was 20)
     }
 
     // Reset to base text with ellipsis

@@ -107,13 +107,13 @@
   }
 
   .chat-message-agent {
-    @apply bg-[#FAFAFA] text-gray-800 self-start animate-fade-in relative pr-12 shadow-md;
+    @apply bg-[#FAFAFA] text-gray-800 self-start animate-fade-in relative pr-12 shadow-sm;
   }
 
   .choice-button {
     @apply bg-[var(--faq-light,#F1F1F1)] text-gray-800 hover:bg-[var(--faq-medium,#E5E5E5)] transition-all 
-           shadow-sm rounded-xl px-4 py-2.5
-           transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-md 
+           rounded-xl px-4 py-2.5
+           transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-sm 
            duration-300 font-medium;
     width: fit-content !important;
     display: inline-block !important;
@@ -179,5 +179,33 @@
       transform: scale(1);
       opacity: 1;
     }
+  }
+  
+  /* Random orbit animation for spiral loader */
+  @keyframes random-orbit {
+    0% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.6;
+    }
+    25% {
+      transform: translate(-10px, 15px) scale(1.2);
+      opacity: 0.9;
+    }
+    50% {
+      transform: translate(25px, -10px) scale(1.1);
+      opacity: 1;
+    }
+    75% {
+      transform: translate(-10px, -20px) scale(1.3);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.6;
+    }
+  }
+  
+  .animate-random-orbit {
+    animation: random-orbit 3s infinite ease-in-out;
   }
 }

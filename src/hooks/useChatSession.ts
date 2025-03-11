@@ -19,6 +19,7 @@ export function useChatSession() {
   const [isTyping, setIsTyping] = useState(false);
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
+  const [messageInProgress, setMessageInProgress] = useState(false);
 
   useEffect(() => {
     startChatSession();
@@ -31,7 +32,7 @@ export function useChatSession() {
       await vfSendLaunch({ pageSlug: 'faq-page', productName: 'faq' }, handleStreamChunk);
     } catch (error) {
       console.error('Error starting chat session:', error);
-      addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
+      addAgentMessage('Beklager, jeg møtte en feil ved start av samtalen. Vennligst last siden på nytt.');
     } finally {
       setIsTyping(false);
       setIsButtonsLoading(false);
@@ -72,15 +73,22 @@ export function useChatSession() {
     addUserMessage(userMessage);
     setButtons([]);
     setIsTyping(true);
-    setIsButtonsLoading(true);
+    setIsButtonsLoading(false); // Don't show buttons loading while typing
+    setMessageInProgress(true);
 
     try {
       await vfSendMessage(userMessage, handleStreamChunk);
     } catch (error) {
       console.error('Error sending message:', error);
-      addAgentMessage('Sorry, I encountered an error processing your message. Please try again.');
+      addAgentMessage('Beklager, jeg møtte en feil. Vennligst prøv igjen.');
     } finally {
       setIsTyping(false);
+      setMessageInProgress(false);
+      
+      // Only show button loading after message is complete
+      if (buttons.length === 0) {
+        setIsButtonsLoading(true);
+      }
     }
   };
 
@@ -88,15 +96,22 @@ export function useChatSession() {
     addUserMessage(button.name);
     setButtons([]);
     setIsTyping(true);
-    setIsButtonsLoading(true);
+    setIsButtonsLoading(false); // Don't show buttons loading while typing
+    setMessageInProgress(true);
 
     try {
       await vfSendAction(button.request, handleStreamChunk);
     } catch (error) {
       console.error('Error processing button action:', error);
-      addAgentMessage('Sorry, I encountered an error processing your selection. Please try again.');
+      addAgentMessage('Beklager, jeg møtte en feil. Vennligst prøv igjen.');
     } finally {
       setIsTyping(false);
+      setMessageInProgress(false);
+      
+      // Only show button loading after message is complete
+      if (buttons.length === 0) {
+        setIsButtonsLoading(true);
+      }
     }
   };
 
@@ -132,6 +147,7 @@ export function useChatSession() {
                 });
               }
               setIsTyping(false);
+              setMessageInProgress(false);
             }
           }
 
@@ -140,31 +156,28 @@ export function useChatSession() {
             setMessages(prev => [...prev, {
               id: messageId,
               type: 'agent',
-              content: '',
-              isPartial: true
+              content: trace.payload.message, // Set content directly for stability
+              isPartial: false // Don't use fake streaming for stability
             }]);
-
-            setTimeout(() => {
-              const messageEl = document.getElementById(`message-${messageId}`);
-              if (messageEl) {
-                fakeStreamMessage(trace.payload.message, messageEl)
-                  .then(() => {
-                    setMessages(prev => prev.map(msg => 
-                      msg.id === messageId ? {...msg, isPartial: false} : msg
-                    ));
-                  });
-              }
-            }, 100);
+            
+            setIsTyping(false);
+            setMessageInProgress(false);
           }
 
           else if (trace.type === 'choice') {
             setButtons(trace.payload.buttons);
             setIsButtonsLoading(false);
+            
+            // If message is complete, don't show typing indicator
+            if (!messageInProgress) {
+              setIsTyping(false);
+            }
           }
 
           else if (trace.type === 'end') {
             setIsTyping(false);
             setIsButtonsLoading(false);
+            setMessageInProgress(false);
           }
 
         } catch (err) {
@@ -184,6 +197,5 @@ export function useChatSession() {
   };
 }
 
-// Helper function to stream messages with animation
-// This is imported from the voiceflow library but used here
-import { parseMarkdown, fakeStreamMessage } from '@/lib/voiceflow';
+// Importing from the voiceflow library but simplified to avoid instability
+import { parseMarkdown } from '@/lib/voiceflow';
