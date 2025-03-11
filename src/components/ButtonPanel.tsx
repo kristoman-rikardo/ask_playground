@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Loader, Sparkles } from 'lucide-react';
 interface Button {
@@ -29,7 +28,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
           {button.name}
         </button>)}
     </div>;
-  return <div className="w-full bg-gray-50 border-t border-gray-200 p-3 relative">
+  return <div className="w-full border-t border-gray-200 p-3 relative bg-slate-100">
       {/* AI Sparkle Icon in top left corner */}
       <div className="absolute top-3 left-3">
         <Sparkles className="w-4 h-4 text-gray-500" />
