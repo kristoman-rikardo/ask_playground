@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -106,12 +107,12 @@
   }
 
   .chat-message-agent {
-    @apply bg-[#F6F6F7] text-gray-800 self-start animate-fade-in relative pr-12 shadow-sm;
+    @apply bg-[#FAFAFA] text-gray-800 self-start animate-fade-in relative pr-12 shadow-md;
   }
 
   .choice-button {
     @apply bg-[var(--faq-light,#F1F1F1)] text-gray-800 hover:bg-[var(--faq-medium,#E5E5E5)] transition-all 
-           shadow-sm border border-gray-200 rounded-xl px-4 py-2.5
+           shadow-sm rounded-xl px-4 py-2.5
            transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-md 
            duration-300 font-medium;
     width: fit-content !important;

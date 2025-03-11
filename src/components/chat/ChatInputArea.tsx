@@ -12,28 +12,28 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isInputStreaming, setIsInputStreaming] = useState(false);
-  const [placeholder, setPlaceholder] = useState('Spør meg om...');
+  const [placeholder, setPlaceholder] = useState('Spør meg...');
   const [isFocused, setIsFocused] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   // Short and long suggestion variations based on widget width
   const shortSuggestions = [
-    "Spør meg om returvilkår...", 
-    "Spør meg om materialer...", 
-    "Spør meg om bærekraft...", 
-    "Spør meg om størrelser...", 
-    "Spør meg om vedlikehold...", 
-    "Spør meg om garantier..."
+    "om returvilkår", 
+    "om materialer", 
+    "om bærekraft", 
+    "om størrelser", 
+    "om vedlikehold", 
+    "om garantier"
   ];
   
   const longSuggestions = [
-    "Spør meg om returvilkårene for denne varen...", 
-    "Spør meg om materialbruk og teknologier i dette produktet...", 
-    "Spør meg om bærekraft i produksjonen av denne varen...", 
-    "Spør meg om størrelsesanbefalinger for dette produktet...", 
-    "Spør meg om vedlikeholdstips for denne varen...", 
-    "Spør meg om garanti og reklamasjonsrettigheter for dette produktet..."
+    "om returvilkårene for denne varen", 
+    "om materialbruk og teknologier i dette produktet", 
+    "om bærekraft i produksjonen av denne varen", 
+    "om størrelsesanbefalinger for dette produktet", 
+    "om vedlikeholdstips for denne varen", 
+    "om garanti og reklamasjonsrettigheter for dette produktet"
   ];
   
   // Detect widget width to use appropriate suggestion length
@@ -59,7 +59,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       if (!isInputStreaming && inputValue === '' && !isFocused) {
         streamPlaceholder();
       }
-    }, 1800); // More frequent streaming
+    }, 1500); // More frequent streaming
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming, isFocused, useShortSuggestions]);
@@ -83,33 +83,33 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     // Choose suggestion set based on widget width
     const suggestions = useShortSuggestions ? shortSuggestions : longSuggestions;
     const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
-    const baseText = 'Spør meg om '; // Base text with space but no ellipsis
+    const baseText = 'Spør meg '; // Base text with space but no ellipsis
 
     // Set the base text first
     setPlaceholder(baseText + '...');
 
     // Stream the remaining characters letter by letter
-    const remainingText = randomSuggestion.substring(baseText.length);
+    const remainingText = randomSuggestion;
     let currentText = baseText;
     
     for (let i = 0; i < remainingText.length; i++) {
       currentText += remainingText[i];
       setPlaceholder(currentText + '...');
-      await delay(80); // Delay between letters
+      await delay(50); // Faster letter streaming (was 80)
     }
 
     // Wait when fully written
-    await delay(2000);
+    await delay(1500); // Slightly shorter pause (was 2000)
 
     // Erase letter by letter with animation
     const fullText = currentText + '...';
     for (let i = fullText.length; i > baseText.length; i--) {
       setPlaceholder(fullText.substring(0, i));
-      await delay(40); // Faster deletion animation (smaller delay)
+      await delay(20); // Much faster deletion animation (was 40)
     }
 
     // Reset to base text with ellipsis
-    setPlaceholder('Spør meg om...');
+    setPlaceholder('Spør meg...');
     setIsInputStreaming(false);
   };
 
@@ -121,7 +121,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 
   return (
     <div className="w-full bg-gray-50 border-t border-gray-200 p-4">
-      <div className="flex items-center space-x-2 relative">
+      <div className="flex items-center space-x-2 relative max-w-full">
         <input 
           ref={inputRef} 
           type="text" 
@@ -131,7 +131,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className={`flex-1 px-4 py-2 pr-10 border font-light font-sans transition-all duration-300 rounded-2xl bg-gray-50
+          className={`flex-1 px-4 py-2 pr-10 border font-light font-sans transition-all duration-300 rounded-2xl bg-gray-50 mx-auto
             ${isFocused 
               ? 'border-gray-500 ring-2 ring-gray-200' 
               : inputValue 
@@ -141,7 +141,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
         
-        {/* Animated circular send button with scale-in/out and ripple effect */}
+        {/* Animated circular send button with tilted arrow */}
         <div 
           className={`absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-300 transform 
             ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}
@@ -154,7 +154,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                      send-button-ripple"
             aria-label="Send message"
           >
-            <ArrowRight size={14} className="transform transition-transform duration-300" />
+            <ArrowRight size={14} className="transform rotate-[-45deg] transition-transform duration-300" />
           </button>
         </div>
       </div>

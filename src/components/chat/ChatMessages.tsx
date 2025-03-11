@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
@@ -64,10 +65,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   };
   return <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px] px-[8px] py-[8px] mx-[4px] my-[4px] rounded-none">
-      {messages.map((message, index) => <div key={message.id} id={`message-${message.id}`} ref={index === messages.length - 1 ? lastMessageRef : null} className={`px-4 py-3 rounded-xl max-w-[85%] relative ${message.type === 'user' ? 'chat-message-user ml-auto bg-gray-200' : 'chat-message-agent mr-auto shadow-sm bg-[#F6F6F7]'}`}>
+      {messages.map((message, index) => <div key={message.id} id={`message-${message.id}`} ref={index === messages.length - 1 ? lastMessageRef : null} className={`px-4 py-3 rounded-xl max-w-[85%] relative ${message.type === 'user' ? 'chat-message-user ml-auto bg-gray-200' : 'chat-message-agent mr-auto shadow-md bg-[#FAFAFA]'}`}>
           <div dangerouslySetInnerHTML={{
         __html: parseMarkdown(message.content || '')
-      }} className="bg-stone-200" />
+      }} className={message.type === 'agent' ? 'prose prose-sm' : 'bg-stone-200'} />
           {message.type === 'agent' && <MessageFeedback messageId={message.id} />}
         </div>)}
       
