@@ -43,24 +43,24 @@ const MessageFeedback = ({
   };
   
   return (
-    <div className="flex flex-col gap-2 absolute right-2 top-1/2 -translate-y-1/2">
+    <div className="flex flex-col gap-1 absolute right-1 top-1/2 -translate-y-1/2">
       <button 
         onClick={() => handleFeedback('positive')} 
-        className="p-1 hover:scale-110 transition-all duration-200" 
+        className="p-0.5 hover:scale-110 transition-all duration-200" 
         aria-label="Thumbs up"
       >
         <ThumbsUp 
-          size={18} 
+          size={14} 
           className={`${feedback === 'positive' ? 'text-green-500' : 'text-gray-300'} hover:text-green-500`} 
         />
       </button>
       <button 
         onClick={() => handleFeedback('negative')} 
-        className="p-1 hover:scale-110 transition-all duration-200" 
+        className="p-0.5 hover:scale-110 transition-all duration-200" 
         aria-label="Thumbs down"
       >
         <ThumbsDown 
-          size={18} 
+          size={14} 
           className={`${feedback === 'negative' ? 'text-red-500' : 'text-gray-300'} hover:text-red-500`} 
         />
       </button>

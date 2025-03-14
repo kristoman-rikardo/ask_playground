@@ -34,26 +34,26 @@ const SpiralLoader: React.FC<SpiralLoaderProps> = ({
     return () => clearInterval(timer);
   }, [phrases, interval]);
 
-  // Size mapping for the container
+  // Size mapping for the container - making all sizes smaller
   const sizeClasses = {
-    small: 'w-24 h-24',
-    medium: 'w-32 h-32',
-    large: 'w-40 h-40'
+    small: 'w-20 h-20',
+    medium: 'w-24 h-24',
+    large: 'w-32 h-32'
   };
 
-  // Size mapping for the text
+  // Size mapping for the text - also smaller
   const textSizeClasses = {
     small: 'text-xs',
-    medium: 'text-sm',
-    large: 'text-base'
+    medium: 'text-xs',
+    large: 'text-sm'
   };
 
-  // Size mapping for the circles
+  // Size mapping for the circles - making all circles smaller
   const getCircleStyle = (index: number) => {
     const sizes = {
-      small: [6, 5, 4, 7, 5, 6, 6],
-      medium: [10, 8, 6, 12, 7, 9, 11],
-      large: [14, 11, 8, 16, 9, 12, 14]
+      small: [4, 3, 2, 5, 3, 4, 4],
+      medium: [6, 5, 4, 7, 5, 6, 6],
+      large: [10, 8, 6, 12, 7, 9, 11]
     };
     
     const baseSize = sizes[size][index % sizes[size].length];

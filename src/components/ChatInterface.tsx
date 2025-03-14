@@ -38,6 +38,9 @@ const ChatInterface: React.FC = () => {
     }
   }, [messages, buttons, startTime, responseTime]);
 
+  // Only show loading in chat when actual message is being typed, not when buttons are loading
+  const showChatLoading = isTyping && !isButtonsLoading;
+
   return (
     <>
       {/* Debug timer display outside the widget */}
@@ -57,13 +60,13 @@ const ChatInterface: React.FC = () => {
           <div className="flex-1 flex flex-col overflow-hidden min-h-[200px]">
             <ChatMessages 
               messages={messages} 
-              isTyping={isTyping} 
+              isTyping={showChatLoading} 
             />
           </div>
           
           <ButtonPanel 
             buttons={buttons} 
-            isLoading={isButtonsLoading && !isTyping} 
+            isLoading={isButtonsLoading} 
             onButtonClick={handleButtonClick} 
           />
           

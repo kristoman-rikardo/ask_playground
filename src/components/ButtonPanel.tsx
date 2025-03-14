@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Info } from 'lucide-react';
 import SpiralLoader from './SpiralLoader';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface Button {
   name: string;
@@ -53,14 +54,25 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   return (
     <div className="w-full border-t border-gray-200 p-3 relative bg-slate-100">
-      {/* AI Sparkle Icon in top left corner */}
-      <div className="absolute top-3 left-3">
-        <Sparkles className="w-4 h-4 text-gray-500" />
+      {/* AI Info Icon in top left corner with tooltip */}
+      <div className="absolute top-3 left-3 z-10">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="focus:outline-none">
+                <Sparkles className="w-4 h-4 text-gray-500" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[250px] text-xs">
+              <p>Denne AI-løsningen er utviklet av Dalai</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       
       {isLoading ? 
         <LoadingIndicator /> : 
-        buttons.length > 0 ? 
+        buttons && buttons.length > 0 ? 
           <ButtonList /> : 
           <div className="h-[120px]"></div>
       }
