@@ -1,8 +1,9 @@
+
 // Voiceflow API integration
 
 // Correct Voiceflow credentials
-const VF_KEY = "VF.DM.67c57e75bd87daaf0917d8fc.2hw3bJ5KRILKyZbf";
-const VF_PROJECT_ID = "67bee8ec99721b58fcb5ea3e";
+const VF_KEY = "VF.DM.67d466872e0fa2e87529d165.jvSM4GSGdSCXVn2z";
+const VF_PROJECT_ID = "67d1ad605c5916e15e7ceb94";
 
 // Create a random userID for session
 export const userID = `${Math.floor(Math.random() * 1000000000000000)}`;
