@@ -23,6 +23,7 @@ export async function vfInteractStream(
   userAction: any, 
   onSseTrace: (chunk: string) => void
 ): Promise<any[]> {
+  // IMPORTANT: completion_events=true must be in the URL
   const streamUrl =
     `https://general-runtime.voiceflow.com/v2/project/${VF_PROJECT_ID}/user/${user}/interact/stream` +
     `?environment=development&completion_events=true&state=false`;

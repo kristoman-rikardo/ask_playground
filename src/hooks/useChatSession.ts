@@ -141,6 +141,7 @@ export function useChatSession() {
           const trace = JSON.parse(jsonStr);
           console.log('Received trace:', trace.type);
 
+          // Handle completion events (streaming)
           if (trace.type === 'completion') {
             if (trace.payload.state === 'start') {
               console.log('Completion start');
@@ -152,6 +153,7 @@ export function useChatSession() {
             else if (trace.payload.state === 'content') {
               // Update the existing streaming message with the new content
               if (streamingMessageId) {
+                console.log('Streaming content update:', trace.payload.content);
                 setMessages(prev => {
                   const newMessages = [...prev];
                   const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
@@ -166,6 +168,8 @@ export function useChatSession() {
                   }
                   return newMessages;
                 });
+              } else {
+                console.warn('Received content but no streaming message ID is set');
               }
             }
             else if (trace.payload.state === 'end') {
@@ -193,6 +197,7 @@ export function useChatSession() {
             }
           }
 
+          // Handle regular text messages (non-streaming)
           else if (trace.type === 'text') {
             console.log('Text message received');
             addAgentMessage(trace.payload.message, false);
@@ -201,6 +206,7 @@ export function useChatSession() {
             setMessageInProgress(false);
           }
 
+          // Handle choices (buttons)
           else if (trace.type === 'choice') {
             console.log('Choice received', trace.payload.buttons);
             setButtons(trace.payload.buttons);
@@ -211,6 +217,7 @@ export function useChatSession() {
             }
           }
 
+          // Handle end of interaction
           else if (trace.type === 'end') {
             console.log('End of interaction');
             setIsTyping(false);
