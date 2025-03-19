@@ -49,7 +49,6 @@ export function useChatSession() {
   };
 
   const addAgentMessage = (text: string, isPartial = false) => {
-    // Create a new message with a unique ID
     const newMessageId = Date.now().toString();
     
     if (isPartial) {
@@ -66,7 +65,7 @@ export function useChatSession() {
     return newMessageId;
   };
 
-  const updateAgentMessage = (messageId: string, text: string, isPartial = true) => {
+  const updateAgentMessage = (messageId: string, content: string, isPartial = true) => {
     setMessages(prev => {
       const newMessages = [...prev];
       const msgIndex = newMessages.findIndex(msg => msg.id === messageId);
@@ -74,7 +73,7 @@ export function useChatSession() {
       if (msgIndex !== -1) {
         newMessages[msgIndex] = {
           ...newMessages[msgIndex],
-          content: text,
+          content,
           isPartial
         };
       }
@@ -146,17 +145,19 @@ export function useChatSession() {
             if (trace.payload.state === 'start') {
               console.log('Completion start');
               setIsTyping(true);
-              // Create a new message for streaming content
-              addAgentMessage('', true);
+              // Create an empty message at the start of streaming
+              const newMsgId = addAgentMessage('', true);
+              setStreamingMessageId(newMsgId);
             } 
             else if (trace.payload.state === 'content') {
-              // Update the existing streaming message by appending new content
+              // Update the existing streaming message with the new content
               if (streamingMessageId) {
                 setMessages(prev => {
                   const newMessages = [...prev];
                   const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
                   
                   if (streamingMsgIndex !== -1) {
+                    // Append new content to existing content
                     newMessages[streamingMsgIndex] = {
                       ...newMessages[streamingMsgIndex],
                       content: newMessages[streamingMsgIndex].content + trace.payload.content,
@@ -169,7 +170,7 @@ export function useChatSession() {
             }
             else if (trace.payload.state === 'end') {
               console.log('Completion end');
-              // Mark the streaming message as complete
+              // Mark streaming message as complete
               if (streamingMessageId) {
                 setMessages(prev => {
                   const newMessages = [...prev];
@@ -183,9 +184,10 @@ export function useChatSession() {
                   }
                   return newMessages;
                 });
+                
+                setStreamingMessageId(null);
               }
               
-              setStreamingMessageId(null);
               setIsTyping(false);
               setMessageInProgress(false);
             }
@@ -215,6 +217,7 @@ export function useChatSession() {
             setIsButtonsLoading(false);
             setMessageInProgress(false);
             
+            // Make sure to mark any streaming message as complete when the interaction ends
             if (streamingMessageId) {
               setMessages(prev => {
                 const newMessages = [...prev];
