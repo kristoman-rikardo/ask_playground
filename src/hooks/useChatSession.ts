@@ -49,37 +49,37 @@ export function useChatSession() {
   };
 
   const addAgentMessage = (text: string, isPartial = false) => {
-    if (isPartial && streamingMessageId) {
-      // Update existing streaming message
-      setMessages(prev => {
-        const newMessages = [...prev];
-        const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
-        
-        if (streamingMsgIndex !== -1) {
-          newMessages[streamingMsgIndex] = {
-            ...newMessages[streamingMsgIndex],
-            content: text,
-            isPartial: true
-          };
-          return newMessages;
-        }
-        return prev;
-      });
-    } else {
-      // Create a new message
-      const newMessageId = Date.now().toString();
-      
-      if (isPartial) {
-        setStreamingMessageId(newMessageId);
-      }
-      
-      setMessages(prev => [...prev, {
-        id: newMessageId,
-        type: 'agent',
-        content: text,
-        isPartial
-      }]);
+    // Create a new message with a unique ID
+    const newMessageId = Date.now().toString();
+    
+    if (isPartial) {
+      setStreamingMessageId(newMessageId);
     }
+    
+    setMessages(prev => [...prev, {
+      id: newMessageId,
+      type: 'agent',
+      content: text,
+      isPartial
+    }]);
+    
+    return newMessageId;
+  };
+
+  const updateAgentMessage = (messageId: string, text: string, isPartial = true) => {
+    setMessages(prev => {
+      const newMessages = [...prev];
+      const msgIndex = newMessages.findIndex(msg => msg.id === messageId);
+      
+      if (msgIndex !== -1) {
+        newMessages[msgIndex] = {
+          ...newMessages[msgIndex],
+          content: text,
+          isPartial
+        };
+      }
+      return newMessages;
+    });
   };
 
   const sendUserMessage = async (userMessage: string) => {
@@ -146,11 +146,10 @@ export function useChatSession() {
             if (trace.payload.state === 'start') {
               console.log('Completion start');
               setIsTyping(true);
-              // Create a new streaming message with empty content
+              // Create a new message for streaming content
               addAgentMessage('', true);
             } 
             else if (trace.payload.state === 'content') {
-              console.log('Completion content:', trace.payload.content);
               // Update the existing streaming message by appending new content
               if (streamingMessageId) {
                 setMessages(prev => {
@@ -171,18 +170,20 @@ export function useChatSession() {
             else if (trace.payload.state === 'end') {
               console.log('Completion end');
               // Mark the streaming message as complete
-              setMessages(prev => {
-                const newMessages = [...prev];
-                const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
-                
-                if (streamingMsgIndex !== -1) {
-                  newMessages[streamingMsgIndex] = {
-                    ...newMessages[streamingMsgIndex],
-                    isPartial: false
-                  };
-                }
-                return newMessages;
-              });
+              if (streamingMessageId) {
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
+                  
+                  if (streamingMsgIndex !== -1) {
+                    newMessages[streamingMsgIndex] = {
+                      ...newMessages[streamingMsgIndex],
+                      isPartial: false
+                    };
+                  }
+                  return newMessages;
+                });
+              }
               
               setStreamingMessageId(null);
               setIsTyping(false);
