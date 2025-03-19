@@ -1,9 +1,10 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import { Message } from '@/hooks/useChatSession';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import SpiralLoader from '../SpiralLoader';
+import { useState } from 'react';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -12,9 +13,11 @@ interface ChatMessagesProps {
 
 // Component for message feedback
 const MessageFeedback = ({
-  messageId
+  messageId,
+  isPartial
 }: {
   messageId: string;
+  isPartial?: boolean;
 }) => {
   const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
   
@@ -25,6 +28,11 @@ const MessageFeedback = ({
       setFeedback(existingFeedback[messageId]);
     }
   }, [messageId]);
+  
+  // Don't show feedback buttons for partial messages
+  if (isPartial) {
+    return null;
+  }
   
   const handleFeedback = (type: 'positive' | 'negative') => {
     // Toggle feedback if already selected
@@ -43,7 +51,7 @@ const MessageFeedback = ({
   };
   
   return (
-    <div className="flex items-center gap-1 ml-1 absolute -right-10 top-1/2 -translate-y-1/2">
+    <div className="flex items-center gap-1 absolute -right-10 top-1/2 -translate-y-1/2">
       <button 
         onClick={() => handleFeedback('positive')} 
         className="p-0.5 hover:scale-110 transition-all duration-200 opacity-60 hover:opacity-100" 
@@ -121,12 +129,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               }} 
               className={message.type === 'agent' ? 'prose prose-sm' : 'bg-stone-200'} 
             />
-            {message.type === 'agent' && !message.isPartial && <MessageFeedback messageId={message.id} />}
+            {message.type === 'agent' && <MessageFeedback messageId={message.id} isPartial={message.isPartial} />}
           </div>
         </div>
       ))}
       
-      {isTyping && (
+      {isTyping && !messages.some(m => m.isPartial) && (
         <div className="mr-auto">
           <SpiralLoader 
             size="small" 
