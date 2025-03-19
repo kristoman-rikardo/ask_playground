@@ -43,25 +43,25 @@ const MessageFeedback = ({
   };
   
   return (
-    <div className="flex flex-col gap-1 absolute right-1 top-1/2 -translate-y-1/2">
+    <div className="flex items-center gap-1 ml-1 absolute -right-10 top-1/2 -translate-y-1/2">
       <button 
         onClick={() => handleFeedback('positive')} 
-        className="p-0.5 hover:scale-110 transition-all duration-200" 
+        className="p-0.5 hover:scale-110 transition-all duration-200 opacity-60 hover:opacity-100" 
         aria-label="Thumbs up"
       >
         <ThumbsUp 
-          size={14} 
-          className={`${feedback === 'positive' ? 'text-green-500' : 'text-gray-300'} hover:text-green-500`} 
+          size={12} 
+          className={`${feedback === 'positive' ? 'text-green-500' : 'text-gray-400'} hover:text-green-500`} 
         />
       </button>
       <button 
         onClick={() => handleFeedback('negative')} 
-        className="p-0.5 hover:scale-110 transition-all duration-200" 
+        className="p-0.5 hover:scale-110 transition-all duration-200 opacity-60 hover:opacity-100" 
         aria-label="Thumbs down"
       >
         <ThumbsDown 
-          size={14} 
-          className={`${feedback === 'negative' ? 'text-red-500' : 'text-gray-300'} hover:text-red-500`} 
+          size={12} 
+          className={`${feedback === 'negative' ? 'text-red-500' : 'text-gray-400'} hover:text-red-500`} 
         />
       </button>
     </div>
@@ -98,23 +98,31 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           key={message.id} 
           id={`message-${message.id}`} 
           ref={index === messages.length - 1 ? lastMessageRef : null} 
-          className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
+          className={`relative ${
             message.type === 'user' 
-              ? 'chat-message-user ml-auto bg-gray-200' 
-              : 'chat-message-agent mr-auto shadow-sm bg-[#FBFBFB]'
+              ? 'flex justify-end' 
+              : 'flex justify-start'
           }`}
-          style={{ 
-            transition: 'all 0.3s ease-out',
-            minHeight: message.content ? 'auto' : '0' 
-          }}
         >
-          <div 
-            dangerouslySetInnerHTML={{
-              __html: parseMarkdown(message.content || '')
-            }} 
-            className={message.type === 'agent' ? 'prose prose-sm' : 'bg-stone-200'} 
-          />
-          {message.type === 'agent' && <MessageFeedback messageId={message.id} />}
+          <div
+            className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
+              message.type === 'user' 
+                ? 'chat-message-user ml-auto bg-gray-200' 
+                : 'chat-message-agent mr-auto shadow-sm bg-[#FBFBFB]'
+            }`}
+            style={{ 
+              transition: 'all 0.3s ease-out',
+              minHeight: message.content ? 'auto' : '0' 
+            }}
+          >
+            <div 
+              dangerouslySetInnerHTML={{
+                __html: parseMarkdown(message.content || '')
+              }} 
+              className={message.type === 'agent' ? 'prose prose-sm' : 'bg-stone-200'} 
+            />
+            {message.type === 'agent' && <MessageFeedback messageId={message.id} />}
+          </div>
         </div>
       ))}
       

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
+import { vfSendLaunch, vfSendMessage, vfSendAction, parseMarkdown } from '@/lib/voiceflow';
 
 export interface Message {
   id: string;
@@ -48,7 +48,7 @@ export function useChatSession() {
   };
 
   const addAgentMessage = (text: string, isPartial = false) => {
-    if (isPartial && messages.length > 0 && messages[messages.length - 1].isPartial) {
+    if (isPartial && messages.length > 0 && messages[messages.length - 1]?.isPartial) {
       setMessages(prev => {
         const newMessages = [...prev];
         newMessages[newMessages.length - 1] = {
@@ -125,46 +125,51 @@ export function useChatSession() {
 
         try {
           const trace = JSON.parse(jsonStr);
+          console.log('Received trace:', trace.type);
 
           if (trace.type === 'completion') {
             if (trace.payload.state === 'start') {
+              console.log('Completion start');
+              setIsTyping(true);
               addAgentMessage('', true);
             } 
             else if (trace.payload.state === 'content') {
+              console.log('Completion content');
+              // Find the last message if it's partial
               const lastMessage = messages[messages.length - 1];
-              if (lastMessage && lastMessage.isPartial) {
-                addAgentMessage(lastMessage.content + trace.payload.content, true);
-              }
+              const content = lastMessage?.isPartial ? lastMessage.content + trace.payload.content : trace.payload.content;
+              addAgentMessage(content, true);
             }
             else if (trace.payload.state === 'end') {
-              if (messages.length > 0) {
-                setMessages(prev => {
+              console.log('Completion end');
+              setMessages(prev => {
+                if (prev.length > 0 && prev[prev.length - 1].isPartial) {
                   const newMessages = [...prev];
-                  if (newMessages[newMessages.length - 1].isPartial) {
-                    newMessages[newMessages.length - 1].isPartial = false;
-                  }
+                  newMessages[newMessages.length - 1] = {
+                    ...newMessages[newMessages.length - 1],
+                    isPartial: false
+                  };
                   return newMessages;
-                });
-              }
+                }
+                return prev;
+              });
+              
               setIsTyping(false);
               setMessageInProgress(false);
             }
           }
 
           else if (trace.type === 'text') {
+            console.log('Text message received');
             const messageId = Date.now().toString();
-            setMessages(prev => [...prev, {
-              id: messageId,
-              type: 'agent',
-              content: trace.payload.message, // Set content directly for stability
-              isPartial: false // Don't use fake streaming for stability
-            }]);
+            addAgentMessage(trace.payload.message, false);
             
             setIsTyping(false);
             setMessageInProgress(false);
           }
 
           else if (trace.type === 'choice') {
+            console.log('Choice received', trace.payload.buttons);
             setButtons(trace.payload.buttons);
             setIsButtonsLoading(false);
             
@@ -175,6 +180,7 @@ export function useChatSession() {
           }
 
           else if (trace.type === 'end') {
+            console.log('End of interaction');
             setIsTyping(false);
             setIsButtonsLoading(false);
             setMessageInProgress(false);
@@ -196,6 +202,3 @@ export function useChatSession() {
     handleButtonClick
   };
 }
-
-// Importing from the voiceflow library but simplified to avoid instability
-import { parseMarkdown } from '@/lib/voiceflow';
