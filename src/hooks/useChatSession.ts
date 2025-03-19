@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction, parseMarkdown } from '@/lib/voiceflow';
 
@@ -20,6 +19,7 @@ export function useChatSession() {
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
   const [messageInProgress, setMessageInProgress] = useState(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     startChatSession();
@@ -48,18 +48,30 @@ export function useChatSession() {
   };
 
   const addAgentMessage = (text: string, isPartial = false) => {
-    if (isPartial && messages.length > 0 && messages[messages.length - 1]?.isPartial) {
+    if (isPartial && streamingMessageId) {
       setMessages(prev => {
         const newMessages = [...prev];
-        newMessages[newMessages.length - 1] = {
-          ...newMessages[newMessages.length - 1],
-          content: text
-        };
-        return newMessages;
+        const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
+        
+        if (streamingMsgIndex !== -1) {
+          newMessages[streamingMsgIndex] = {
+            ...newMessages[streamingMsgIndex],
+            content: text,
+            isPartial: true
+          };
+          return newMessages;
+        }
+        return prev;
       });
     } else {
+      const newMessageId = Date.now().toString();
+      
+      if (isPartial) {
+        setStreamingMessageId(newMessageId);
+      }
+      
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: newMessageId,
         type: 'agent',
         content: text,
         isPartial
@@ -75,6 +87,7 @@ export function useChatSession() {
     setIsTyping(true);
     setIsButtonsLoading(false); // Don't show buttons loading while typing
     setMessageInProgress(true);
+    setStreamingMessageId(null); // Reset streaming ID for new conversation
 
     try {
       await vfSendMessage(userMessage, handleStreamChunk);
@@ -85,7 +98,6 @@ export function useChatSession() {
       setIsTyping(false);
       setMessageInProgress(false);
       
-      // Only show button loading after message is complete
       if (buttons.length === 0) {
         setIsButtonsLoading(true);
       }
@@ -98,6 +110,7 @@ export function useChatSession() {
     setIsTyping(true);
     setIsButtonsLoading(false); // Don't show buttons loading while typing
     setMessageInProgress(true);
+    setStreamingMessageId(null); // Reset streaming ID for new action
 
     try {
       await vfSendAction(button.request, handleStreamChunk);
@@ -108,7 +121,6 @@ export function useChatSession() {
       setIsTyping(false);
       setMessageInProgress(false);
       
-      // Only show button loading after message is complete
       if (buttons.length === 0) {
         setIsButtonsLoading(true);
       }
@@ -131,31 +143,33 @@ export function useChatSession() {
             if (trace.payload.state === 'start') {
               console.log('Completion start');
               setIsTyping(true);
-              // Create a new empty message that will be updated as content arrives
               addAgentMessage('', true);
             } 
             else if (trace.payload.state === 'content') {
               console.log('Completion content:', trace.payload.content);
-              // Find the last message if it's partial and add the new content
-              const lastMessage = messages[messages.length - 1];
-              const content = lastMessage?.isPartial ? lastMessage.content + trace.payload.content : trace.payload.content;
+              const streamingMsg = messages.find(m => m.id === streamingMessageId);
+              const content = streamingMsg?.content 
+                ? streamingMsg.content + trace.payload.content 
+                : trace.payload.content;
+              
               addAgentMessage(content, true);
             }
             else if (trace.payload.state === 'end') {
               console.log('Completion end');
-              // Mark the message as no longer partial
               setMessages(prev => {
-                if (prev.length > 0 && prev[prev.length - 1].isPartial) {
-                  const newMessages = [...prev];
-                  newMessages[newMessages.length - 1] = {
-                    ...newMessages[newMessages.length - 1],
+                const newMessages = [...prev];
+                const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
+                
+                if (streamingMsgIndex !== -1) {
+                  newMessages[streamingMsgIndex] = {
+                    ...newMessages[streamingMsgIndex],
                     isPartial: false
                   };
-                  return newMessages;
                 }
-                return prev;
+                return newMessages;
               });
               
+              setStreamingMessageId(null);
               setIsTyping(false);
               setMessageInProgress(false);
             }
@@ -174,7 +188,6 @@ export function useChatSession() {
             setButtons(trace.payload.buttons);
             setIsButtonsLoading(false);
             
-            // If message is complete, don't show typing indicator
             if (!messageInProgress) {
               setIsTyping(false);
             }
@@ -185,6 +198,22 @@ export function useChatSession() {
             setIsTyping(false);
             setIsButtonsLoading(false);
             setMessageInProgress(false);
+            
+            if (streamingMessageId) {
+              setMessages(prev => {
+                const newMessages = [...prev];
+                const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
+                
+                if (streamingMsgIndex !== -1) {
+                  newMessages[streamingMsgIndex] = {
+                    ...newMessages[streamingMsgIndex],
+                    isPartial: false
+                  };
+                }
+                return newMessages;
+              });
+              setStreamingMessageId(null);
+            }
           }
 
         } catch (err) {

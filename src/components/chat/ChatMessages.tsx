@@ -108,7 +108,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
               message.type === 'user' 
                 ? 'chat-message-user ml-auto bg-gray-200' 
-                : 'chat-message-agent mr-auto shadow-sm bg-[#FBFBFB]'
+                : `chat-message-agent mr-auto shadow-sm bg-[#FBFBFB] ${message.isPartial ? 'animate-pulse' : ''}`
             }`}
             style={{ 
               transition: 'all 0.3s ease-out',
@@ -121,7 +121,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               }} 
               className={message.type === 'agent' ? 'prose prose-sm' : 'bg-stone-200'} 
             />
-            {message.type === 'agent' && <MessageFeedback messageId={message.id} />}
+            {message.type === 'agent' && !message.isPartial && <MessageFeedback messageId={message.id} />}
           </div>
         </div>
       ))}
