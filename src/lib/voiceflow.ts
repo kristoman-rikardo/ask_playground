@@ -29,6 +29,7 @@ export async function vfInteractStream(
     `?environment=development&completion_events=true&state=false`;
 
   const payload = { action: userAction, completion_events: true };
+  console.log('Sending payload to Voiceflow:', JSON.stringify(payload));
 
   try {
     const response = await fetch(streamUrl, {

@@ -103,7 +103,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     >
       {messages.map((message, index) => (
         <div 
-          key={`message-${message.id}`} 
+          key={message.id} 
           id={`message-${message.id}`} 
           ref={index === messages.length - 1 ? lastMessageRef : null} 
           className={`relative ${

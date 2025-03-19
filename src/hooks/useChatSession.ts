@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
 
 export interface Message {
@@ -20,7 +19,7 @@ export function useChatSession() {
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
   const [messageInProgress, setMessageInProgress] = useState(false);
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const streamingMessageIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     startChatSession();
@@ -52,7 +51,8 @@ export function useChatSession() {
     const newMessageId = Date.now().toString();
     
     if (isPartial) {
-      setStreamingMessageId(newMessageId);
+      streamingMessageIdRef.current = newMessageId;
+      console.log('Creating new streaming message with ID:', newMessageId);
     }
     
     setMessages(prev => [...prev, {
@@ -89,7 +89,7 @@ export function useChatSession() {
     setIsTyping(true);
     setIsButtonsLoading(false);
     setMessageInProgress(true);
-    setStreamingMessageId(null); // Reset streaming ID for new conversation
+    streamingMessageIdRef.current = null; // Reset streaming ID for new conversation
 
     try {
       await vfSendMessage(userMessage, handleStreamChunk);
@@ -112,7 +112,7 @@ export function useChatSession() {
     setIsTyping(true);
     setIsButtonsLoading(false);
     setMessageInProgress(true);
-    setStreamingMessageId(null);
+    streamingMessageIdRef.current = null;
 
     try {
       await vfSendAction(button.request, handleStreamChunk);
@@ -130,6 +130,8 @@ export function useChatSession() {
   };
 
   const handleStreamChunk = (chunk: string) => {
+    console.log('Raw chunk received:', chunk);
+    
     const lines = chunk.split('\n');
     
     for (const line of lines) {
@@ -139,24 +141,30 @@ export function useChatSession() {
 
         try {
           const trace = JSON.parse(jsonStr);
-          console.log('Received trace:', trace.type);
+          console.log('Received trace:', trace.type, trace);
 
           // Handle completion events (streaming)
           if (trace.type === 'completion') {
+            // Start of a streaming message
             if (trace.payload.state === 'start') {
               console.log('Completion start');
               setIsTyping(true);
+              setMessageInProgress(true);
               // Create an empty message at the start of streaming
               const newMsgId = addAgentMessage('', true);
-              setStreamingMessageId(newMsgId);
+              streamingMessageIdRef.current = newMsgId;
+              console.log('Created streaming message with ID:', newMsgId);
             } 
+            // Content chunks of a streaming message
             else if (trace.payload.state === 'content') {
+              const currentStreamingId = streamingMessageIdRef.current;
+              
               // Update the existing streaming message with the new content
-              if (streamingMessageId) {
+              if (currentStreamingId) {
                 console.log('Streaming content update:', trace.payload.content);
                 setMessages(prev => {
                   const newMessages = [...prev];
-                  const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
+                  const streamingMsgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
                   
                   if (streamingMsgIndex !== -1) {
                     // Append new content to existing content
@@ -165,31 +173,42 @@ export function useChatSession() {
                       content: newMessages[streamingMsgIndex].content + trace.payload.content,
                       isPartial: true
                     };
+                  } else {
+                    console.warn('Could not find streaming message with ID:', currentStreamingId);
                   }
                   return newMessages;
                 });
               } else {
                 console.warn('Received content but no streaming message ID is set');
+                // If we somehow lost our streaming message ID, create a new one
+                const newMsgId = addAgentMessage(trace.payload.content, true);
+                streamingMessageIdRef.current = newMsgId;
               }
             }
+            // End of a streaming message
             else if (trace.payload.state === 'end') {
               console.log('Completion end');
+              const currentStreamingId = streamingMessageIdRef.current;
+              
               // Mark streaming message as complete
-              if (streamingMessageId) {
+              if (currentStreamingId) {
                 setMessages(prev => {
                   const newMessages = [...prev];
-                  const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
+                  const streamingMsgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
                   
                   if (streamingMsgIndex !== -1) {
                     newMessages[streamingMsgIndex] = {
                       ...newMessages[streamingMsgIndex],
                       isPartial: false
                     };
+                  } else {
+                    console.warn('Could not find streaming message with ID:', currentStreamingId);
                   }
                   return newMessages;
                 });
                 
-                setStreamingMessageId(null);
+                // Keep the message ID around until we get an end event
+                console.log('Finished streaming message with ID:', currentStreamingId);
               }
               
               setIsTyping(false);
@@ -199,7 +218,7 @@ export function useChatSession() {
 
           // Handle regular text messages (non-streaming)
           else if (trace.type === 'text') {
-            console.log('Text message received');
+            console.log('Text message received:', trace.payload.message);
             addAgentMessage(trace.payload.message, false);
             
             setIsTyping(false);
@@ -208,7 +227,7 @@ export function useChatSession() {
 
           // Handle choices (buttons)
           else if (trace.type === 'choice') {
-            console.log('Choice received', trace.payload.buttons);
+            console.log('Choice received:', trace.payload.buttons);
             setButtons(trace.payload.buttons);
             setIsButtonsLoading(false);
             
@@ -220,15 +239,13 @@ export function useChatSession() {
           // Handle end of interaction
           else if (trace.type === 'end') {
             console.log('End of interaction');
-            setIsTyping(false);
-            setIsButtonsLoading(false);
-            setMessageInProgress(false);
+            const currentStreamingId = streamingMessageIdRef.current;
             
             // Make sure to mark any streaming message as complete when the interaction ends
-            if (streamingMessageId) {
+            if (currentStreamingId) {
               setMessages(prev => {
                 const newMessages = [...prev];
-                const streamingMsgIndex = newMessages.findIndex(msg => msg.id === streamingMessageId);
+                const streamingMsgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
                 
                 if (streamingMsgIndex !== -1) {
                   newMessages[streamingMsgIndex] = {
@@ -238,12 +255,18 @@ export function useChatSession() {
                 }
                 return newMessages;
               });
-              setStreamingMessageId(null);
+              
+              // Clear the streaming message ID reference
+              streamingMessageIdRef.current = null;
             }
+            
+            setIsTyping(false);
+            setIsButtonsLoading(false);
+            setMessageInProgress(false);
           }
 
         } catch (err) {
-          console.warn('Error parsing SSE line:', err);
+          console.warn('Error parsing SSE line:', err, jsonStr);
         }
       }
     }
