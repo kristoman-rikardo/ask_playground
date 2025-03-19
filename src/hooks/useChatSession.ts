@@ -131,17 +131,19 @@ export function useChatSession() {
             if (trace.payload.state === 'start') {
               console.log('Completion start');
               setIsTyping(true);
+              // Create a new empty message that will be updated as content arrives
               addAgentMessage('', true);
             } 
             else if (trace.payload.state === 'content') {
-              console.log('Completion content');
-              // Find the last message if it's partial
+              console.log('Completion content:', trace.payload.content);
+              // Find the last message if it's partial and add the new content
               const lastMessage = messages[messages.length - 1];
               const content = lastMessage?.isPartial ? lastMessage.content + trace.payload.content : trace.payload.content;
               addAgentMessage(content, true);
             }
             else if (trace.payload.state === 'end') {
               console.log('Completion end');
+              // Mark the message as no longer partial
               setMessages(prev => {
                 if (prev.length > 0 && prev[prev.length - 1].isPartial) {
                   const newMessages = [...prev];
@@ -161,7 +163,6 @@ export function useChatSession() {
 
           else if (trace.type === 'text') {
             console.log('Text message received');
-            const messageId = Date.now().toString();
             addAgentMessage(trace.payload.message, false);
             
             setIsTyping(false);
