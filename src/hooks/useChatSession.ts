@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
 
@@ -19,6 +20,7 @@ export function useChatSession() {
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
   const [messageInProgress, setMessageInProgress] = useState(false);
+  // Use a ref to track the currently streaming message ID
   const streamingMessageIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -147,30 +149,33 @@ export function useChatSession() {
           if (trace.type === 'completion') {
             // Start of a streaming message
             if (trace.payload.state === 'start') {
-              console.log('Completion start');
+              console.log('Completion start event received');
               setIsTyping(true);
               setMessageInProgress(true);
               // Create an empty message at the start of streaming
               const newMsgId = addAgentMessage('', true);
               streamingMessageIdRef.current = newMsgId;
-              console.log('Created streaming message with ID:', newMsgId);
+              console.log('Created new streaming message with ID:', newMsgId);
             } 
             // Content chunks of a streaming message
             else if (trace.payload.state === 'content') {
               const currentStreamingId = streamingMessageIdRef.current;
+              const contentChunk = trace.payload.content || '';
+              
+              console.log('Content chunk received:', contentChunk);
               
               // Update the existing streaming message with the new content
               if (currentStreamingId) {
-                console.log('Streaming content update:', trace.payload.content);
                 setMessages(prev => {
                   const newMessages = [...prev];
-                  const streamingMsgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
+                  const msgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
                   
-                  if (streamingMsgIndex !== -1) {
+                  if (msgIndex !== -1) {
                     // Append new content to existing content
-                    newMessages[streamingMsgIndex] = {
-                      ...newMessages[streamingMsgIndex],
-                      content: newMessages[streamingMsgIndex].content + trace.payload.content,
+                    const updatedContent = newMessages[msgIndex].content + contentChunk;
+                    newMessages[msgIndex] = {
+                      ...newMessages[msgIndex],
+                      content: updatedContent,
                       isPartial: true
                     };
                   } else {
@@ -181,34 +186,31 @@ export function useChatSession() {
               } else {
                 console.warn('Received content but no streaming message ID is set');
                 // If we somehow lost our streaming message ID, create a new one
-                const newMsgId = addAgentMessage(trace.payload.content, true);
+                const newMsgId = addAgentMessage(contentChunk, true);
                 streamingMessageIdRef.current = newMsgId;
               }
             }
             // End of a streaming message
             else if (trace.payload.state === 'end') {
-              console.log('Completion end');
+              console.log('Completion end event received');
               const currentStreamingId = streamingMessageIdRef.current;
               
               // Mark streaming message as complete
               if (currentStreamingId) {
                 setMessages(prev => {
                   const newMessages = [...prev];
-                  const streamingMsgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
+                  const msgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
                   
-                  if (streamingMsgIndex !== -1) {
-                    newMessages[streamingMsgIndex] = {
-                      ...newMessages[streamingMsgIndex],
+                  if (msgIndex !== -1) {
+                    newMessages[msgIndex] = {
+                      ...newMessages[msgIndex],
                       isPartial: false
                     };
-                  } else {
-                    console.warn('Could not find streaming message with ID:', currentStreamingId);
                   }
                   return newMessages;
                 });
                 
-                // Keep the message ID around until we get an end event
-                console.log('Finished streaming message with ID:', currentStreamingId);
+                console.log('Completed streaming message with ID:', currentStreamingId);
               }
               
               setIsTyping(false);
@@ -227,7 +229,7 @@ export function useChatSession() {
 
           // Handle choices (buttons)
           else if (trace.type === 'choice') {
-            console.log('Choice received:', trace.payload.buttons);
+            console.log('Choice buttons received:', trace.payload.buttons);
             setButtons(trace.payload.buttons);
             setIsButtonsLoading(false);
             
@@ -238,18 +240,18 @@ export function useChatSession() {
 
           // Handle end of interaction
           else if (trace.type === 'end') {
-            console.log('End of interaction');
+            console.log('End of interaction event received');
             const currentStreamingId = streamingMessageIdRef.current;
             
             // Make sure to mark any streaming message as complete when the interaction ends
             if (currentStreamingId) {
               setMessages(prev => {
                 const newMessages = [...prev];
-                const streamingMsgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
+                const msgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
                 
-                if (streamingMsgIndex !== -1) {
-                  newMessages[streamingMsgIndex] = {
-                    ...newMessages[streamingMsgIndex],
+                if (msgIndex !== -1) {
+                  newMessages[msgIndex] = {
+                    ...newMessages[msgIndex],
                     isPartial: false
                   };
                 }

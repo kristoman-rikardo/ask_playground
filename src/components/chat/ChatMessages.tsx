@@ -103,7 +103,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     >
       {messages.map((message, index) => (
         <div 
-          key={message.id} 
+          key={`message-${message.id}`} 
           id={`message-${message.id}`} 
           ref={index === messages.length - 1 ? lastMessageRef : null} 
           className={`relative ${
@@ -116,11 +116,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
               message.type === 'user' 
                 ? 'chat-message-user ml-auto bg-gray-200' 
-                : `chat-message-agent mr-auto shadow-sm bg-[#FBFBFB] ${message.isPartial ? 'animate-pulse' : ''}`
+                : `chat-message-agent mr-auto shadow-sm bg-[#FBFBFB] ${message.isPartial ? 'border-l-4 border-gray-300 animate-pulse' : ''}`
             }`}
             style={{ 
               transition: 'all 0.3s ease-out',
-              minHeight: message.content ? 'auto' : '0' 
             }}
           >
             <div 

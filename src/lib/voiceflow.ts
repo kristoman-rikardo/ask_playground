@@ -1,4 +1,3 @@
-
 // Voiceflow API integration
 
 // Correct Voiceflow credentials
@@ -57,16 +56,14 @@ export async function vfInteractStream(
       buffer += decoder.decode(value, { stream: true });
       
       // Process any complete SSE messages in the buffer
-      if (buffer.includes('\n\n')) {
-        const parts = buffer.split('\n\n');
-        // The last part might be incomplete, so we keep it in the buffer
-        buffer = parts.pop() || '';
-        
-        // Process each complete SSE message
-        for (const part of parts) {
-          if (part.trim()) {
-            onSseTrace(part + '\n\n');
-          }
+      const lines = buffer.split('\n\n');
+      // The last part might be incomplete, so keep it in the buffer
+      buffer = lines.pop() || '';
+      
+      // Process each complete SSE message
+      for (const part of lines) {
+        if (part.trim()) {
+          onSseTrace(part + '\n\n');
         }
       }
     }
