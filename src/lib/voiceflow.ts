@@ -30,6 +30,7 @@ export async function vfInteractStream(
   const payload = { action: userAction };
 
   try {
+    console.log('Sending request to Voiceflow:', payload);
     const response = await fetch(streamUrl, {
       method: 'POST',
       headers: {
@@ -55,7 +56,6 @@ export async function vfInteractStream(
       buffer += decoder.decode(value, { stream: true });
       
       // Process any complete SSE messages in the buffer
-      // SSE format: "id: <id>\nevent: <event>\ndata: <data>\n\n"
       const messages = buffer.split('\n\n');
       buffer = messages.pop() || ''; // Keep the last potentially incomplete message
       
@@ -68,27 +68,13 @@ export async function vfInteractStream(
             
             if (eventMatch && eventMatch[1] === 'trace' && dataMatch && dataMatch[1]) {
               const data = JSON.parse(dataMatch[1].trim());
+              console.log('Received trace event:', data);
               onSseTrace(data);
             }
           } catch (err) {
             console.error('Error parsing SSE message:', err, message);
           }
         }
-      }
-    }
-
-    // Process any remaining data in the buffer
-    if (buffer.trim()) {
-      try {
-        const eventMatch = buffer.match(/^event: ([^\n]*)/m);
-        const dataMatch = buffer.match(/^data: (.*)$/m);
-        
-        if (eventMatch && eventMatch[1] === 'trace' && dataMatch && dataMatch[1]) {
-          const data = JSON.parse(dataMatch[1].trim());
-          onSseTrace(data);
-        }
-      } catch (err) {
-        console.error('Error parsing remaining SSE buffer:', err, buffer);
       }
     }
 

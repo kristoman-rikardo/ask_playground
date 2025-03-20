@@ -79,33 +79,39 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       ref={chatBoxRef} 
       className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]"
     >
-      {messages.map((message, index) => (
-        <div 
-          key={message.id} 
-          id={`message-${message.id}`} 
-          ref={index === messages.length - 1 ? lastMessageRef : null} 
-          className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
-            message.type === 'user' 
-              ? 'chat-message-user ml-auto bg-gray-200' 
-              : 'chat-message-agent mr-auto shadow-sm bg-[#F6F6F7]'
-          } ${message.isPartial ? 'border-l-4 border-blue-400' : ''}`}
-        >
-          {message.content ? (
-            <div 
-              dangerouslySetInnerHTML={{
-                __html: parseMarkdown(message.content)
-              }} 
-              className={message.isPartial ? 'animate-pulse' : ''}
-            />
-          ) : (
-            <div className="h-5 w-20 bg-gray-200 rounded animate-pulse"></div>
-          )}
-          
-          {message.type === 'agent' && !message.isPartial && message.content && (
-            <MessageFeedback messageId={message.id} />
-          )}
+      {messages.length > 0 ? (
+        messages.map((message, index) => (
+          <div 
+            key={message.id} 
+            id={`message-${message.id}`} 
+            ref={index === messages.length - 1 ? lastMessageRef : null} 
+            className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
+              message.type === 'user' 
+                ? 'chat-message-user ml-auto bg-gray-200' 
+                : 'chat-message-agent mr-auto shadow-sm bg-[#F6F6F7]'
+            } ${message.isPartial ? 'border-l-4 border-blue-400' : ''}`}
+          >
+            {message.content ? (
+              <div 
+                dangerouslySetInnerHTML={{
+                  __html: parseMarkdown(message.content)
+                }} 
+                className={message.isPartial ? 'animate-pulse' : ''}
+              />
+            ) : (
+              <div className="h-5 w-20 bg-gray-200 rounded animate-pulse"></div>
+            )}
+            
+            {message.type === 'agent' && !message.isPartial && message.content && (
+              <MessageFeedback messageId={message.id} />
+            )}
+          </div>
+        ))
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-gray-500">No messages yet. Start a conversation!</p>
         </div>
-      ))}
+      )}
       
       {isTyping && <TypingIndicator />}
       
