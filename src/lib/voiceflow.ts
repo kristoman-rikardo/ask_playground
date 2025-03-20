@@ -1,8 +1,8 @@
 // Voiceflow API integration
 
 // Correct Voiceflow credentials
-const VF_KEY = "VF.DM.67d466872e0fa2e87529d165.jvSM4GSGdSCXVn2z";
-const VF_PROJECT_ID = "67d1ad605c5916e15e7ceb94";
+const VF_KEY = "VF.DM.67c57e75bd87daaf0917d8fc.2hw3bJ5KRILKyZbf";
+const VF_PROJECT_ID = "67bee8ec99721b58fcb5ea3e";
 
 // Create a random userID for session
 export const userID = `${Math.floor(Math.random() * 1000000000000000)}`;
@@ -22,13 +22,11 @@ export async function vfInteractStream(
   userAction: any, 
   onSseTrace: (chunk: string) => void
 ): Promise<any[]> {
-  // IMPORTANT: completion_events=true must be in the URL
   const streamUrl =
     `https://general-runtime.voiceflow.com/v2/project/${VF_PROJECT_ID}/user/${user}/interact/stream` +
     `?environment=development&completion_events=true&state=false`;
 
   const payload = { action: userAction, completion_events: true };
-  console.log('Sending payload to Voiceflow:', JSON.stringify(payload));
 
   try {
     const response = await fetch(streamUrl, {
@@ -56,14 +54,16 @@ export async function vfInteractStream(
       buffer += decoder.decode(value, { stream: true });
       
       // Process any complete SSE messages in the buffer
-      const lines = buffer.split('\n\n');
-      // The last part might be incomplete, so keep it in the buffer
-      buffer = lines.pop() || '';
-      
-      // Process each complete SSE message
-      for (const part of lines) {
-        if (part.trim()) {
-          onSseTrace(part + '\n\n');
+      if (buffer.includes('\n\n')) {
+        const parts = buffer.split('\n\n');
+        // The last part might be incomplete, so we keep it in the buffer
+        buffer = parts.pop() || '';
+        
+        // Process each complete SSE message
+        for (const part of parts) {
+          if (part.trim()) {
+            onSseTrace(part + '\n\n');
+          }
         }
       }
     }

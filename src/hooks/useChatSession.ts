@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
 
 export interface Message {
@@ -19,9 +19,6 @@ export function useChatSession() {
   const [isTyping, setIsTyping] = useState(false);
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
-  const [messageInProgress, setMessageInProgress] = useState(false);
-  // Use a ref to track the currently streaming message ID
-  const streamingMessageIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     startChatSession();
@@ -34,7 +31,7 @@ export function useChatSession() {
       await vfSendLaunch({ pageSlug: 'faq-page', productName: 'faq' }, handleStreamChunk);
     } catch (error) {
       console.error('Error starting chat session:', error);
-      addAgentMessage('Beklager, jeg møtte en feil ved start av samtalen. Vennligst last siden på nytt.');
+      addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
     } finally {
       setIsTyping(false);
       setIsButtonsLoading(false);
@@ -50,37 +47,23 @@ export function useChatSession() {
   };
 
   const addAgentMessage = (text: string, isPartial = false) => {
-    const newMessageId = Date.now().toString();
-    
-    if (isPartial) {
-      streamingMessageIdRef.current = newMessageId;
-      console.log('Creating new streaming message with ID:', newMessageId);
-    }
-    
-    setMessages(prev => [...prev, {
-      id: newMessageId,
-      type: 'agent',
-      content: text,
-      isPartial
-    }]);
-    
-    return newMessageId;
-  };
-
-  const updateAgentMessage = (messageId: string, content: string, isPartial = true) => {
-    setMessages(prev => {
-      const newMessages = [...prev];
-      const msgIndex = newMessages.findIndex(msg => msg.id === messageId);
-      
-      if (msgIndex !== -1) {
-        newMessages[msgIndex] = {
-          ...newMessages[msgIndex],
-          content,
-          isPartial
+    if (isPartial && messages.length > 0 && messages[messages.length - 1].isPartial) {
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = {
+          ...newMessages[newMessages.length - 1],
+          content: text
         };
-      }
-      return newMessages;
-    });
+        return newMessages;
+      });
+    } else {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        type: 'agent',
+        content: text,
+        isPartial
+      }]);
+    }
   };
 
   const sendUserMessage = async (userMessage: string) => {
@@ -89,22 +72,15 @@ export function useChatSession() {
     addUserMessage(userMessage);
     setButtons([]);
     setIsTyping(true);
-    setIsButtonsLoading(false);
-    setMessageInProgress(true);
-    streamingMessageIdRef.current = null; // Reset streaming ID for new conversation
+    setIsButtonsLoading(true);
 
     try {
       await vfSendMessage(userMessage, handleStreamChunk);
     } catch (error) {
       console.error('Error sending message:', error);
-      addAgentMessage('Beklager, jeg møtte en feil. Vennligst prøv igjen.');
+      addAgentMessage('Sorry, I encountered an error processing your message. Please try again.');
     } finally {
       setIsTyping(false);
-      setMessageInProgress(false);
-      
-      if (buttons.length === 0) {
-        setIsButtonsLoading(true);
-      }
     }
   };
 
@@ -112,28 +88,19 @@ export function useChatSession() {
     addUserMessage(button.name);
     setButtons([]);
     setIsTyping(true);
-    setIsButtonsLoading(false);
-    setMessageInProgress(true);
-    streamingMessageIdRef.current = null;
+    setIsButtonsLoading(true);
 
     try {
       await vfSendAction(button.request, handleStreamChunk);
     } catch (error) {
       console.error('Error processing button action:', error);
-      addAgentMessage('Beklager, jeg møtte en feil. Vennligst prøv igjen.');
+      addAgentMessage('Sorry, I encountered an error processing your selection. Please try again.');
     } finally {
       setIsTyping(false);
-      setMessageInProgress(false);
-      
-      if (buttons.length === 0) {
-        setIsButtonsLoading(true);
-      }
     }
   };
 
   const handleStreamChunk = (chunk: string) => {
-    console.log('Raw chunk received:', chunk);
-    
     const lines = chunk.split('\n');
     
     for (const line of lines) {
@@ -143,132 +110,65 @@ export function useChatSession() {
 
         try {
           const trace = JSON.parse(jsonStr);
-          console.log('Received trace:', trace.type, trace);
 
-          // Handle completion events (streaming)
           if (trace.type === 'completion') {
-            // Start of a streaming message
             if (trace.payload.state === 'start') {
-              console.log('Completion start event received');
-              setIsTyping(true);
-              setMessageInProgress(true);
-              // Create an empty message at the start of streaming
-              const newMsgId = addAgentMessage('', true);
-              streamingMessageIdRef.current = newMsgId;
-              console.log('Created new streaming message with ID:', newMsgId);
+              addAgentMessage('', true);
             } 
-            // Content chunks of a streaming message
             else if (trace.payload.state === 'content') {
-              const currentStreamingId = streamingMessageIdRef.current;
-              const contentChunk = trace.payload.content || '';
-              
-              console.log('Content chunk received:', contentChunk);
-              
-              // Update the existing streaming message with the new content
-              if (currentStreamingId) {
-                setMessages(prev => {
-                  const newMessages = [...prev];
-                  const msgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
-                  
-                  if (msgIndex !== -1) {
-                    // Append new content to existing content
-                    const updatedContent = newMessages[msgIndex].content + contentChunk;
-                    newMessages[msgIndex] = {
-                      ...newMessages[msgIndex],
-                      content: updatedContent,
-                      isPartial: true
-                    };
-                  } else {
-                    console.warn('Could not find streaming message with ID:', currentStreamingId);
-                  }
-                  return newMessages;
-                });
-              } else {
-                console.warn('Received content but no streaming message ID is set');
-                // If we somehow lost our streaming message ID, create a new one
-                const newMsgId = addAgentMessage(contentChunk, true);
-                streamingMessageIdRef.current = newMsgId;
+              const lastMessage = messages[messages.length - 1];
+              if (lastMessage && lastMessage.isPartial) {
+                addAgentMessage(lastMessage.content + trace.payload.content, true);
               }
             }
-            // End of a streaming message
             else if (trace.payload.state === 'end') {
-              console.log('Completion end event received');
-              const currentStreamingId = streamingMessageIdRef.current;
-              
-              // Mark streaming message as complete
-              if (currentStreamingId) {
+              if (messages.length > 0) {
                 setMessages(prev => {
                   const newMessages = [...prev];
-                  const msgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
-                  
-                  if (msgIndex !== -1) {
-                    newMessages[msgIndex] = {
-                      ...newMessages[msgIndex],
-                      isPartial: false
-                    };
+                  if (newMessages[newMessages.length - 1].isPartial) {
+                    newMessages[newMessages.length - 1].isPartial = false;
                   }
                   return newMessages;
                 });
-                
-                console.log('Completed streaming message with ID:', currentStreamingId);
               }
-              
               setIsTyping(false);
-              setMessageInProgress(false);
             }
           }
 
-          // Handle regular text messages (non-streaming)
           else if (trace.type === 'text') {
-            console.log('Text message received:', trace.payload.message);
-            addAgentMessage(trace.payload.message, false);
-            
-            setIsTyping(false);
-            setMessageInProgress(false);
+            const messageId = Date.now().toString();
+            setMessages(prev => [...prev, {
+              id: messageId,
+              type: 'agent',
+              content: '',
+              isPartial: true
+            }]);
+
+            setTimeout(() => {
+              const messageEl = document.getElementById(`message-${messageId}`);
+              if (messageEl) {
+                fakeStreamMessage(trace.payload.message, messageEl)
+                  .then(() => {
+                    setMessages(prev => prev.map(msg => 
+                      msg.id === messageId ? {...msg, isPartial: false} : msg
+                    ));
+                  });
+              }
+            }, 100);
           }
 
-          // Handle choices (buttons)
           else if (trace.type === 'choice') {
-            console.log('Choice buttons received:', trace.payload.buttons);
             setButtons(trace.payload.buttons);
             setIsButtonsLoading(false);
-            
-            if (!messageInProgress) {
-              setIsTyping(false);
-            }
           }
 
-          // Handle end of interaction
           else if (trace.type === 'end') {
-            console.log('End of interaction event received');
-            const currentStreamingId = streamingMessageIdRef.current;
-            
-            // Make sure to mark any streaming message as complete when the interaction ends
-            if (currentStreamingId) {
-              setMessages(prev => {
-                const newMessages = [...prev];
-                const msgIndex = newMessages.findIndex(msg => msg.id === currentStreamingId);
-                
-                if (msgIndex !== -1) {
-                  newMessages[msgIndex] = {
-                    ...newMessages[msgIndex],
-                    isPartial: false
-                  };
-                }
-                return newMessages;
-              });
-              
-              // Clear the streaming message ID reference
-              streamingMessageIdRef.current = null;
-            }
-            
             setIsTyping(false);
             setIsButtonsLoading(false);
-            setMessageInProgress(false);
           }
 
         } catch (err) {
-          console.warn('Error parsing SSE line:', err, jsonStr);
+          console.warn('Error parsing SSE line:', err);
         }
       }
     }
@@ -283,3 +183,7 @@ export function useChatSession() {
     handleButtonClick
   };
 }
+
+// Helper function to stream messages with animation
+// This is imported from the voiceflow library but used here
+import { parseMarkdown, fakeStreamMessage } from '@/lib/voiceflow';
