@@ -62,7 +62,16 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
+  // Log what we're rendering
+  console.log('Rendering ChatMessages:', { 
+    messageCount: messages.length, 
+    isTyping,
+    messages: messages.map(m => ({ id: m.id, type: m.type, contentLength: m.content?.length || 0, isPartial: m.isPartial }))
+  });
+
+  // Auto-scroll when messages change or typing state changes
   useEffect(() => {
+    console.log('Messages or typing state changed, scrolling to bottom');
     scrollToBottom();
   }, [messages, isTyping]);
 
@@ -74,8 +83,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   };
 
-  console.log('Rendering ChatMessages:', { messageCount: messages.length, isTyping });
-
   return (
     <div 
       ref={chatBoxRef} 
@@ -83,7 +90,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     >
       {messages.length > 0 ? (
         messages.map((message, index) => {
-          console.log('Rendering message:', message);
+          console.log(`Rendering message ${index}:`, message);
           return (
             <div 
               key={message.id} 
@@ -103,7 +110,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   className={message.isPartial ? 'animate-pulse' : ''}
                 />
               ) : (
-                <div className="h-5 w-20 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-5 w-20 bg-gray-200 rounded animate-pulse">
+                  {/* Empty content placeholder */}
+                </div>
               )}
               
               {message.type === 'agent' && !message.isPartial && message.content && (
@@ -114,7 +123,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         })
       ) : (
         <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">No messages yet. Start a conversation!</p>
+          <p className="text-gray-500">Starting conversation...</p>
         </div>
       )}
       

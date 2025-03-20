@@ -26,6 +26,7 @@ export function useChatSession() {
   }, []);
 
   const startChatSession = async () => {
+    console.log('Starting chat session...');
     setIsTyping(true);
     setIsButtonsLoading(true);
     try {
@@ -40,11 +41,13 @@ export function useChatSession() {
   };
 
   const addUserMessage = (text: string) => {
-    setMessages(prev => [...prev, {
+    const message = {
       id: Date.now().toString(),
       type: 'user',
       content: text
-    }]);
+    };
+    console.log('Adding user message:', message);
+    setMessages(prev => [...prev, message]);
   };
 
   const addAgentMessage = (text: string, isPartial = false, existingId?: string) => {
@@ -52,12 +55,14 @@ export function useChatSession() {
     
     if (isPartial && partialMessageIdRef.current === messageId) {
       // Update existing partial message
+      console.log('Updating partial message:', messageId, text);
       setMessages(prev => prev.map(msg => 
         msg.id === messageId ? { ...msg, content: text, isPartial: true } : msg
       ));
     } 
     else if (isPartial) {
       // Create new partial message
+      console.log('Creating new partial message:', messageId, text);
       partialMessageIdRef.current = messageId;
       setMessages(prev => [...prev, {
         id: messageId,
@@ -70,12 +75,14 @@ export function useChatSession() {
       // Create or finalize a complete message
       if (partialMessageIdRef.current === messageId) {
         // Finalize existing partial message
+        console.log('Finalizing partial message:', messageId, text);
         setMessages(prev => prev.map(msg => 
           msg.id === messageId ? { ...msg, content: text, isPartial: false } : msg
         ));
         partialMessageIdRef.current = null;
       } else {
         // Create new complete message
+        console.log('Creating new complete message:', messageId, text);
         setMessages(prev => [...prev, {
           id: messageId,
           type: 'agent',
@@ -89,6 +96,7 @@ export function useChatSession() {
   const sendUserMessage = async (userMessage: string) => {
     if (!userMessage.trim()) return;
 
+    console.log('Sending user message:', userMessage);
     addUserMessage(userMessage);
     setButtons([]);
     setIsTyping(true);
@@ -105,6 +113,7 @@ export function useChatSession() {
   };
 
   const handleButtonClick = async (button: Button) => {
+    console.log('Button clicked:', button.name);
     addUserMessage(button.name);
     setButtons([]);
     setIsTyping(true);
@@ -125,25 +134,26 @@ export function useChatSession() {
     
     switch (trace.type) {
       case 'speak':
-      case 'text':
+      case 'text': {
         if (trace.payload && trace.payload.message) {
           console.log('Text/Speak message received:', trace.payload.message);
           addAgentMessage(trace.payload.message);
-          setIsTyping(false);
         }
         break;
+      }
       
       case 'completion':
         handleCompletionEvent(trace.payload);
         break;
       
-      case 'choice':
+      case 'choice': {
         if (trace.payload && trace.payload.buttons) {
           console.log('Choices received:', trace.payload.buttons);
           setButtons(trace.payload.buttons || []);
           setIsButtonsLoading(false);
         }
         break;
+      }
       
       case 'end':
         console.log('Session ended');
@@ -157,7 +167,10 @@ export function useChatSession() {
   };
 
   const handleCompletionEvent = (payload: any) => {
-    if (!payload) return;
+    if (!payload) {
+      console.warn('Empty completion payload received');
+      return;
+    }
     
     const { state, content } = payload;
     console.log('Completion event:', state, content);
@@ -167,11 +180,14 @@ export function useChatSession() {
       // Generate a stable ID for this completion message
       const msgId = `completion-${Date.now()}`;
       partialMessageIdRef.current = msgId;
+      
+      // Start with empty content
       addAgentMessage('', true, msgId);
       setIsTyping(true);
     } 
     else if (state === 'content' && partialMessageIdRef.current) {
       console.log('Completion content received:', content);
+      
       // Find the current message and append the new content to it
       setMessages(prev => {
         const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
@@ -188,6 +204,7 @@ export function useChatSession() {
     }
     else if (state === 'end') {
       console.log('Completion ended');
+      
       // Finalize the message if we have one in progress
       if (partialMessageIdRef.current) {
         setMessages(prev => {

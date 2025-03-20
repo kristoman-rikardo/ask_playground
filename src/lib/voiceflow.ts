@@ -56,23 +56,32 @@ export async function vfInteractStream(
       buffer += decoder.decode(value, { stream: true });
       
       // Process any complete SSE messages in the buffer
-      const messages = buffer.split('\n\n');
+      let messages = buffer.split(/\n\n/);
       buffer = messages.pop() || ''; // Keep the last potentially incomplete message
       
       for (const message of messages) {
         if (message.trim()) {
-          try {
-            // Parse the SSE message
-            const eventMatch = message.match(/^event: ([^\n]*)/m);
-            const dataMatch = message.match(/^data: (.*)$/m);
-            
-            if (eventMatch && eventMatch[1] === 'trace' && dataMatch && dataMatch[1]) {
-              const data = JSON.parse(dataMatch[1].trim());
-              console.log('Received trace event:', data);
-              onSseTrace(data);
+          // Parse the SSE message
+          const lines = message.split('\n');
+          let eventType = '';
+          let data = '';
+          
+          for (const line of lines) {
+            if (line.startsWith('event:')) {
+              eventType = line.substring('event:'.length).trim();
+            } else if (line.startsWith('data:')) {
+              data = line.substring('data:'.length).trim();
             }
-          } catch (err) {
-            console.error('Error parsing SSE message:', err, message);
+          }
+          
+          if (eventType === 'trace' && data) {
+            try {
+              const traceData = JSON.parse(data);
+              console.log('Processed trace event:', traceData.type, traceData);
+              onSseTrace(traceData);
+            } catch (err) {
+              console.error('Error parsing trace data:', err, data);
+            }
           }
         }
       }
