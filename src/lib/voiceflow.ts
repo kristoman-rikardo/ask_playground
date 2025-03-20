@@ -109,6 +109,8 @@ export function vfSendAction(actionRequest: any, onChunk: (chunk: string) => voi
  * Parse Voiceflow response for markdown formatting
  */
 export function parseMarkdown(text: string): string {
+  if (!text) return '';
+  
   return text
     .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
     .replace(/\*(.*?)\*/g, '<i>$1</i>')

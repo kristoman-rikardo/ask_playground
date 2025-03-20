@@ -166,12 +166,14 @@ export function useChatSession() {
     } 
     else if (state === 'content' && partialMessageIdRef.current) {
       console.log('Completion content received:', content);
+      // Find the current message and append the new content to it
       setMessages(prev => {
         const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
         if (currentMsg) {
+          const updatedContent = currentMsg.content + (content || '');
           return prev.map(msg => 
             msg.id === partialMessageIdRef.current 
-              ? { ...msg, content: msg.content + content, isPartial: true } 
+              ? { ...msg, content: updatedContent, isPartial: true } 
               : msg
           );
         }

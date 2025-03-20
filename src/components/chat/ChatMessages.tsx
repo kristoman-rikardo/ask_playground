@@ -96,7 +96,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             }} 
             className={message.isPartial ? 'animate-pulse' : ''}
           />
-          {message.type === 'agent' && !message.isPartial && (
+          {message.type === 'agent' && !message.isPartial && message.content && (
             <MessageFeedback messageId={message.id} />
           )}
         </div>
