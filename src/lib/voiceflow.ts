@@ -21,7 +21,7 @@ export function delay(ms: number): Promise<void> {
 export async function vfInteractStream(
   user: string, 
   userAction: any, 
-  onSseTrace: (chunk: string) => void
+  onSseTrace: (trace: any) => void
 ): Promise<any[]> {
   const streamUrl =
     `https://general-runtime.voiceflow.com/v2/project/${VF_PROJECT_ID}/user/${user}/interact/stream` +
@@ -61,14 +61,35 @@ export async function vfInteractStream(
       
       for (const message of messages) {
         if (message.trim()) {
-          onSseTrace(message + '\n\n');
+          try {
+            // Parse the SSE message
+            const eventMatch = message.match(/^event: ([^\n]*)/m);
+            const dataMatch = message.match(/^data: (.*)$/m);
+            
+            if (eventMatch && eventMatch[1] === 'trace' && dataMatch && dataMatch[1]) {
+              const data = JSON.parse(dataMatch[1].trim());
+              onSseTrace(data);
+            }
+          } catch (err) {
+            console.error('Error parsing SSE message:', err, message);
+          }
         }
       }
     }
 
     // Process any remaining data in the buffer
     if (buffer.trim()) {
-      onSseTrace(buffer);
+      try {
+        const eventMatch = buffer.match(/^event: ([^\n]*)/m);
+        const dataMatch = buffer.match(/^data: (.*)$/m);
+        
+        if (eventMatch && eventMatch[1] === 'trace' && dataMatch && dataMatch[1]) {
+          const data = JSON.parse(dataMatch[1].trim());
+          onSseTrace(data);
+        }
+      } catch (err) {
+        console.error('Error parsing remaining SSE buffer:', err, buffer);
+      }
     }
 
     return [];
@@ -87,22 +108,22 @@ export async function vfInteractStream(
 /**
  * Voiceflow: Launch a new session
  */
-export function vfSendLaunch(payload: any, onChunk: (chunk: string) => void): Promise<any[]> {
-  return vfInteractStream(userID, { type: 'launch', payload }, onChunk);
+export function vfSendLaunch(payload: any, onTrace: (trace: any) => void): Promise<any[]> {
+  return vfInteractStream(userID, { type: 'launch', payload }, onTrace);
 }
 
 /**
  * Voiceflow: Send text
  */
-export function vfSendMessage(message: string, onChunk: (chunk: string) => void): Promise<any[]> {
-  return vfInteractStream(userID, { type: 'text', payload: message }, onChunk);
+export function vfSendMessage(message: string, onTrace: (trace: any) => void): Promise<any[]> {
+  return vfInteractStream(userID, { type: 'text', payload: message }, onTrace);
 }
 
 /**
  * Voiceflow: Send an action (button press, etc.)
  */
-export function vfSendAction(actionRequest: any, onChunk: (chunk: string) => void): Promise<any[]> {
-  return vfInteractStream(userID, actionRequest, onChunk);
+export function vfSendAction(actionRequest: any, onTrace: (trace: any) => void): Promise<any[]> {
+  return vfInteractStream(userID, actionRequest, onTrace);
 }
 
 /**

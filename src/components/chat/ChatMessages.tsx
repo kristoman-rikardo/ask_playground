@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
 import { Message } from '@/hooks/useChatSession';
@@ -16,9 +16,9 @@ const MessageFeedback = ({
 }: {
   messageId: string;
 }) => {
-  const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
+  const [feedback, setFeedback] = React.useState<'positive' | 'negative' | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Check for existing feedback when component mounts
     const existingFeedback = JSON.parse(localStorage.getItem('messageFeedback') || '{}');
     if (existingFeedback[messageId]) {
@@ -90,12 +90,17 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               : 'chat-message-agent mr-auto shadow-sm bg-[#F6F6F7]'
           } ${message.isPartial ? 'border-l-4 border-blue-400' : ''}`}
         >
-          <div 
-            dangerouslySetInnerHTML={{
-              __html: parseMarkdown(message.content || '')
-            }} 
-            className={message.isPartial ? 'animate-pulse' : ''}
-          />
+          {message.content ? (
+            <div 
+              dangerouslySetInnerHTML={{
+                __html: parseMarkdown(message.content)
+              }} 
+              className={message.isPartial ? 'animate-pulse' : ''}
+            />
+          ) : (
+            <div className="h-5 w-20 bg-gray-200 rounded animate-pulse"></div>
+          )}
+          
           {message.type === 'agent' && !message.isPartial && message.content && (
             <MessageFeedback messageId={message.id} />
           )}

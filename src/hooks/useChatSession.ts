@@ -29,7 +29,7 @@ export function useChatSession() {
     setIsTyping(true);
     setIsButtonsLoading(true);
     try {
-      await vfSendLaunch({ pageSlug: 'faq-page', productName: 'faq' }, handleStreamChunk);
+      await vfSendLaunch({ pageSlug: 'faq-page', productName: 'faq' }, handleTraceEvent);
     } catch (error) {
       console.error('Error starting chat session:', error);
       addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
@@ -95,7 +95,7 @@ export function useChatSession() {
     setIsButtonsLoading(true);
 
     try {
-      await vfSendMessage(userMessage, handleStreamChunk);
+      await vfSendMessage(userMessage, handleTraceEvent);
     } catch (error) {
       console.error('Error sending message:', error);
       addAgentMessage('Sorry, I encountered an error processing your message. Please try again.');
@@ -111,7 +111,7 @@ export function useChatSession() {
     setIsButtonsLoading(true);
 
     try {
-      await vfSendAction(button.request, handleStreamChunk);
+      await vfSendAction(button.request, handleTraceEvent);
     } catch (error) {
       console.error('Error processing button action:', error);
       addAgentMessage('Sorry, I encountered an error processing your selection. Please try again.');
@@ -120,42 +120,39 @@ export function useChatSession() {
     }
   };
 
-  const handleStreamChunk = (chunk: string) => {
-    // Parse SSE message format
-    const eventMatch = chunk.match(/^event: ([^\n]*)/m);
-    const dataMatch = chunk.match(/^data: (.*)$/m);
+  const handleTraceEvent = (trace: any) => {
+    console.log('Received trace event:', trace);
     
-    if (dataMatch && dataMatch[1]) {
-      try {
-        const data = JSON.parse(dataMatch[1].trim());
-        console.log('Received trace:', data);
-        
-        if (data.type === 'completion') {
-          handleCompletionEvent(data);
-        }
-        else if (data.type === 'text') {
-          console.log('Text message received:', data.payload.message);
-          // For non-streaming messages, create a complete message
-          addAgentMessage(data.payload.message);
-        }
-        else if (data.type === 'choice') {
-          console.log('Choices received:', data.payload.buttons);
-          setButtons(data.payload.buttons);
-          setIsButtonsLoading(false);
-        }
-        else if (data.type === 'end') {
-          console.log('Session ended');
-          setIsTyping(false);
-          setIsButtonsLoading(false);
-        }
-      } catch (err) {
-        console.warn('Error parsing SSE line:', err, dataMatch[1]);
-      }
+    switch (trace.type) {
+      case 'speak':
+      case 'text':
+        console.log('Text/Speak message received:', trace.payload.message);
+        addAgentMessage(trace.payload.message || '');
+        break;
+      
+      case 'completion':
+        handleCompletionEvent(trace.payload);
+        break;
+      
+      case 'choice':
+        console.log('Choices received:', trace.payload.buttons);
+        setButtons(trace.payload.buttons || []);
+        setIsButtonsLoading(false);
+        break;
+      
+      case 'end':
+        console.log('Session ended');
+        setIsTyping(false);
+        setIsButtonsLoading(false);
+        break;
+      
+      default:
+        console.log('Unhandled trace type:', trace.type);
     }
   };
 
-  const handleCompletionEvent = (data: any) => {
-    const { state, content } = data.payload;
+  const handleCompletionEvent = (payload: any) => {
+    const { state, content } = payload;
     
     if (state === 'start') {
       console.log('Completion started');
@@ -170,7 +167,7 @@ export function useChatSession() {
       setMessages(prev => {
         const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
         if (currentMsg) {
-          const updatedContent = currentMsg.content + (content || '');
+          const updatedContent = (currentMsg.content || '') + (content || '');
           return prev.map(msg => 
             msg.id === partialMessageIdRef.current 
               ? { ...msg, content: updatedContent, isPartial: true } 
@@ -185,11 +182,15 @@ export function useChatSession() {
       // Finalize the message if we have one in progress
       if (partialMessageIdRef.current) {
         setMessages(prev => {
-          return prev.map(msg => 
-            msg.id === partialMessageIdRef.current 
-              ? { ...msg, isPartial: false } 
-              : msg
-          );
+          const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
+          if (currentMsg) {
+            return prev.map(msg => 
+              msg.id === partialMessageIdRef.current 
+                ? { ...msg, isPartial: false } 
+                : msg
+            );
+          }
+          return prev;
         });
         partialMessageIdRef.current = null;
       }
@@ -206,7 +207,3 @@ export function useChatSession() {
     handleButtonClick
   };
 }
-
-// Helper function to stream messages with animation
-// This is imported from the voiceflow library but used here
-import { parseMarkdown, fakeStreamMessage } from '@/lib/voiceflow';
