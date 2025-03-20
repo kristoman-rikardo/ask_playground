@@ -121,81 +121,77 @@ export function useChatSession() {
   };
 
   const handleStreamChunk = (chunk: string) => {
-    const lines = chunk.split('\n');
+    // Parse SSE message format
+    const eventMatch = chunk.match(/^event: ([^\n]*)/m);
+    const dataMatch = chunk.match(/^data: (.*)$/m);
     
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const jsonStr = line.slice(6).trim();
-        if (!jsonStr) continue;
-
-        try {
-          const trace = JSON.parse(jsonStr);
-          console.log('Received trace:', trace);
-
-          if (trace.type === 'completion') {
-            if (trace.payload.state === 'start') {
-              console.log('Completion started');
-              // Generate a stable ID for this completion message
-              const msgId = `completion-${Date.now().toString()}`;
-              partialMessageIdRef.current = msgId;
-              addAgentMessage('', true, msgId);
-            } 
-            else if (trace.payload.state === 'content') {
-              console.log('Completion content received:', trace.payload.content);
-              if (partialMessageIdRef.current) {
-                setMessages(prev => {
-                  const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
-                  if (currentMsg) {
-                    return prev.map(msg => 
-                      msg.id === partialMessageIdRef.current 
-                        ? { ...msg, content: msg.content + trace.payload.content, isPartial: true } 
-                        : msg
-                    );
-                  }
-                  return prev;
-                });
-              }
-            }
-            else if (trace.payload.state === 'end') {
-              console.log('Completion ended');
-              // Finalize the message if we have one in progress
-              if (partialMessageIdRef.current) {
-                setMessages(prev => {
-                  return prev.map(msg => 
-                    msg.id === partialMessageIdRef.current 
-                      ? { ...msg, isPartial: false } 
-                      : msg
-                  );
-                });
-                partialMessageIdRef.current = null;
-              }
-              setIsTyping(false);
-            }
-          }
-
-          else if (trace.type === 'text') {
-            console.log('Text message received:', trace.payload.message);
-            // For non-streaming messages we still create a complete message
-            const messageId = Date.now().toString();
-            addAgentMessage(trace.payload.message, false, messageId);
-          }
-
-          else if (trace.type === 'choice') {
-            console.log('Choices received:', trace.payload.buttons);
-            setButtons(trace.payload.buttons);
-            setIsButtonsLoading(false);
-          }
-
-          else if (trace.type === 'end') {
-            console.log('Session ended');
-            setIsTyping(false);
-            setIsButtonsLoading(false);
-          }
-
-        } catch (err) {
-          console.warn('Error parsing SSE line:', err);
+    if (dataMatch && dataMatch[1]) {
+      try {
+        const data = JSON.parse(dataMatch[1].trim());
+        console.log('Received trace:', data);
+        
+        if (data.type === 'completion') {
+          handleCompletionEvent(data);
         }
+        else if (data.type === 'text') {
+          console.log('Text message received:', data.payload.message);
+          // For non-streaming messages, create a complete message
+          addAgentMessage(data.payload.message);
+        }
+        else if (data.type === 'choice') {
+          console.log('Choices received:', data.payload.buttons);
+          setButtons(data.payload.buttons);
+          setIsButtonsLoading(false);
+        }
+        else if (data.type === 'end') {
+          console.log('Session ended');
+          setIsTyping(false);
+          setIsButtonsLoading(false);
+        }
+      } catch (err) {
+        console.warn('Error parsing SSE line:', err, dataMatch[1]);
       }
+    }
+  };
+
+  const handleCompletionEvent = (data: any) => {
+    const { state, content } = data.payload;
+    
+    if (state === 'start') {
+      console.log('Completion started');
+      // Generate a stable ID for this completion message
+      const msgId = `completion-${Date.now().toString()}`;
+      partialMessageIdRef.current = msgId;
+      addAgentMessage('', true, msgId);
+    } 
+    else if (state === 'content' && partialMessageIdRef.current) {
+      console.log('Completion content received:', content);
+      setMessages(prev => {
+        const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
+        if (currentMsg) {
+          return prev.map(msg => 
+            msg.id === partialMessageIdRef.current 
+              ? { ...msg, content: msg.content + content, isPartial: true } 
+              : msg
+          );
+        }
+        return prev;
+      });
+    }
+    else if (state === 'end') {
+      console.log('Completion ended');
+      // Finalize the message if we have one in progress
+      if (partialMessageIdRef.current) {
+        setMessages(prev => {
+          return prev.map(msg => 
+            msg.id === partialMessageIdRef.current 
+              ? { ...msg, isPartial: false } 
+              : msg
+          );
+        });
+        partialMessageIdRef.current = null;
+      }
+      setIsTyping(false);
     }
   };
 
