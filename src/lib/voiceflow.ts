@@ -115,7 +115,7 @@ export function vfSendAction(actionRequest: any, onTrace: (trace: any) => void):
 /**
  * Parse Voiceflow response for markdown formatting
  */
-export function parseMarkdown(text: string): string {
+export function parseMarkdown(text: string | null | undefined): string {
   if (!text) return '';
   
   return text

@@ -121,13 +121,16 @@ export function useChatSession() {
   };
 
   const handleTraceEvent = (trace: any) => {
-    console.log('Received trace event:', trace);
+    console.log('Trace event received:', trace.type, trace);
     
     switch (trace.type) {
       case 'speak':
       case 'text':
-        console.log('Text/Speak message received:', trace.payload.message);
-        addAgentMessage(trace.payload.message || '');
+        if (trace.payload && trace.payload.message) {
+          console.log('Text/Speak message received:', trace.payload.message);
+          addAgentMessage(trace.payload.message);
+          setIsTyping(false);
+        }
         break;
       
       case 'completion':
@@ -135,9 +138,11 @@ export function useChatSession() {
         break;
       
       case 'choice':
-        console.log('Choices received:', trace.payload.buttons);
-        setButtons(trace.payload.buttons || []);
-        setIsButtonsLoading(false);
+        if (trace.payload && trace.payload.buttons) {
+          console.log('Choices received:', trace.payload.buttons);
+          setButtons(trace.payload.buttons || []);
+          setIsButtonsLoading(false);
+        }
         break;
       
       case 'end':
@@ -152,14 +157,18 @@ export function useChatSession() {
   };
 
   const handleCompletionEvent = (payload: any) => {
+    if (!payload) return;
+    
     const { state, content } = payload;
+    console.log('Completion event:', state, content);
     
     if (state === 'start') {
       console.log('Completion started');
       // Generate a stable ID for this completion message
-      const msgId = `completion-${Date.now().toString()}`;
+      const msgId = `completion-${Date.now()}`;
       partialMessageIdRef.current = msgId;
       addAgentMessage('', true, msgId);
+      setIsTyping(true);
     } 
     else if (state === 'content' && partialMessageIdRef.current) {
       console.log('Completion content received:', content);
