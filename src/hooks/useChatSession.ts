@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
 
 export interface Message {
@@ -19,6 +19,7 @@ export function useChatSession() {
   const [isTyping, setIsTyping] = useState(false);
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
+  const partialMessageIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     startChatSession();
@@ -46,23 +47,42 @@ export function useChatSession() {
     }]);
   };
 
-  const addAgentMessage = (text: string, isPartial = false) => {
-    if (isPartial && messages.length > 0 && messages[messages.length - 1].isPartial) {
-      setMessages(prev => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1] = {
-          ...newMessages[newMessages.length - 1],
-          content: text
-        };
-        return newMessages;
-      });
-    } else {
+  const addAgentMessage = (text: string, isPartial = false, existingId?: string) => {
+    const messageId = existingId || Date.now().toString();
+    
+    if (isPartial && partialMessageIdRef.current === messageId) {
+      // Update existing partial message
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, content: text, isPartial: true } : msg
+      ));
+    } 
+    else if (isPartial) {
+      // Create new partial message
+      partialMessageIdRef.current = messageId;
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: messageId,
         type: 'agent',
         content: text,
-        isPartial
+        isPartial: true
       }]);
+    } 
+    else {
+      // Create or finalize a complete message
+      if (partialMessageIdRef.current === messageId) {
+        // Finalize existing partial message
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId ? { ...msg, content: text, isPartial: false } : msg
+        ));
+        partialMessageIdRef.current = null;
+      } else {
+        // Create new complete message
+        setMessages(prev => [...prev, {
+          id: messageId,
+          type: 'agent',
+          content: text,
+          isPartial: false
+        }]);
+      }
     }
   };
 
@@ -110,59 +130,64 @@ export function useChatSession() {
 
         try {
           const trace = JSON.parse(jsonStr);
+          console.log('Received trace:', trace);
 
           if (trace.type === 'completion') {
             if (trace.payload.state === 'start') {
-              addAgentMessage('', true);
+              console.log('Completion started');
+              // Generate a stable ID for this completion message
+              const msgId = `completion-${Date.now().toString()}`;
+              partialMessageIdRef.current = msgId;
+              addAgentMessage('', true, msgId);
             } 
             else if (trace.payload.state === 'content') {
-              const lastMessage = messages[messages.length - 1];
-              if (lastMessage && lastMessage.isPartial) {
-                addAgentMessage(lastMessage.content + trace.payload.content, true);
+              console.log('Completion content received:', trace.payload.content);
+              if (partialMessageIdRef.current) {
+                setMessages(prev => {
+                  const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
+                  if (currentMsg) {
+                    return prev.map(msg => 
+                      msg.id === partialMessageIdRef.current 
+                        ? { ...msg, content: msg.content + trace.payload.content, isPartial: true } 
+                        : msg
+                    );
+                  }
+                  return prev;
+                });
               }
             }
             else if (trace.payload.state === 'end') {
-              if (messages.length > 0) {
+              console.log('Completion ended');
+              // Finalize the message if we have one in progress
+              if (partialMessageIdRef.current) {
                 setMessages(prev => {
-                  const newMessages = [...prev];
-                  if (newMessages[newMessages.length - 1].isPartial) {
-                    newMessages[newMessages.length - 1].isPartial = false;
-                  }
-                  return newMessages;
+                  return prev.map(msg => 
+                    msg.id === partialMessageIdRef.current 
+                      ? { ...msg, isPartial: false } 
+                      : msg
+                  );
                 });
+                partialMessageIdRef.current = null;
               }
               setIsTyping(false);
             }
           }
 
           else if (trace.type === 'text') {
+            console.log('Text message received:', trace.payload.message);
+            // For non-streaming messages we still create a complete message
             const messageId = Date.now().toString();
-            setMessages(prev => [...prev, {
-              id: messageId,
-              type: 'agent',
-              content: '',
-              isPartial: true
-            }]);
-
-            setTimeout(() => {
-              const messageEl = document.getElementById(`message-${messageId}`);
-              if (messageEl) {
-                fakeStreamMessage(trace.payload.message, messageEl)
-                  .then(() => {
-                    setMessages(prev => prev.map(msg => 
-                      msg.id === messageId ? {...msg, isPartial: false} : msg
-                    ));
-                  });
-              }
-            }, 100);
+            addAgentMessage(trace.payload.message, false, messageId);
           }
 
           else if (trace.type === 'choice') {
+            console.log('Choices received:', trace.payload.buttons);
             setButtons(trace.payload.buttons);
             setIsButtonsLoading(false);
           }
 
           else if (trace.type === 'end') {
+            console.log('Session ended');
             setIsTyping(false);
             setIsButtonsLoading(false);
           }
