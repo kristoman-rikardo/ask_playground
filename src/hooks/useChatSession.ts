@@ -41,7 +41,7 @@ export function useChatSession() {
   };
 
   const addUserMessage = (text: string) => {
-    const message = {
+    const message: Message = {
       id: Date.now().toString(),
       type: 'user',
       content: text
@@ -53,43 +53,34 @@ export function useChatSession() {
   const addAgentMessage = (text: string, isPartial = false, existingId?: string) => {
     const messageId = existingId || Date.now().toString();
     
-    if (isPartial && partialMessageIdRef.current === messageId) {
-      // Update existing partial message
-      console.log('Updating partial message:', messageId, text);
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? { ...msg, content: text, isPartial: true } : msg
-      ));
-    } 
-    else if (isPartial) {
-      // Create new partial message
-      console.log('Creating new partial message:', messageId, text);
-      partialMessageIdRef.current = messageId;
-      setMessages(prev => [...prev, {
+    setMessages(prev => {
+      // If updating an existing partial message
+      const existingMessageIndex = prev.findIndex(msg => msg.id === messageId);
+      
+      if (existingMessageIndex !== -1) {
+        const updatedMessages = [...prev];
+        updatedMessages[existingMessageIndex] = {
+          ...updatedMessages[existingMessageIndex],
+          content: text,
+          isPartial
+        };
+        return updatedMessages;
+      }
+      
+      // If creating a new message
+      const newMessage: Message = {
         id: messageId,
         type: 'agent',
         content: text,
-        isPartial: true
-      }]);
-    } 
-    else {
-      // Create or finalize a complete message
-      if (partialMessageIdRef.current === messageId) {
-        // Finalize existing partial message
-        console.log('Finalizing partial message:', messageId, text);
-        setMessages(prev => prev.map(msg => 
-          msg.id === messageId ? { ...msg, content: text, isPartial: false } : msg
-        ));
-        partialMessageIdRef.current = null;
-      } else {
-        // Create new complete message
-        console.log('Creating new complete message:', messageId, text);
-        setMessages(prev => [...prev, {
-          id: messageId,
-          type: 'agent',
-          content: text,
-          isPartial: false
-        }]);
-      }
+        isPartial
+      };
+      return [...prev, newMessage];
+    });
+
+    if (!isPartial) {
+      partialMessageIdRef.current = null;
+    } else {
+      partialMessageIdRef.current = messageId;
     }
   };
 
@@ -177,48 +168,19 @@ export function useChatSession() {
     
     if (state === 'start') {
       console.log('Completion started');
-      // Generate a stable ID for this completion message
       const msgId = `completion-${Date.now()}`;
-      partialMessageIdRef.current = msgId;
-      
-      // Start with empty content
       addAgentMessage('', true, msgId);
       setIsTyping(true);
     } 
-    else if (state === 'content' && partialMessageIdRef.current) {
-      console.log('Completion content received:', content);
-      
-      // Find the current message and append the new content to it
-      setMessages(prev => {
-        const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
-        if (currentMsg) {
-          const updatedContent = (currentMsg.content || '') + (content || '');
-          return prev.map(msg => 
-            msg.id === partialMessageIdRef.current 
-              ? { ...msg, content: updatedContent, isPartial: true } 
-              : msg
-          );
-        }
-        return prev;
-      });
+    else if (state === 'content') {
+      console.log('Completion content:', content);
+      addAgentMessage(content || '', true, partialMessageIdRef.current || undefined);
     }
     else if (state === 'end') {
       console.log('Completion ended');
-      
-      // Finalize the message if we have one in progress
-      if (partialMessageIdRef.current) {
-        setMessages(prev => {
-          const currentMsg = prev.find(m => m.id === partialMessageIdRef.current);
-          if (currentMsg) {
-            return prev.map(msg => 
-              msg.id === partialMessageIdRef.current 
-                ? { ...msg, isPartial: false } 
-                : msg
-            );
-          }
-          return prev;
-        });
-        partialMessageIdRef.current = null;
+      const currentPartialId = partialMessageIdRef.current;
+      if (currentPartialId) {
+        addAgentMessage(content || '', false, currentPartialId);
       }
       setIsTyping(false);
     }
@@ -233,3 +195,4 @@ export function useChatSession() {
     handleButtonClick
   };
 }
+
