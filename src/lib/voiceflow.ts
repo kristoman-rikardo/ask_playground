@@ -1,156 +1,203 @@
+// src/lib/voiceflow.ts
+import { v4 as uuidv4 } from 'uuid';
 
-// Voiceflow API integration
+const RUNTIME_API_KEY = import.meta.env.VITE_VOICEFLOW_API_KEY;
+const RUNTIME_ENDPOINT = 'https://general-runtime.voiceflow.com';
+const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID;
 
-// Voiceflow credentials
-const VF_KEY = "VF.DM.67d466872e0fa2e87529d165.jvSM4GSGdSCXVn2z";
-const VF_PROJECT_ID = "67d1ad605c5916e15e7ceb94";
+// User session ID
+const USER_ID = 'user_' + uuidv4();
 
-// Create a random userID for session
-export const userID = `${Math.floor(Math.random() * 1000000000000000)}`;
-
-/**
- * Helper delay function
- */
-export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export function parseMarkdown(text: string): string {
+  if (!text) return '';
+  
+  // Convert markdown links: [text](url)
+  text = text.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g, 
+    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>'
+  );
+  
+  // Handle bold: **text** or __text__
+  text = text.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
+  
+  // Handle italic: *text* or _text_
+  text = text.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
+  
+  // Handle line breaks
+  text = text.replace(/\n/g, '<br />');
+  
+  return text;
 }
 
-/**
- * Main Voiceflow streaming function
- */
-export async function vfInteractStream(
-  user: string, 
-  userAction: any, 
-  onSseTrace: (trace: any) => void
-): Promise<any[]> {
-  const streamUrl =
-    `https://general-runtime.voiceflow.com/v2/project/${VF_PROJECT_ID}/user/${user}/interact/stream` +
-    `?environment=development&completion_events=true&state=false`;
+// Simple delay function for animations
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  const payload = { action: userAction };
+// Send a launch request to Voiceflow Dialog API
+export async function vfSendLaunch(
+  variables: Record<string, any> = {}, 
+  traceHandler: (trace: any) => void
+): Promise<void> {
+  console.log('Sending launch request to Voiceflow');
+  
+  await sendRequest(
+    {
+      type: 'launch',
+      payload: {}
+    },
+    variables,
+    traceHandler
+  );
+}
+
+// Send a message to Voiceflow Dialog API
+export async function vfSendMessage(
+  message: string, 
+  traceHandler: (trace: any) => void,
+  variables: Record<string, any> = {}
+): Promise<void> {
+  console.log(`Sending message to Voiceflow: ${message}`);
+  
+  await sendRequest(
+    {
+      type: 'text',
+      payload: message
+    },
+    variables,
+    traceHandler
+  );
+}
+
+// Send an action to Voiceflow Dialog API (for button clicks)
+export async function vfSendAction(
+  action: any,
+  traceHandler: (trace: any) => void,
+  variables: Record<string, any> = {}
+): Promise<void> {
+  console.log('Sending action to Voiceflow:', action);
+  
+  await sendRequest(
+    action,
+    variables,
+    traceHandler
+  );
+}
+
+// Core function to send requests to Voiceflow Dialog API
+async function sendRequest(
+  action: any,
+  variables: Record<string, any> = {},
+  traceHandler: (trace: any) => void
+): Promise<void> {
+  if (!RUNTIME_API_KEY || !PROJECT_ID) {
+    console.error('Missing Voiceflow API key or project ID');
+    throw new Error('Missing Voiceflow API key or project ID');
+  }
+
+  const queryParams = new URLSearchParams({
+    completion_events: 'true', // Enable streaming completion events
+  });
 
   try {
-    console.log('Sending request to Voiceflow:', payload);
-    const response = await fetch(streamUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: VF_KEY,
-        accept: 'text/event-stream',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+    // Make the request to the Voiceflow Dialog API
+    const response = await fetch(
+      `${RUNTIME_ENDPOINT}/v2/project/${PROJECT_ID}/user/${USER_ID}/interact/stream?${queryParams}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: RUNTIME_API_KEY,
+        },
+        body: JSON.stringify({
+          action,
+          ...(Object.keys(variables).length > 0 && { variables }),
+        }),
+      }
+    );
+
+    if (!response.ok || !response.body) {
+      throw new Error(`API failed with status ${response.status}`);
+    }
+
+    // Create EventSource parser
+    const parser = createParser(event => {
+      if (event.type === 'event' && event.event === 'trace') {
+        try {
+          const trace = JSON.parse(event.data);
+          traceHandler(trace);
+        } catch (error) {
+          console.error('Error parsing trace event:', error);
+        }
+      }
     });
 
-    if (!response.ok) throw new Error(`Stream HTTP error: ${response.status}`);
-    if (!response.body) throw new Error('Response body is null');
-
+    // Process the streaming response
     const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
+    const decoder = new TextDecoder();
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       
-      // Decode the current chunk and add it to our buffer
-      buffer += decoder.decode(value, { stream: true });
-      
-      // Process any complete SSE messages in the buffer
-      let messages = buffer.split(/\n\n/);
-      buffer = messages.pop() || ''; // Keep the last potentially incomplete message
-      
-      for (const message of messages) {
-        if (message.trim()) {
-          // Parse the SSE message
-          const lines = message.split('\n');
-          let eventType = '';
-          let eventId = '';
-          let data = '';
-          
-          for (const line of lines) {
-            if (line.startsWith('event:')) {
-              eventType = line.substring('event:'.length).trim();
-            } else if (line.startsWith('id:')) {
-              eventId = line.substring('id:'.length).trim();
-            } else if (line.startsWith('data:')) {
-              data = line.substring('data:'.length).trim();
-            }
-          }
-          
-          if (eventType === 'trace' && data) {
-            try {
-              const traceData = JSON.parse(data);
-              console.log(`Trace event (${eventId}):`, traceData.type, traceData);
-              onSseTrace(traceData);
-            } catch (err) {
-              console.error('Error parsing trace data:', err, data);
-            }
-          } else if (eventType === 'end') {
-            console.log('End of stream event received');
-            onSseTrace({ type: 'end' });
-          }
-        }
-      }
+      const chunk = decoder.decode(value, { stream: true });
+      parser.feed(chunk);
     }
 
-    return [];
   } catch (error) {
-    console.error('Voiceflow API error:', error);
-    // Add retry logic for network errors
-    if (error instanceof TypeError && error.message.includes('network')) {
-      console.log('Network error detected, retrying in 2 seconds...');
-      await delay(2000);
-      return vfInteractStream(user, userAction, onSseTrace);
-    }
+    console.error('Error sending request to Voiceflow:', error);
     throw error;
   }
 }
 
-/**
- * Voiceflow: Launch a new session
- */
-export function vfSendLaunch(payload: any, onTrace: (trace: any) => void): Promise<any[]> {
-  return vfInteractStream(userID, { type: 'launch', payload }, onTrace);
+// EventSource parser for SSE
+interface EventSourceParserOptions {
+  onEvent: (event: { type: string; event?: string; data: string; id?: string }) => void;
 }
 
-/**
- * Voiceflow: Send text
- */
-export function vfSendMessage(message: string, onTrace: (trace: any) => void): Promise<any[]> {
-  return vfInteractStream(userID, { type: 'text', payload: message }, onTrace);
-}
+function createParser(onEvent: EventSourceParserOptions['onEvent']) {
+  let data = '';
+  let eventId = '';
+  let eventType = '';
+  let eventData = '';
 
-/**
- * Voiceflow: Send an action (button press, etc.)
- */
-export function vfSendAction(actionRequest: any, onTrace: (trace: any) => void): Promise<any[]> {
-  return vfInteractStream(userID, actionRequest, onTrace);
-}
+  return {
+    feed(chunk: string): void {
+      data += chunk;
+      processData();
+    },
+  };
 
-/**
- * Parse Voiceflow response for markdown formatting
- */
-export function parseMarkdown(text: string | null | undefined): string {
-  if (!text) return '';
-  
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-    .replace(/\*(.*?)\*/g, '<i>$1</i>')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 hover:underline">$1</a>')
-    .replace(/(\n)+/g, '<br>');
-}
+  function processData() {
+    let index = 0;
+    let startingPosition = 0;
+    let newLinePosition = -1;
 
-/**
- * Optional fake streaming effect for text messages
- */
-export async function fakeStreamMessage(fullMessage: string, element: HTMLElement): Promise<void> {
-  const words = fullMessage.split(/\s+/);
-  let current = "";
+    while ((newLinePosition = data.indexOf('\n', index)) !== -1) {
+      const line = data.slice(index, newLinePosition);
+      index = newLinePosition + 1;
 
-  for (let i = 0; i < words.length; i++) {
-    current += (i === 0 ? "" : " ") + words[i];
-    element.innerHTML = parseMarkdown(current);
-    await delay(Math.floor(Math.random() * 10) + 5); // Faster streaming
+      if (line.startsWith('event:')) {
+        eventType = line.slice(6).trim();
+      } else if (line.startsWith('id:')) {
+        eventId = line.slice(3).trim();
+      } else if (line.startsWith('data:')) {
+        eventData = line.slice(5).trim();
+      } else if (line === '') {
+        // Empty line denotes the end of an event
+        if (eventType && eventData) {
+          onEvent({
+            type: 'event',
+            event: eventType,
+            data: eventData,
+            id: eventId,
+          });
+        }
+        eventType = '';
+        eventId = '';
+        eventData = '';
+      }
+    }
+
+    // Keep any unprocessed data for the next chunk
+    data = data.slice(index);
   }
 }
-

@@ -22,9 +22,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     "Spør meg om returvilkår", 
     "Spør meg om materialer", 
     "Spør meg om bærekraft", 
-    "Spør meg om størrelser", 
-    "Spør meg om vedlikehold", 
-    "Spør meg om garanti"
+    "Spør meg om størrelser"
   ];
   
   useEffect(() => {
@@ -32,7 +30,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       if (!isInputStreaming && inputValue === '' && !isFocused) {
         streamPlaceholder();
       }
-    }, 1500); // More frequent streaming
+    }, 1200); // More frequent streaming
 
     return () => clearInterval(interval);
   }, [inputValue, isInputStreaming, isFocused]);
@@ -66,17 +64,17 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     for (let i = 0; i < remainingText.length; i++) {
       currentText += remainingText[i];
       setPlaceholder(currentText + '...');
-      await delay(40); // Faster typing (was 80)
+      await delay(30); // Faster typing (was 40)
     }
 
     // Wait when fully written
-    await delay(1500); // Shorter wait time (was 2000)
+    await delay(1200); // Shorter wait time (was 1500)
 
     // Erase letter by letter with animation - faster deletion
     const fullText = currentText + '...';
     for (let i = fullText.length; i > baseText.length; i--) {
       setPlaceholder(fullText.substring(0, i));
-      await delay(20); // Much faster deletion (was 40)
+      await delay(15); // Much faster deletion (was 20)
     }
 
     // Reset to base text with ellipsis
@@ -103,11 +101,11 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 rounded-2xl bg-transparent
-            ${isFocused 
-              ? 'border border-gray-200 ring-1 ring-gray-200/50' 
+            border border-gray-200 ${isFocused 
+              ? 'ring-1 ring-gray-200/50' 
               : inputValue 
-                ? 'border border-gray-100/50' 
-                : 'border border-gray-100/30 hover:border-gray-100/50'
+                ? '' 
+                : 'hover:border-gray-300/50'
             }`} 
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
