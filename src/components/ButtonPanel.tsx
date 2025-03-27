@@ -17,7 +17,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
-  // Custom loader component with the animation provided but in gray
+  // Custom loader component with the animation in grey
   const LoadingIndicator = () => (
     <div className="h-[120px] flex flex-col items-center justify-center">
       <div className="loader" style={{ filter: "blur(5px) contrast(10) hue-rotate(0deg)", background: "#fff" }}></div>
@@ -25,7 +25,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </div>
   );
 
-  // Sparkle SVG icon - using exactly the provided SVG
+  // Sparkle SVG icon
   const SparkleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
       fill="currentColor" className="size-5 inline-block ml-1 text-gray-400">
@@ -45,7 +45,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </svg>
   );
 
-  // Button list component with enhanced responsive layout and text truncation
+  // Button list component
   const ButtonList = () => (
     <div className="h-auto min-h-[120px] flex flex-wrap gap-1.5 p-3 content-start">
       {buttons.map((button, index) => (

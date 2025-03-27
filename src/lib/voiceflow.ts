@@ -122,9 +122,10 @@ async function sendRequest(
 
     // Create EventSource parser
     const parser = createParser(event => {
-      if (event.type === 'event' && event.event === 'trace') {
+      if (event.type === 'event') {
         try {
           const trace = JSON.parse(event.data);
+          // Immediately pass all trace events to the handler in original order
           traceHandler(trace);
         } catch (error) {
           console.error('Error parsing trace event:', error);

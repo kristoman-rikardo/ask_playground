@@ -57,19 +57,19 @@ export function useChatSession() {
     setMessages(prev => [...prev, message]);
   };
 
-  // Throttled update for smoother streaming experience
+  // Throttled update for smoother streaming experience - 20ms for faster streaming
   const updatePartialMessage = (messageId: string, text: string, isPartial = true) => {
     const now = Date.now();
     
-    // Throttle updates to ensure smooth rendering (33ms ≈ 30fps)
-    if (now - lastUpdateTimeRef.current < 33) {
+    // Throttle updates to ensure smooth rendering (20ms ≈ 50fps for faster streaming)
+    if (now - lastUpdateTimeRef.current < 20) {
       if (streamThrottleRef.current) {
         clearTimeout(streamThrottleRef.current);
       }
       
       streamThrottleRef.current = setTimeout(() => {
         updatePartialMessage(messageId, text, isPartial);
-      }, 33);
+      }, 20);
       
       return;
     }
@@ -171,7 +171,7 @@ export function useChatSession() {
           const fullText = trace.payload.message;
           
           // Start streaming immediately for the first few characters
-          const initialChunk = fullText.substring(0, 3);
+          const initialChunk = fullText.substring(0, 5);
           currentText = initialChunk;
           
           partialMessageIdRef.current = msgId;
@@ -186,8 +186,8 @@ export function useChatSession() {
               addAgentMessage(currentText, true, msgId);
               index++;
               
-              // Randomize delay slightly for natural feel (30-50ms)
-              const randomDelay = Math.floor(Math.random() * 20) + 30;
+              // Faster streaming speed (15-25ms)
+              const randomDelay = Math.floor(Math.random() * 10) + 15;
               setTimeout(streamNextChar, randomDelay);
             } else {
               // Finalize message when done
@@ -196,7 +196,7 @@ export function useChatSession() {
           }
           
           // Start streaming after a brief delay
-          setTimeout(streamNextChar, 30);
+          setTimeout(streamNextChar, 15);
         }
         break;
       }
@@ -253,19 +253,15 @@ export function useChatSession() {
     else if (state === 'content') {
       if (!content) return;
       
-      // Stream each character with a throttled update for smooth animation
-      for (let i = 0; i < content.length; i++) {
-        setTimeout(() => {
-          currentCompletionContentRef.current += content[i];
-          
-          if (partialMessageIdRef.current) {
-            updatePartialMessage(
-              partialMessageIdRef.current, 
-              currentCompletionContentRef.current, 
-              true
-            );
-          }
-        }, i * 30); // Adjust timing for faster streaming (30ms per character)
+      // Immediately add the content to the current streaming message
+      currentCompletionContentRef.current += content;
+      
+      if (partialMessageIdRef.current) {
+        updatePartialMessage(
+          partialMessageIdRef.current, 
+          currentCompletionContentRef.current, 
+          true
+        );
       }
     }
     else if (state === 'end') {
