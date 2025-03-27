@@ -55,10 +55,6 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     }
   };
 
-  if (isCollapsed) {
-    return null;
-  }
-
   return (
     <div className="p-3 bg-transparent transition-all duration-300 ease-in-out">
       <div className="flex items-end bg-white chat-input border border-gray-200 rounded-lg overflow-hidden shadow-sm">

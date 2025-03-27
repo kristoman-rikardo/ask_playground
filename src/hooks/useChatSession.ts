@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction, TraceHandler } from '@/lib/voiceflow';
 
@@ -60,7 +59,7 @@ export function useChatSession() {
     setMessages(prev => [...prev, message]);
   };
 
-  // Function to simulate natural typing for streaming effect
+  // Function to simulate natural typing for streaming effect - with increased speed
   const simulateTyping = (
     fullText: string, 
     existingId: string | null, 
@@ -77,9 +76,9 @@ export function useChatSession() {
       return;
     }
     
-    // Calculate how many characters to reveal
+    // Calculate how many characters to reveal - faster streaming
     const charsToReveal = Math.min(
-      currentIndex + Math.floor(Math.random() * 3) + 1, 
+      currentIndex + Math.floor(Math.random() * 4) + 3, 
       fullText.length
     );
     
@@ -91,7 +90,8 @@ export function useChatSession() {
     
     // If we haven't reached the end, continue typing
     if (charsToReveal < fullText.length || isPartial) {
-      const delay = Math.floor(Math.random() * 30) + 10; // Random delay between 10-40ms
+      // Faster delay between 5-20ms for smoother streaming
+      const delay = Math.floor(Math.random() * 15) + 5;
       streamingTimerRef.current = setTimeout(() => {
         simulateTyping(fullText, existingId, isPartial, charsToReveal);
       }, delay);
@@ -103,12 +103,6 @@ export function useChatSession() {
 
   const addAgentMessage = (text: string, isPartial = false, existingId?: string) => {
     const messageId = existingId || Date.now().toString();
-    
-    console.log(`${isPartial ? 'Partial' : 'Final'} agent message:`, { 
-      messageId, 
-      text: text.substring(0, 50) + (text.length > 50 ? '...' : ''), 
-      isPartial 
-    });
     
     setMessages(prev => {
       // If updating an existing partial message
@@ -232,7 +226,6 @@ export function useChatSession() {
     }
     
     const { state, content } = payload;
-    console.log('Completion event:', state, content ? content.substring(0, 50) : '');
     
     if (state === 'start') {
       console.log('Completion started');
@@ -244,8 +237,6 @@ export function useChatSession() {
     } 
     else if (state === 'content') {
       if (!content) return;
-      
-      console.log('Completion content received:', content.substring(0, 50));
       
       // Accumulate content in the ref
       currentCompletionContentRef.current += content;
