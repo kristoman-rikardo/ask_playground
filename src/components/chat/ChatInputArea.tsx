@@ -12,17 +12,17 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isInputStreaming, setIsInputStreaming] = useState(false);
-  const [placeholder, setPlaceholder] = useState('Spør meg om...');
+  const [placeholder, setPlaceholder] = useState('Spør om produktet...');
   const [isFocused, setIsFocused] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   // Short suggestion variations
   const suggestions = [
-    "Spør meg om returvilkår", 
-    "Spør meg om materialer", 
-    "Spør meg om bærekraft", 
-    "Spør meg om størrelser"
+    "Spør om returvilkår", 
+    "Spør om materialer", 
+    "Spør om bærekraft", 
+    "Spør om størrelser"
   ];
   
   useEffect(() => {
@@ -52,7 +52,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     setIsInputStreaming(true);
     
     const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
-    const baseText = 'Spør meg om '; // Base text with space but no ellipsis
+    const baseText = 'Spør om '; // Base text with space but no ellipsis
 
     // Set the base text first
     setPlaceholder(baseText + '...');
@@ -78,7 +78,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     }
 
     // Reset to base text with ellipsis
-    setPlaceholder('Spør meg om...');
+    setPlaceholder('Spør om produktet...');
     setIsInputStreaming(false);
   };
 
@@ -89,7 +89,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   };
 
   return (
-    <div className="w-full bg-transparent border-t border-transparent p-4">
+    <div className="w-full bg-transparent border-t border-gray-100 p-4">
       <div className="flex items-center space-x-2 relative">
         <input 
           ref={inputRef} 
