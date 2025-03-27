@@ -76,7 +76,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         </div>
       )}
       
-      {isTyping && (
+      {isTyping && !messages.some(m => m.isPartial) && (
         <div className="mt-2">
           <TypingIndicator />
         </div>

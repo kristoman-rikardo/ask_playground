@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
 
@@ -60,19 +61,19 @@ export function useChatSession() {
     setMessages(prev => [...prev, message]);
   };
 
-  // Throttled update for smoother streaming experience - reduced to 5ms for even faster streaming
+  // Throttled update for one-character-at-a-time streaming
   const updatePartialMessage = (messageId: string, text: string, isPartial = true) => {
     const now = Date.now();
     
-    // Throttle updates to ensure smooth rendering (5ms = 200fps for extremely fast streaming)
-    if (now - lastUpdateTimeRef.current < 5) {
+    // Throttle updates to 2ms per character for the smoothest possible experience
+    if (now - lastUpdateTimeRef.current < 2) {
       if (streamThrottleRef.current) {
         clearTimeout(streamThrottleRef.current);
       }
       
       streamThrottleRef.current = setTimeout(() => {
         updatePartialMessage(messageId, text, isPartial);
-      }, 5);
+      }, 2);
       
       return;
     }
@@ -179,43 +180,33 @@ export function useChatSession() {
           // Create a new message ID for this text/speak event
           const msgId = `text-${Date.now()}`;
           
-          // Start with empty message and stream it character by character
+          // Initialize the message with an empty string
+          partialMessageIdRef.current = msgId;
+          addAgentMessage('', true, msgId);
+          
+          // Stream the full text character by character
           let currentText = '';
           const fullText = trace.payload.message;
-          
-          // Start streaming immediately for the first several characters - increased chunk size
-          const initialChunk = fullText.substring(0, 15);
-          currentText = initialChunk;
-          
-          partialMessageIdRef.current = msgId;
-          addAgentMessage(currentText, true, msgId);
-          
-          // Then, stream the rest character by character with faster delays
-          let index = initialChunk.length;
+          let index = 0;
           
           function streamNextChar() {
             if (index < fullText.length) {
-              // Stream even more characters at once for faster display (5-8 chars)
-              const charsToAdd = Math.min(
-                Math.floor(Math.random() * 3) + 5, 
-                fullText.length - index
-              );
-              
-              currentText += fullText.substring(index, index + charsToAdd);
+              // Stream one character at a time
+              currentText += fullText[index];
               addAgentMessage(currentText, true, msgId);
-              index += charsToAdd;
+              index++;
               
-              // Ultra-fast streaming speed (2-5ms)
-              const randomDelay = Math.floor(Math.random() * 3) + 2;
+              // Stream at a consistent fast speed (5-10ms per character)
+              const randomDelay = Math.floor(Math.random() * 5) + 5;
               setTimeout(streamNextChar, randomDelay);
             } else {
-              // Finalize message when done
+              // Only finalize the message when we're done with all characters
               addAgentMessage(fullText, false, msgId);
             }
           }
           
           // Start streaming immediately
-          setTimeout(streamNextChar, 2);
+          streamNextChar();
         }
         break;
       }
@@ -235,15 +226,20 @@ export function useChatSession() {
       
       case 'end':
         console.log('Session ended');
-        setIsTyping(false);
-        setIsButtonsLoading(false);
-        
-        // Ensure any partial message is finalized
+        // Don't set isTyping to false immediately, wait to ensure complete messages
+        // Only finalize any remaining partial messages
         if (partialMessageIdRef.current && currentCompletionContentRef.current) {
+          // Make sure we display the complete content
           addAgentMessage(currentCompletionContentRef.current, false, partialMessageIdRef.current);
           partialMessageIdRef.current = null;
           currentCompletionContentRef.current = '';
         }
+        
+        // Wait a short moment after 'end' to ensure all content is complete
+        setTimeout(() => {
+          setIsTyping(false);
+          setIsButtonsLoading(false);
+        }, 100);
         break;
       
       default:
@@ -274,29 +270,46 @@ export function useChatSession() {
     else if (state === 'content') {
       if (!content) return;
       
-      // Immediately add the content to the current streaming message
+      // Add the content to the current completion content
       currentCompletionContentRef.current += content;
       
       if (partialMessageIdRef.current) {
-        // Update message with current content immediately
-        updatePartialMessage(
-          partialMessageIdRef.current, 
-          currentCompletionContentRef.current, 
-          true
-        );
+        // Stream the content character by character
+        let existingContent = '';
+        const fullContent = currentCompletionContentRef.current;
+        let charIndex = 0;
+        
+        function streamCompletionChar() {
+          if (charIndex < fullContent.length) {
+            existingContent += fullContent[charIndex];
+            updatePartialMessage(partialMessageIdRef.current!, existingContent, true);
+            charIndex++;
+            
+            // Stream at a consistent fast speed (5-10ms per character)
+            const randomDelay = Math.floor(Math.random() * 5) + 5;
+            setTimeout(streamCompletionChar, randomDelay);
+          }
+        }
+        
+        // Only start a new streaming sequence if we're not already streaming
+        if (charIndex === 0) {
+          streamCompletionChar();
+        }
       }
     }
     else if (state === 'end') {
       console.log('Completion ended');
       
-      // Finalize the message
+      // Make sure to finalize with the complete content
       if (partialMessageIdRef.current) {
-        addAgentMessage(currentCompletionContentRef.current, false, partialMessageIdRef.current);
-        partialMessageIdRef.current = null;
-        currentCompletionContentRef.current = '';
+        // Allow a brief delay to ensure we've displayed all content
+        setTimeout(() => {
+          addAgentMessage(currentCompletionContentRef.current, false, partialMessageIdRef.current);
+          partialMessageIdRef.current = null;
+          currentCompletionContentRef.current = '';
+          setIsTyping(false);
+        }, 100);
       }
-      
-      setIsTyping(false);
     }
   };
 

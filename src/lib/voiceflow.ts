@@ -124,7 +124,7 @@ async function sendRequest(
       if (event.type === 'event') {
         try {
           const trace = JSON.parse(event.data);
-          // Immediately pass all trace events to the handler in original order
+          // Immediately pass each trace event to the handler in original order
           traceHandler(trace);
         } catch (error) {
           console.error('Error parsing trace event:', error);
@@ -132,7 +132,7 @@ async function sendRequest(
       }
     });
 
-    // Process the streaming response with absolute minimal buffering for speed
+    // Process the streaming response with minimal buffering for immediate processing
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
@@ -140,6 +140,7 @@ async function sendRequest(
       const { value, done } = await reader.read();
       if (done) break;
       
+      // Process each chunk as soon as it arrives
       const chunk = decoder.decode(value, { stream: true });
       parser.feed(chunk);
     }
@@ -150,7 +151,7 @@ async function sendRequest(
   }
 }
 
-// EventSource parser for SSE - optimized for speed
+// EventSource parser for SSE - optimized for immediate processing
 interface EventSourceParserOptions {
   onEvent: (event: { type: string; event?: string; data: string; id?: string }) => void;
 }
@@ -172,7 +173,7 @@ function createParser(onEvent: EventSourceParserOptions['onEvent']) {
     let index = 0;
     let newLinePosition = -1;
 
-    // Process each line as soon as it's available for maximum speed
+    // Process each line as soon as it's available for immediate response
     while ((newLinePosition = data.indexOf('\n', index)) !== -1) {
       const line = data.slice(index, newLinePosition);
       index = newLinePosition + 1;
@@ -184,7 +185,7 @@ function createParser(onEvent: EventSourceParserOptions['onEvent']) {
       } else if (line.startsWith('data:')) {
         eventData = line.slice(5).trim();
       } else if (line === '') {
-        // Empty line denotes the end of an event - immediately process
+        // Empty line denotes the end of an event - process immediately
         if (eventType && eventData) {
           onEvent({
             type: 'event',
