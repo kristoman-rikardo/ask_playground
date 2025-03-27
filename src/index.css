@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -44,9 +45,9 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
     
     /* Custom widget variables */
-    --widget-bg-color: #FFFFFF;
-    --faq-light: #F1F1F1;
-    --faq-medium: #E5E5E5;
+    --widget-bg-color: transparent;
+    --faq-light: transparent;
+    --faq-medium: rgba(229, 229, 229, 0.5);
     --widget-accent-color: #333333;
   }
 
@@ -102,18 +103,18 @@
 
 @layer components {
   .chat-message-user {
-    @apply bg-faq-user text-gray-800 self-end animate-fade-in;
+    @apply bg-transparent text-gray-800 self-end animate-fade-in shadow-none border border-transparent;
   }
 
   .chat-message-agent {
-    @apply bg-[#F6F6F7] text-gray-800 self-start animate-fade-in relative pr-12 shadow-sm;
+    @apply bg-transparent text-gray-800 self-start animate-fade-in relative pr-12 shadow-none border border-transparent;
   }
 
   .choice-button {
-    @apply bg-[var(--faq-light,#F1F1F1)] text-gray-800 hover:bg-[var(--faq-medium,#E5E5E5)] transition-all 
-           shadow-sm border border-gray-200 rounded-xl px-4 py-2.5
-           transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-md 
-           duration-300 font-medium;
+    @apply bg-transparent text-gray-800 hover:bg-gray-50/50 transition-all 
+           shadow-none border border-gray-100 rounded-xl px-4 py-2.5
+           transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-sm 
+           duration-300 font-medium whitespace-nowrap overflow-hidden text-ellipsis;
     width: fit-content !important;
     display: inline-block !important;
   }
@@ -137,16 +138,16 @@
   
   /* Enhanced input field styling */
   .chat-input {
-    @apply border border-gray-300 rounded-lg px-4 py-3 w-full outline-none
-           transition-all duration-200 bg-white font-light;
+    @apply border border-transparent rounded-lg px-4 py-3 w-full outline-none
+           transition-all duration-200 bg-transparent font-light;
   }
   
   .chat-input:hover {
-    @apply border-gray-400 shadow-sm;
+    @apply border-transparent shadow-none;
   }
   
   .chat-input:focus {
-    @apply border-gray-500 ring-1 ring-gray-300;
+    @apply border-transparent ring-1 ring-gray-100/30;
   }
   
   /* Widget container */

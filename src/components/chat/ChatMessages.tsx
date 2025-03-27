@@ -10,6 +10,26 @@ interface ChatMessagesProps {
   isTyping: boolean;
 }
 
+// Sparkle SVG icon component
+const SparkleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+    fill="currentColor" className="size-4 inline-block ml-1 text-gray-400 align-text-bottom">
+    <path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785
+            l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238
+            1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192
+            -.238a1 1 0 0 0 0-1.962l-1.192-.238a1 1 0 0 1-.785-.785l-.238
+            -1.192ZM6.949 5.684a1 1 0 0 0-1.898 0l-.683 2.051a1 1 0 0 1
+            -.633.633l-2.051.683a1 1 0 0 0 0 1.898l2.051.684a1 1 0 0 1
+            .633.632l.683 2.051a1 1 0 0 0 1.898 0l.683-2.051a1 1 0 0 1
+            .633-.633l2.051-.683a1 1 0 0 0 0-1.898l-2.051-.683a1 1 0 0 1
+            -.633-.633L6.95 5.684ZM13.949 13.684a1 1 0 0 0-1.898 0l-.184
+            .551a1 1 0 0 1-.632.633l-.551.183a1 1 0 0 0 0 1.898l.551.183a1 1
+            0 0 1 .633.633l.183.551a1 1 0 0 0 1.898 0l.184-.551a1 1 0 0 1
+            .632-.633l.551-.183a1 1 0 0 0 0-1.898l-.551-.184a1 1 0 0 1
+            -.633-.632l-.183-.551Z" />
+  </svg>
+);
+
 // Component for message feedback
 const MessageFeedback = ({
   messageId
@@ -98,9 +118,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               ref={index === messages.length - 1 ? lastMessageRef : null} 
               className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
                 message.type === 'user' 
-                  ? 'chat-message-user ml-auto bg-gray-200' 
-                  : 'chat-message-agent mr-auto shadow-sm bg-[#F6F6F7]'
-              } ${message.isPartial ? 'border-l-4 border-blue-400' : ''}`}
+                  ? 'chat-message-user ml-auto bg-gray-100/50 shadow-none border border-transparent' 
+                  : 'chat-message-agent mr-auto shadow-none bg-[#F6F6F7]/70 border border-transparent'
+              } ${message.isPartial ? 'border-l-4 border-blue-300/50' : ''}`}
             >
               {message.content ? (
                 <div 
@@ -110,9 +130,16 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   className={message.isPartial ? 'animate-pulse' : ''}
                 />
               ) : (
-                <div className="h-5 w-20 bg-gray-200 rounded animate-pulse">
+                <div className="h-5 w-20 bg-gray-200/50 rounded animate-pulse">
                   {/* Empty content placeholder */}
                 </div>
+              )}
+              
+              {/* Add sparkle icon at the end of agent non-partial messages */}
+              {message.type === 'agent' && !message.isPartial && message.content && (
+                <span className="inline-block ml-1">
+                  <SparkleIcon />
+                </span>
               )}
               
               {message.type === 'agent' && !message.isPartial && message.content && (

@@ -20,6 +20,7 @@ export function useChatSession() {
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
   const partialMessageIdRef = useRef<string | null>(null);
+  const currentCompletionContentRef = useRef<string>('');
 
   useEffect(() => {
     startChatSession();
@@ -52,6 +53,8 @@ export function useChatSession() {
 
   const addAgentMessage = (text: string, isPartial = false, existingId?: string) => {
     const messageId = existingId || Date.now().toString();
+    
+    console.log(`${isPartial ? 'Partial' : 'Final'} agent message:`, { messageId, text: text.substring(0, 50) + (text.length > 50 ? '...' : '') });
     
     setMessages(prev => {
       // If updating an existing partial message
@@ -164,24 +167,40 @@ export function useChatSession() {
     }
     
     const { state, content } = payload;
-    console.log('Completion event:', state, content);
+    console.log('Completion event:', state, content?.substring(0, 50));
     
     if (state === 'start') {
       console.log('Completion started');
+      // Generate a unique ID for this streaming session
       const msgId = `completion-${Date.now()}`;
+      partialMessageIdRef.current = msgId;
+      currentCompletionContentRef.current = '';
       addAgentMessage('', true, msgId);
       setIsTyping(true);
     } 
     else if (state === 'content') {
-      console.log('Completion content:', content);
-      addAgentMessage(content || '', true, partialMessageIdRef.current || undefined);
+      if (!content) return;
+      
+      console.log('Completion content received:', content.substring(0, 50));
+      
+      // Accumulate content in the ref
+      currentCompletionContentRef.current += content;
+      
+      // Update the message with the accumulated content
+      if (partialMessageIdRef.current) {
+        addAgentMessage(currentCompletionContentRef.current, true, partialMessageIdRef.current);
+      }
     }
     else if (state === 'end') {
       console.log('Completion ended');
-      const currentPartialId = partialMessageIdRef.current;
-      if (currentPartialId) {
-        addAgentMessage(content || '', false, currentPartialId);
+      
+      // Finalize the message
+      if (partialMessageIdRef.current) {
+        addAgentMessage(currentCompletionContentRef.current, false, partialMessageIdRef.current);
+        partialMessageIdRef.current = null;
+        currentCompletionContentRef.current = '';
       }
+      
       setIsTyping(false);
     }
   };
@@ -195,4 +214,3 @@ export function useChatSession() {
     handleButtonClick
   };
 }
-

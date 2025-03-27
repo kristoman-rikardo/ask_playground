@@ -120,7 +120,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   };
 
   return (
-    <div className="w-full bg-gray-50 border-t border-gray-200 p-4">
+    <div className="w-full bg-transparent border-t border-transparent p-4">
       <div className="flex items-center space-x-2 relative">
         <input 
           ref={inputRef} 
@@ -131,12 +131,12 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className={`flex-1 px-4 py-2 pr-10 border font-light font-sans transition-all duration-300 rounded-2xl bg-gray-50
+          className={`flex-1 px-4 py-2 pr-10 border font-light font-sans transition-all duration-300 rounded-2xl bg-transparent
             ${isFocused 
-              ? 'border-gray-500 ring-2 ring-gray-200' 
+              ? 'border-transparent ring-2 ring-gray-200/50' 
               : inputValue 
-                ? 'border-gray-400' 
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-transparent' 
+                : 'border-transparent hover:border-transparent'
             }`} 
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
@@ -148,10 +148,9 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         >
           <button 
             onClick={handleSend}
-            className="p-1.5 bg-gray-800 text-white rounded-full 
+            className="p-1.5 bg-transparent text-gray-600 rounded-full 
                      transition-all duration-300 transform hover:scale-110 active:scale-95
-                     hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400
-                     send-button-ripple"
+                     hover:bg-gray-100/50 focus:outline-none"
             aria-label="Send message"
           >
             <ArrowRight size={14} className="transform transition-transform duration-300" />

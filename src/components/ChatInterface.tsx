@@ -17,7 +17,7 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div 
-      className="w-full mx-auto bg-[var(--widget-bg-color,white)] shadow-lg rounded-2xl overflow-hidden transition-all font-sans"
+      className="w-full mx-auto bg-transparent shadow-none rounded-2xl overflow-hidden transition-all font-sans"
       style={{ height: '100%' }}
     >
       <div className="flex flex-col h-full">
