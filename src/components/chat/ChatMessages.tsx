@@ -43,6 +43,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   };
 
+  // Check if any message is currently streaming (partial)
+  const hasPartialMessages = messages.some(m => m.isPartial);
+
   return (
     <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]">
       {messages.length > 0 ? messages.map((message, index) => {
@@ -76,7 +79,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         </div>
       )}
       
-      {isTyping && !messages.some(m => m.isPartial) && (
+      {/* Only show typing indicator when isTyping is true and no messages are currently streaming */}
+      {isTyping && !hasPartialMessages && (
         <div className="mt-2">
           <TypingIndicator />
         </div>

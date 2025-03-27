@@ -119,12 +119,14 @@ async function sendRequest(
       throw new Error(`API failed with status ${response.status}`);
     }
 
-    // Create EventSource parser
+    // Process streaming response more efficiently
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
     const parser = createParser(event => {
       if (event.type === 'event') {
         try {
           const trace = JSON.parse(event.data);
-          // Immediately pass each trace event to the handler in original order
+          // Process each trace immediately
           traceHandler(trace);
         } catch (error) {
           console.error('Error parsing trace event:', error);
@@ -132,17 +134,13 @@ async function sendRequest(
       }
     });
 
-    // Process the streaming response with minimal buffering for immediate processing
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
+    // Process chunks as they arrive
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       
-      // Process each chunk as soon as it arrives
-      const chunk = decoder.decode(value, { stream: true });
-      parser.feed(chunk);
+      // Process each chunk immediately
+      parser.feed(decoder.decode(value, { stream: true }));
     }
 
   } catch (error) {
@@ -151,7 +149,7 @@ async function sendRequest(
   }
 }
 
-// EventSource parser for SSE - optimized for immediate processing
+// Simple EventSource parser for SSE
 interface EventSourceParserOptions {
   onEvent: (event: { type: string; event?: string; data: string; id?: string }) => void;
 }
@@ -165,42 +163,36 @@ function createParser(onEvent: EventSourceParserOptions['onEvent']) {
   return {
     feed(chunk: string): void {
       data += chunk;
-      processData();
-    },
-  };
-
-  function processData() {
-    let index = 0;
-    let newLinePosition = -1;
-
-    // Process each line as soon as it's available for immediate response
-    while ((newLinePosition = data.indexOf('\n', index)) !== -1) {
-      const line = data.slice(index, newLinePosition);
-      index = newLinePosition + 1;
-
-      if (line.startsWith('event:')) {
-        eventType = line.slice(6).trim();
-      } else if (line.startsWith('id:')) {
-        eventId = line.slice(3).trim();
-      } else if (line.startsWith('data:')) {
-        eventData = line.slice(5).trim();
-      } else if (line === '') {
-        // Empty line denotes the end of an event - process immediately
-        if (eventType && eventData) {
-          onEvent({
-            type: 'event',
-            event: eventType,
-            data: eventData,
-            id: eventId,
-          });
+      const lines = data.split('\n');
+      
+      // Process all complete lines
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i];
+        
+        if (line.startsWith('event:')) {
+          eventType = line.slice(6).trim();
+        } else if (line.startsWith('id:')) {
+          eventId = line.slice(3).trim();
+        } else if (line.startsWith('data:')) {
+          eventData = line.slice(5).trim();
+        } else if (line === '') {
+          // Empty line denotes the end of an event
+          if (eventType && eventData) {
+            onEvent({
+              type: 'event',
+              event: eventType,
+              data: eventData,
+              id: eventId,
+            });
+          }
+          eventType = '';
+          eventId = '';
+          eventData = '';
         }
-        eventType = '';
-        eventId = '';
-        eventData = '';
       }
+      
+      // Keep the last line if it's incomplete
+      data = lines[lines.length - 1];
     }
-
-    // Keep any unprocessed data for the next chunk
-    data = data.slice(index);
-  }
+  };
 }

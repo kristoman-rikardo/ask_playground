@@ -22,8 +22,6 @@ export function useChatSession() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const partialMessageIdRef = useRef<string | null>(null);
   const currentCompletionContentRef = useRef<string>('');
-  const lastUpdateTimeRef = useRef<number>(0);
-  const streamThrottleRef = useRef<NodeJS.Timeout | null>(null);
   const receivedFirstTraceRef = useRef<boolean>(false);
 
   useEffect(() => {
@@ -61,25 +59,8 @@ export function useChatSession() {
     setMessages(prev => [...prev, message]);
   };
 
-  // Throttled update for one-character-at-a-time streaming
+  // Character-by-character streaming update
   const updatePartialMessage = (messageId: string, text: string, isPartial = true) => {
-    const now = Date.now();
-    
-    // Throttle updates to 2ms per character for the smoothest possible experience
-    if (now - lastUpdateTimeRef.current < 2) {
-      if (streamThrottleRef.current) {
-        clearTimeout(streamThrottleRef.current);
-      }
-      
-      streamThrottleRef.current = setTimeout(() => {
-        updatePartialMessage(messageId, text, isPartial);
-      }, 2);
-      
-      return;
-    }
-    
-    lastUpdateTimeRef.current = now;
-    
     setMessages(prev => {
       const existingMessageIndex = prev.findIndex(msg => msg.id === messageId);
       
@@ -167,9 +148,10 @@ export function useChatSession() {
   const handleTraceEvent = (trace: any) => {
     console.log('Trace event received:', trace.type, trace);
     
-    // Set the receivedFirstTraceRef to true for any trace received
-    // This helps us keep the typing indicator until we receive traces
-    receivedFirstTraceRef.current = true;
+    // Set the receivedFirstTraceRef to true for any content trace received
+    if (trace.type === 'speak' || trace.type === 'text' || (trace.type === 'completion' && trace.payload?.state === 'content')) {
+      receivedFirstTraceRef.current = true;
+    }
     
     switch (trace.type) {
       case 'speak':
@@ -184,29 +166,26 @@ export function useChatSession() {
           partialMessageIdRef.current = msgId;
           addAgentMessage('', true, msgId);
           
-          // Stream the full text character by character
+          // Stream the full text letter by letter
           let currentText = '';
           const fullText = trace.payload.message;
-          let index = 0;
           
-          function streamNextChar() {
+          // Character-by-character streaming - better performance
+          const streamText = (index = 0) => {
             if (index < fullText.length) {
-              // Stream one character at a time
               currentText += fullText[index];
-              addAgentMessage(currentText, true, msgId);
-              index++;
+              updatePartialMessage(msgId, currentText, true);
               
-              // Stream at a consistent fast speed (5-10ms per character)
-              const randomDelay = Math.floor(Math.random() * 5) + 5;
-              setTimeout(streamNextChar, randomDelay);
+              // Stream next character with a small random delay (5-10ms)
+              setTimeout(() => streamText(index + 1), 5 + Math.random() * 5);
             } else {
-              // Only finalize the message when we're done with all characters
-              addAgentMessage(fullText, false, msgId);
+              // Only finalize when entire message is displayed
+              updatePartialMessage(msgId, fullText, false);
             }
-          }
+          };
           
           // Start streaming immediately
-          streamNextChar();
+          streamText();
         }
         break;
       }
@@ -226,20 +205,19 @@ export function useChatSession() {
       
       case 'end':
         console.log('Session ended');
-        // Don't set isTyping to false immediately, wait to ensure complete messages
-        // Only finalize any remaining partial messages
+        // Ensure any partial messages are complete before ending
         if (partialMessageIdRef.current && currentCompletionContentRef.current) {
-          // Make sure we display the complete content
-          addAgentMessage(currentCompletionContentRef.current, false, partialMessageIdRef.current);
+          // Finalize any partial messages with their complete content
+          updatePartialMessage(partialMessageIdRef.current, currentCompletionContentRef.current, false);
           partialMessageIdRef.current = null;
           currentCompletionContentRef.current = '';
         }
         
-        // Wait a short moment after 'end' to ensure all content is complete
+        // Only set typing to false after all messages are complete
         setTimeout(() => {
           setIsTyping(false);
           setIsButtonsLoading(false);
-        }, 100);
+        }, 50);
         break;
       
       default:
@@ -263,52 +241,45 @@ export function useChatSession() {
       partialMessageIdRef.current = msgId;
       currentCompletionContentRef.current = '';
       
-      // Initialize message immediately
+      // Initialize message with empty content
       addAgentMessage('', true, msgId);
-      setIsTyping(true);
+      receivedFirstTraceRef.current = true;
     } 
     else if (state === 'content') {
       if (!content) return;
       
-      // Add the content to the current completion content
+      // Append new content to the current message
       currentCompletionContentRef.current += content;
       
       if (partialMessageIdRef.current) {
-        // Stream the content character by character
-        let existingContent = '';
-        const fullContent = currentCompletionContentRef.current;
+        // Stream text character by character
+        const existingContent = currentCompletionContentRef.current;
+        let currentDisplayedText = '';
         let charIndex = 0;
         
-        function streamCompletionChar() {
-          if (charIndex < fullContent.length) {
-            existingContent += fullContent[charIndex];
-            updatePartialMessage(partialMessageIdRef.current!, existingContent, true);
+        // Immediately stream the first character, then continue character by character
+        const streamChar = () => {
+          if (charIndex < existingContent.length) {
+            currentDisplayedText += existingContent[charIndex];
+            updatePartialMessage(partialMessageIdRef.current!, currentDisplayedText, true);
             charIndex++;
             
-            // Stream at a consistent fast speed (5-10ms per character)
-            const randomDelay = Math.floor(Math.random() * 5) + 5;
-            setTimeout(streamCompletionChar, randomDelay);
+            // Fast but natural pacing (5-10ms per character)
+            setTimeout(streamChar, 5 + Math.random() * 5);
           }
-        }
+        };
         
-        // Only start a new streaming sequence if we're not already streaming
-        if (charIndex === 0) {
-          streamCompletionChar();
-        }
+        // Start streaming
+        streamChar();
       }
     }
     else if (state === 'end') {
       console.log('Completion ended');
       
-      // Make sure to finalize with the complete content
+      // Ensure the full content is displayed
       if (partialMessageIdRef.current) {
-        // Allow a brief delay to ensure we've displayed all content
-        setTimeout(() => {
-          addAgentMessage(currentCompletionContentRef.current, false, partialMessageIdRef.current);
-          partialMessageIdRef.current = null;
-          currentCompletionContentRef.current = '';
-          setIsTyping(false);
-        }, 100);
+        updatePartialMessage(partialMessageIdRef.current, currentCompletionContentRef.current, false);
+        partialMessageIdRef.current = null;
       }
     }
   };
