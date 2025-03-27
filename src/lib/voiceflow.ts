@@ -1,4 +1,3 @@
-
 // src/lib/voiceflow.ts
 import { v4 as uuidv4 } from 'uuid';
 
@@ -133,7 +132,7 @@ async function sendRequest(
       }
     });
 
-    // Process the streaming response
+    // Process the streaming response with minimal buffering
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
@@ -151,7 +150,7 @@ async function sendRequest(
   }
 }
 
-// EventSource parser for SSE
+// EventSource parser for SSE - optimized for speed
 interface EventSourceParserOptions {
   onEvent: (event: { type: string; event?: string; data: string; id?: string }) => void;
 }
@@ -161,6 +160,7 @@ function createParser(onEvent: EventSourceParserOptions['onEvent']) {
   let eventId = '';
   let eventType = '';
   let eventData = '';
+  let buffer = '';
 
   return {
     feed(chunk: string): void {
@@ -185,7 +185,7 @@ function createParser(onEvent: EventSourceParserOptions['onEvent']) {
       } else if (line.startsWith('data:')) {
         eventData = line.slice(5).trim();
       } else if (line === '') {
-        // Empty line denotes the end of an event
+        // Empty line denotes the end of an event - immediately process
         if (eventType && eventData) {
           onEvent({
             type: 'event',

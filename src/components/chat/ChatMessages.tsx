@@ -61,7 +61,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             {message.content ? (
               <div 
                 dangerouslySetInnerHTML={{ __html: parseMarkdown(message.content) }} 
-                className={message.isPartial ? 'animate-pulse opacity-90' : ''}
+                className={message.isPartial ? 'streaming-content' : ''}
               />
             ) : (
               <div className="h-5 w-20 bg-gray-200/50 rounded animate-pulse">

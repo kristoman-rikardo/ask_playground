@@ -17,10 +17,14 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
-  // Custom loader component with the animation in grey
+  // Custom loader component with grey animation
   const LoadingIndicator = () => (
     <div className="h-[120px] flex flex-col items-center justify-center">
-      <div className="loader" style={{ filter: "blur(5px) contrast(10) hue-rotate(0deg)", background: "#fff" }}></div>
+      <div className="loader" style={{ 
+        filter: "blur(5px) contrast(10) hue-rotate(0deg)", 
+        background: "#fff", 
+        opacity: 0.5 // Makes it more grey
+      }}></div>
       <p className="text-gray-500 mt-2 text-sm font-light">Laster spørsmål...</p>
     </div>
   );

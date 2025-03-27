@@ -57,19 +57,19 @@ export function useChatSession() {
     setMessages(prev => [...prev, message]);
   };
 
-  // Throttled update for smoother streaming experience - 20ms for faster streaming
+  // Throttled update for smoother streaming experience - now 10ms for faster streaming
   const updatePartialMessage = (messageId: string, text: string, isPartial = true) => {
     const now = Date.now();
     
-    // Throttle updates to ensure smooth rendering (20ms ≈ 50fps for faster streaming)
-    if (now - lastUpdateTimeRef.current < 20) {
+    // Throttle updates to ensure smooth rendering (10ms ≈ 100fps for faster streaming)
+    if (now - lastUpdateTimeRef.current < 10) {
       if (streamThrottleRef.current) {
         clearTimeout(streamThrottleRef.current);
       }
       
       streamThrottleRef.current = setTimeout(() => {
         updatePartialMessage(messageId, text, isPartial);
-      }, 20);
+      }, 10);
       
       return;
     }
@@ -170,24 +170,30 @@ export function useChatSession() {
           let currentText = '';
           const fullText = trace.payload.message;
           
-          // Start streaming immediately for the first few characters
-          const initialChunk = fullText.substring(0, 5);
+          // Start streaming immediately for the first few characters - increased initial chunk
+          const initialChunk = fullText.substring(0, 10);
           currentText = initialChunk;
           
           partialMessageIdRef.current = msgId;
           addAgentMessage(currentText, true, msgId);
           
-          // Then, stream the rest character by character with delays
+          // Then, stream the rest character by character with faster delays
           let index = initialChunk.length;
           
           function streamNextChar() {
             if (index < fullText.length) {
-              currentText += fullText[index];
-              addAgentMessage(currentText, true, msgId);
-              index++;
+              // Stream more characters at once for faster display (3-5 chars)
+              const charsToAdd = Math.min(
+                Math.floor(Math.random() * 3) + 3, 
+                fullText.length - index
+              );
               
-              // Faster streaming speed (15-25ms)
-              const randomDelay = Math.floor(Math.random() * 10) + 15;
+              currentText += fullText.substring(index, index + charsToAdd);
+              addAgentMessage(currentText, true, msgId);
+              index += charsToAdd;
+              
+              // Much faster streaming speed (5-10ms)
+              const randomDelay = Math.floor(Math.random() * 5) + 5;
               setTimeout(streamNextChar, randomDelay);
             } else {
               // Finalize message when done
@@ -195,8 +201,8 @@ export function useChatSession() {
             }
           }
           
-          // Start streaming after a brief delay
-          setTimeout(streamNextChar, 15);
+          // Start streaming immediately
+          setTimeout(streamNextChar, 5);
         }
         break;
       }
@@ -247,6 +253,8 @@ export function useChatSession() {
       const msgId = `completion-${Date.now()}`;
       partialMessageIdRef.current = msgId;
       currentCompletionContentRef.current = '';
+      
+      // Initialize message immediately
       addAgentMessage('', true, msgId);
       setIsTyping(true);
     } 
@@ -257,6 +265,7 @@ export function useChatSession() {
       currentCompletionContentRef.current += content;
       
       if (partialMessageIdRef.current) {
+        // Update message with current content immediately
         updatePartialMessage(
           partialMessageIdRef.current, 
           currentCompletionContentRef.current, 
