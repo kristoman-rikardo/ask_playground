@@ -55,17 +55,16 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 message.type === 'user' 
                   ? 'chat-message-user ml-auto bg-gray-400 shadow-sm border border-transparent' 
                   : 'chat-message-agent mr-auto shadow-sm bg-gray-300 border border-transparent'
-              } ${message.isPartial ? 'border-l-4 border-blue-300/50' : ''}`}
+              }`}
             >
               {message.content ? (
                 <div 
                   dangerouslySetInnerHTML={{
                     __html: parseMarkdown(message.content)
                   }} 
-                  className={message.isPartial ? 'animate-pulse' : ''}
                 />
               ) : (
-                <div className="h-5 w-20 bg-gray-300/50 rounded animate-pulse">
+                <div className="h-5 w-20 bg-gray-300/50 rounded">
                   {/* Empty content placeholder */}
                 </div>
               )}
