@@ -51,27 +51,32 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               key={message.id} 
               id={`message-${message.id}`} 
               ref={index === messages.length - 1 ? lastMessageRef : null} 
-              className={`px-4 py-3 rounded-xl max-w-[85%] transition-all duration-300 ${
+              className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
                 message.type === 'user' 
-                  ? 'chat-message-user ml-auto bg-gray-200 shadow-sm' 
-                  : 'chat-message-agent mr-auto shadow-sm bg-gray-100'
-              }`}
+                  ? 'chat-message-user ml-auto bg-gray-300 shadow-sm border border-transparent' 
+                  : 'chat-message-agent mr-auto shadow-sm bg-gray-200 border border-transparent'
+              } ${message.isPartial ? 'border-l-4 border-blue-300/50' : ''}`}
             >
               {message.content ? (
                 <div 
                   dangerouslySetInnerHTML={{
                     __html: parseMarkdown(message.content)
                   }} 
+                  className={message.isPartial ? 'animate-pulse' : ''}
                 />
               ) : (
-                <div className="h-5 w-20 bg-gray-200 rounded">
+                <div className="h-5 w-20 bg-gray-300/50 rounded animate-pulse">
                   {/* Empty content placeholder */}
                 </div>
               )}
             </div>
           );
         })
-      ) : null}
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-gray-500">Starting conversation...</p>
+        </div>
+      )}
       
       {isTyping && (
         <div className="mt-2">

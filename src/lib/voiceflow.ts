@@ -1,4 +1,3 @@
-
 // src/lib/voiceflow.ts
 import { v4 as uuidv4 } from 'uuid';
 
@@ -33,14 +32,10 @@ export function parseMarkdown(text: string): string {
 // Simple delay function for animations
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Types for trace handling
-export type TraceHandler = (trace: any) => void;
-export type CompletionCallback = (content: string, isPartial: boolean, messageId: string | null) => void;
-
 // Send a launch request to Voiceflow Dialog API
 export async function vfSendLaunch(
   variables: Record<string, any> = {}, 
-  traceHandler: TraceHandler
+  traceHandler: (trace: any) => void
 ): Promise<void> {
   console.log('Sending launch request to Voiceflow');
   
@@ -56,7 +51,7 @@ export async function vfSendLaunch(
 // Send a message to Voiceflow Dialog API
 export async function vfSendMessage(
   message: string, 
-  traceHandler: TraceHandler,
+  traceHandler: (trace: any) => void,
   variables: Record<string, any> = {}
 ): Promise<void> {
   console.log(`Sending message to Voiceflow: ${message}`);
@@ -74,7 +69,7 @@ export async function vfSendMessage(
 // Send an action to Voiceflow Dialog API (for button clicks)
 export async function vfSendAction(
   action: any,
-  traceHandler: TraceHandler,
+  traceHandler: (trace: any) => void,
   variables: Record<string, any> = {}
 ): Promise<void> {
   console.log('Sending action to Voiceflow:', action);
@@ -90,7 +85,7 @@ export async function vfSendAction(
 async function sendRequest(
   action: any,
   variables: Record<string, any> = {},
-  traceHandler: TraceHandler
+  traceHandler: (trace: any) => void
 ): Promise<void> {
   if (!RUNTIME_API_KEY || !PROJECT_ID) {
     console.error('Missing Voiceflow API key or project ID');
@@ -125,40 +120,86 @@ async function sendRequest(
       throw new Error(`API failed with status ${response.status}`);
     }
 
+    // Create EventSource parser
+    const parser = createParser(event => {
+      if (event.type === 'event' && event.event === 'trace') {
+        try {
+          const trace = JSON.parse(event.data);
+          traceHandler(trace);
+        } catch (error) {
+          console.error('Error parsing trace event:', error);
+        }
+      }
+    });
+
     // Process the streaming response
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let buffer = '';
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       
-      // Decode the chunk and add it to our buffer
-      buffer += decoder.decode(value, { stream: true });
-      
-      // Process complete events from the buffer
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // Keep the last incomplete line in the buffer
-      
-      for (const line of lines) {
-        if (line.trim() === '') continue;
-        
-        if (line.startsWith('data:')) {
-          try {
-            const data = line.slice(5).trim();
-            const event = JSON.parse(data);
-            // Pass the event to the trace handler
-            traceHandler(event);
-          } catch (error) {
-            console.error('Error parsing event:', line, error);
-          }
-        }
-      }
+      const chunk = decoder.decode(value, { stream: true });
+      parser.feed(chunk);
     }
 
   } catch (error) {
     console.error('Error sending request to Voiceflow:', error);
     throw error;
+  }
+}
+
+// EventSource parser for SSE
+interface EventSourceParserOptions {
+  onEvent: (event: { type: string; event?: string; data: string; id?: string }) => void;
+}
+
+function createParser(onEvent: EventSourceParserOptions['onEvent']) {
+  let data = '';
+  let eventId = '';
+  let eventType = '';
+  let eventData = '';
+
+  return {
+    feed(chunk: string): void {
+      data += chunk;
+      processData();
+    },
+  };
+
+  function processData() {
+    let index = 0;
+    let startingPosition = 0;
+    let newLinePosition = -1;
+
+    while ((newLinePosition = data.indexOf('\n', index)) !== -1) {
+      const line = data.slice(index, newLinePosition);
+      index = newLinePosition + 1;
+
+      if (line.startsWith('event:')) {
+        eventType = line.slice(6).trim();
+      } else if (line.startsWith('id:')) {
+        eventId = line.slice(3).trim();
+      } else if (line.startsWith('data:')) {
+        eventData = line.slice(5).trim();
+      } else if (line === '') {
+        // Empty line denotes the end of an event
+        if (eventType && eventData) {
+          onEvent({
+            type: 'event',
+            event: eventType,
+            data: eventData,
+            id: eventId,
+          });
+        }
+        eventType = '';
+        eventId = '';
+        eventData = '';
+      }
+    }
+
+    // Keep any unprocessed data for the next chunk
+    data = data.slice(index);
   }
 }

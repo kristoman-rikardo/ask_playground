@@ -17,13 +17,11 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div 
-      className="w-full mx-auto bg-transparent shadow-none rounded-2xl overflow-hidden transition-all font-sans border border-gray-200"
+      className="w-full mx-auto bg-transparent shadow-none rounded-2xl overflow-hidden transition-all font-sans"
       style={{ height: '100%' }}
     >
       <div className="flex flex-col h-full">
-        <div className={`flex-1 flex flex-col overflow-hidden min-h-[200px] transition-all duration-300 ${
-          messages.length === 0 ? 'justify-end' : ''
-        }`}>
+        <div className="flex-1 flex flex-col overflow-hidden min-h-[200px]">
           <ChatMessages 
             messages={messages} 
             isTyping={isTyping} 
@@ -36,10 +34,7 @@ const ChatInterface: React.FC = () => {
           onButtonClick={handleButtonClick} 
         />
         
-        <ChatInputArea 
-          onSendMessage={sendUserMessage} 
-          isCollapsed={false} // Make sure input is always visible
-        />
+        <ChatInputArea onSendMessage={sendUserMessage} />
       </div>
     </div>
   );
