@@ -52,7 +52,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
 
   return (
     <div className="p-3 bg-transparent">
-      <div className="flex items-end bg-white chat-input">
+      <div className="flex items-end bg-white chat-input border border-gray-300 rounded-lg overflow-hidden">
         <textarea
           ref={inputRef}
           value={inputMessage}
@@ -64,7 +64,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
         />
         <button
           onClick={handleSendMessage}
-          className={`p-3 flex items-center justify-center w-12 h-[40px] transition-colors rounded-r-lg ${
+          className={`p-3 flex items-center justify-center w-12 h-[40px] transition-colors ${
             inputMessage.trim() ? 'text-blue-500 hover:text-blue-600' : 'text-gray-400'
           }`}
           disabled={!inputMessage.trim()}

@@ -1,3 +1,4 @@
+
 // src/lib/voiceflow.ts
 import { v4 as uuidv4 } from 'uuid';
 
@@ -32,10 +33,14 @@ export function parseMarkdown(text: string): string {
 // Simple delay function for animations
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Types for trace handling
+export type TraceHandler = (trace: any) => void;
+export type CompletionCallback = (content: string, isPartial: boolean, messageId: string | null) => void;
+
 // Send a launch request to Voiceflow Dialog API
 export async function vfSendLaunch(
   variables: Record<string, any> = {}, 
-  traceHandler: (trace: any) => void
+  traceHandler: TraceHandler
 ): Promise<void> {
   console.log('Sending launch request to Voiceflow');
   
@@ -51,7 +56,7 @@ export async function vfSendLaunch(
 // Send a message to Voiceflow Dialog API
 export async function vfSendMessage(
   message: string, 
-  traceHandler: (trace: any) => void,
+  traceHandler: TraceHandler,
   variables: Record<string, any> = {}
 ): Promise<void> {
   console.log(`Sending message to Voiceflow: ${message}`);
@@ -69,7 +74,7 @@ export async function vfSendMessage(
 // Send an action to Voiceflow Dialog API (for button clicks)
 export async function vfSendAction(
   action: any,
-  traceHandler: (trace: any) => void,
+  traceHandler: TraceHandler,
   variables: Record<string, any> = {}
 ): Promise<void> {
   console.log('Sending action to Voiceflow:', action);
@@ -85,7 +90,7 @@ export async function vfSendAction(
 async function sendRequest(
   action: any,
   variables: Record<string, any> = {},
-  traceHandler: (trace: any) => void
+  traceHandler: TraceHandler
 ): Promise<void> {
   if (!RUNTIME_API_KEY || !PROJECT_ID) {
     console.error('Missing Voiceflow API key or project ID');

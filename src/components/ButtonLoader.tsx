@@ -1,0 +1,44 @@
+
+import React from 'react';
+
+const ButtonLoader: React.FC = () => {
+  return (
+    <div className="flex justify-center items-center p-4">
+      <div className="loader">
+        <style jsx>{`
+          .loader {
+            width: 100px;
+            aspect-ratio: 1;
+            padding: 10px;
+            box-sizing: border-box;
+            display: grid;
+            background: #fff;
+            filter: blur(5px) contrast(10) hue-rotate(300deg);
+            mix-blend-mode: darken;
+          }
+          .loader:before,
+          .loader:after { 
+            content: "";
+            grid-area: 1/1; 
+            width: 40px;
+            height: 40px;
+            background: #ffff00;
+            animation: l7 2s infinite;
+          }
+          .loader:after { 
+            animation-delay: -1s;
+          }
+          @keyframes l7 {
+            0%   {transform: translate(   0,0)}
+            25%  {transform: translate(100%,0)}
+            50%  {transform: translate(100%,100%)}
+            75%  {transform: translate(   0,100%)}
+            100% {transform: translate(   0,0)}
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+};
+
+export default ButtonLoader;

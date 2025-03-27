@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useRef } from 'react';
-import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
+import { vfSendLaunch, vfSendMessage, vfSendAction, TraceHandler } from '@/lib/voiceflow';
 
 export interface Message {
   id: string;
@@ -130,7 +131,7 @@ export function useChatSession() {
     }
   };
 
-  const handleTraceEvent = (trace: any) => {
+  const handleTraceEvent: TraceHandler = (trace) => {
     console.log('Trace event received:', trace.type, trace);
     
     switch (trace.type) {
