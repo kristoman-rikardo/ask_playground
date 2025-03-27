@@ -101,11 +101,11 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 rounded-2xl bg-transparent
-            border border-gray-200 ${isFocused 
-              ? 'ring-1 ring-gray-200/50' 
+            border border-gray-300 ${isFocused 
+              ? 'ring-1 ring-gray-300/50' 
               : inputValue 
                 ? '' 
-                : 'hover:border-gray-300/50'
+                : 'hover:border-gray-400/50'
             }`} 
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />

@@ -103,15 +103,15 @@
 
 @layer components {
   .chat-message-user {
-    @apply bg-transparent text-gray-800 self-end animate-fade-in shadow-sm border border-transparent;
+    @apply bg-gray-200 text-gray-800 self-end animate-fade-in shadow-sm border border-transparent;
   }
 
   .chat-message-agent {
-    @apply bg-transparent text-gray-800 self-start animate-fade-in relative pr-4 shadow-sm border border-transparent;
+    @apply bg-gray-100 text-gray-800 self-start animate-fade-in relative pr-4 shadow-sm border border-transparent;
   }
 
   .choice-button {
-    @apply bg-gray-50/40 text-gray-800 hover:bg-gray-50/80 transition-all 
+    @apply bg-gray-50 text-gray-800 hover:bg-gray-100 transition-all 
            shadow-sm border border-gray-100 rounded-xl px-4 py-2.5
            transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-md 
            duration-300 font-medium whitespace-nowrap overflow-hidden text-ellipsis;
@@ -179,5 +179,36 @@
     content: '|';
     animation: cursor-blink 1s infinite;
     margin-left: 2px;
+  }
+
+  /* Custom loader animation */
+  .loader {
+    width: 100px;
+    aspect-ratio: 1;
+    padding: 10px;
+    box-sizing: border-box;
+    display: grid;
+    background: #fff;
+    filter: blur(5px) contrast(10) hue-rotate(300deg);
+    mix-blend-mode: darken;
+  }
+  .loader:before,
+  .loader:after{ 
+    content: "";
+    grid-area: 1/1; 
+    width: 40px;
+    height: 40px;
+    background: #ffff00;
+    animation: l7 2s infinite;
+  }
+  .loader:after{ 
+    animation-delay: -1s;
+  }
+  @keyframes l7{
+    0%   {transform: translate(   0,0)}
+    25%  {transform: translate(100%,0)}
+    50%  {transform: translate(100%,100%)}
+    75%  {transform: translate(   0,100%)}
+    100% {transform: translate(   0,0)}
   }
 }

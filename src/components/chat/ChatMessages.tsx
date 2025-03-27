@@ -53,8 +53,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               ref={index === messages.length - 1 ? lastMessageRef : null} 
               className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
                 message.type === 'user' 
-                  ? 'chat-message-user ml-auto bg-gray-100/50 shadow-sm border border-transparent' 
-                  : 'chat-message-agent mr-auto shadow-sm bg-[#F6F6F7]/70 border border-transparent'
+                  ? 'chat-message-user ml-auto bg-gray-200 shadow-sm border border-transparent' 
+                  : 'chat-message-agent mr-auto shadow-sm bg-gray-100 border border-transparent'
               } ${message.isPartial ? 'border-l-4 border-blue-300/50' : ''}`}
             >
               {message.content ? (

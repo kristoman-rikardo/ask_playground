@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
 
@@ -19,12 +18,17 @@ export function useChatSession() {
   const [isTyping, setIsTyping] = useState(false);
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
+  const [sessionStarted, setSessionStarted] = useState(false);
   const partialMessageIdRef = useRef<string | null>(null);
   const currentCompletionContentRef = useRef<string>('');
 
   useEffect(() => {
-    startChatSession();
-  }, []);
+    // Only start the chat session once when the component mounts
+    if (!sessionStarted) {
+      startChatSession();
+      setSessionStarted(true);
+    }
+  }, [sessionStarted]);
 
   const startChatSession = async () => {
     console.log('Starting chat session...');
@@ -37,7 +41,6 @@ export function useChatSession() {
       addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
     } finally {
       setIsTyping(false);
-      setIsButtonsLoading(false);
     }
   };
 

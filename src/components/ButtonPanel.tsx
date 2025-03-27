@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Loader } from 'lucide-react';
 
 interface Button {
   name: string;
@@ -18,13 +17,10 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
-  // Loading state component
+  // Custom loader component with the animation provided
   const LoadingIndicator = () => (
     <div className="h-[120px] flex items-center justify-center">
-      <div className="flex flex-col items-center justify-center">
-        <Loader className="w-8 h-8 text-gray-600 animate-spin" />
-        <span className="text-sm text-gray-500 mt-2 font-medium">Loading options...</span>
-      </div>
+      <div className="loader"></div>
     </div>
   );
 
@@ -59,7 +55,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
           className="choice-button whitespace-nowrap overflow-hidden text-ellipsis transition-all 
                    duration-300 text-base text-left rounded-2xl my-0 mx-[2px] 
                    px-[15px] py-[8px] border border-gray-100 shadow-sm hover:shadow-md
-                   hover:bg-gray-50/80 max-w-full bg-gray-50/40"
+                   hover:bg-gray-100 max-w-full bg-gray-50"
           style={{ maxWidth: '100%' }}
         >
           {button.name}
