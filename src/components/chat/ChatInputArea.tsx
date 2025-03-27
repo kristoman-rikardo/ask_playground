@@ -17,52 +17,25 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   const [isButtonVisible, setIsButtonVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Short and long suggestion variations based on widget width
-  const shortSuggestions = [
-    "Spør meg om returvilkår...", 
-    "Spør meg om materialer...", 
-    "Spør meg om bærekraft...", 
-    "Spør meg om størrelser...", 
-    "Spør meg om vedlikehold...", 
-    "Spør meg om garantier..."
+  // Short suggestion variations
+  const suggestions = [
+    "Spør meg om returvilkår", 
+    "Spør meg om materialer", 
+    "Spør meg om bærekraft", 
+    "Spør meg om størrelser", 
+    "Spør meg om vedlikehold", 
+    "Spør meg om garanti"
   ];
   
-  const longSuggestions = [
-    "Spør meg om returvilkårene for denne varen...", 
-    "Spør meg om materialbruk og teknologier i dette produktet...", 
-    "Spør meg om bærekraft i produksjonen av denne varen...", 
-    "Spør meg om størrelsesanbefalinger for dette produktet...", 
-    "Spør meg om vedlikeholdstips for denne varen...", 
-    "Spør meg om garanti og reklamasjonsrettigheter for dette produktet..."
-  ];
-  
-  // Detect widget width to use appropriate suggestion length
-  const [useShortSuggestions, setUseShortSuggestions] = useState(false);
-  
-  useEffect(() => {
-    const checkWidth = () => {
-      // When container is less than 70% of the max width, use short suggestions
-      const widgetWidth = document.querySelector('.widget-container')?.clientWidth || 0;
-      const windowWidth = window.innerWidth;
-      const widgetPercentage = (widgetWidth / windowWidth) * 100;
-      
-      setUseShortSuggestions(widgetPercentage < 70);
-    };
-    
-    checkWidth();
-    window.addEventListener('resize', checkWidth);
-    return () => window.removeEventListener('resize', checkWidth);
-  }, []);
-
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isInputStreaming && inputValue === '' && !isFocused) {
         streamPlaceholder();
       }
-    }, 1800); // More frequent streaming
+    }, 1500); // More frequent streaming
 
     return () => clearInterval(interval);
-  }, [inputValue, isInputStreaming, isFocused, useShortSuggestions]);
+  }, [inputValue, isInputStreaming, isFocused]);
   
   // Handle button visibility with animation delay
   useEffect(() => {
@@ -80,8 +53,6 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     if (isInputStreaming || inputValue !== '') return;
     setIsInputStreaming(true);
     
-    // Choose suggestion set based on widget width
-    const suggestions = useShortSuggestions ? shortSuggestions : longSuggestions;
     const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
     const baseText = 'Spør meg om '; // Base text with space but no ellipsis
 
@@ -95,17 +66,17 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     for (let i = 0; i < remainingText.length; i++) {
       currentText += remainingText[i];
       setPlaceholder(currentText + '...');
-      await delay(80); // Delay between letters
+      await delay(40); // Faster typing (was 80)
     }
 
     // Wait when fully written
-    await delay(2000);
+    await delay(1500); // Shorter wait time (was 2000)
 
-    // Erase letter by letter with animation
+    // Erase letter by letter with animation - faster deletion
     const fullText = currentText + '...';
     for (let i = fullText.length; i > baseText.length; i--) {
       setPlaceholder(fullText.substring(0, i));
-      await delay(40); // Faster deletion animation (smaller delay)
+      await delay(20); // Much faster deletion (was 40)
     }
 
     // Reset to base text with ellipsis
@@ -131,12 +102,12 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className={`flex-1 px-4 py-2 pr-10 border font-light font-sans transition-all duration-300 rounded-2xl bg-transparent
+          className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 rounded-2xl bg-transparent
             ${isFocused 
-              ? 'border-transparent ring-2 ring-gray-200/50' 
+              ? 'border border-gray-200 ring-1 ring-gray-200/50' 
               : inputValue 
-                ? 'border-transparent' 
-                : 'border-transparent hover:border-transparent'
+                ? 'border border-gray-100/50' 
+                : 'border border-gray-100/30 hover:border-gray-100/50'
             }`} 
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />

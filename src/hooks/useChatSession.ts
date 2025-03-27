@@ -54,7 +54,11 @@ export function useChatSession() {
   const addAgentMessage = (text: string, isPartial = false, existingId?: string) => {
     const messageId = existingId || Date.now().toString();
     
-    console.log(`${isPartial ? 'Partial' : 'Final'} agent message:`, { messageId, text: text.substring(0, 50) + (text.length > 50 ? '...' : '') });
+    console.log(`${isPartial ? 'Partial' : 'Final'} agent message:`, { 
+      messageId, 
+      text: text.substring(0, 50) + (text.length > 50 ? '...' : ''), 
+      isPartial 
+    });
     
     setMessages(prev => {
       // If updating an existing partial message
@@ -153,6 +157,13 @@ export function useChatSession() {
         console.log('Session ended');
         setIsTyping(false);
         setIsButtonsLoading(false);
+        
+        // Ensure any partial message is finalized
+        if (partialMessageIdRef.current && currentCompletionContentRef.current) {
+          addAgentMessage(currentCompletionContentRef.current, false, partialMessageIdRef.current);
+          partialMessageIdRef.current = null;
+          currentCompletionContentRef.current = '';
+        }
         break;
       
       default:
@@ -167,7 +178,7 @@ export function useChatSession() {
     }
     
     const { state, content } = payload;
-    console.log('Completion event:', state, content?.substring(0, 50));
+    console.log('Completion event:', state, content ? content.substring(0, 50) : '');
     
     if (state === 'start') {
       console.log('Completion started');

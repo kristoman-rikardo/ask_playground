@@ -64,11 +64,14 @@ export async function vfInteractStream(
           // Parse the SSE message
           const lines = message.split('\n');
           let eventType = '';
+          let eventId = '';
           let data = '';
           
           for (const line of lines) {
             if (line.startsWith('event:')) {
               eventType = line.substring('event:'.length).trim();
+            } else if (line.startsWith('id:')) {
+              eventId = line.substring('id:'.length).trim();
             } else if (line.startsWith('data:')) {
               data = line.substring('data:'.length).trim();
             }
@@ -77,11 +80,14 @@ export async function vfInteractStream(
           if (eventType === 'trace' && data) {
             try {
               const traceData = JSON.parse(data);
-              console.log('Processed trace event:', traceData.type, traceData);
+              console.log(`Trace event (${eventId}):`, traceData.type, traceData);
               onSseTrace(traceData);
             } catch (err) {
               console.error('Error parsing trace data:', err, data);
             }
+          } else if (eventType === 'end') {
+            console.log('End of stream event received');
+            onSseTrace({ type: 'end' });
           }
         }
       }
@@ -144,6 +150,7 @@ export async function fakeStreamMessage(fullMessage: string, element: HTMLElemen
   for (let i = 0; i < words.length; i++) {
     current += (i === 0 ? "" : " ") + words[i];
     element.innerHTML = parseMarkdown(current);
-    await delay(Math.floor(Math.random() * 20) + 10);
+    await delay(Math.floor(Math.random() * 10) + 5); // Faster streaming
   }
 }
+

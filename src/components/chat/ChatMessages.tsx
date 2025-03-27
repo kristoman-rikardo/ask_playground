@@ -13,7 +13,7 @@ interface ChatMessagesProps {
 // Sparkle SVG icon component
 const SparkleIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-    fill="currentColor" className="size-4 inline-block ml-1 text-gray-400 align-text-bottom">
+    fill="currentColor" className="size-5 inline-block ml-1 text-gray-400 align-text-bottom">
     <path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785
             l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238
             1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192
@@ -118,8 +118,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               ref={index === messages.length - 1 ? lastMessageRef : null} 
               className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
                 message.type === 'user' 
-                  ? 'chat-message-user ml-auto bg-gray-100/50 shadow-none border border-transparent' 
-                  : 'chat-message-agent mr-auto shadow-none bg-[#F6F6F7]/70 border border-transparent'
+                  ? 'chat-message-user ml-auto bg-gray-100/50 shadow-sm border border-transparent' 
+                  : 'chat-message-agent mr-auto shadow-sm bg-[#F6F6F7]/70 border border-transparent'
               } ${message.isPartial ? 'border-l-4 border-blue-300/50' : ''}`}
             >
               {message.content ? (

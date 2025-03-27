@@ -31,7 +31,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   // Sparkle SVG icon
   const SparkleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-      fill="currentColor" className="size-4 inline-block ml-1 text-gray-400">
+      fill="currentColor" className="size-5 inline-block ml-1 text-gray-400">
       <path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785
               l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238
               1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192
@@ -50,15 +50,15 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   // Button list component with enhanced responsive layout and text truncation
   const ButtonList = () => (
-    <div className="h-auto min-h-[120px] flex flex-wrap gap-3 p-3 content-start">
+    <div className="h-auto min-h-[120px] flex flex-wrap gap-2 p-3 content-start">
       {buttons.map((button, index) => (
         <button 
           key={`button-${index}-${button.name.substring(0, 10)}`} 
           onClick={() => onButtonClick(button)} 
           title={button.name} 
           className="choice-button whitespace-nowrap overflow-hidden text-ellipsis transition-all 
-                   duration-300 text-base text-left bg-transparent rounded-2xl my-0 mx-[5px] 
-                   px-[15px] py-[8px] border border-gray-100 shadow-sm
+                   duration-300 text-base text-left bg-transparent rounded-2xl my-0 mx-[2px] 
+                   px-[15px] py-[8px] border border-gray-100 shadow-sm hover:shadow-md
                    hover:bg-gray-50/50 max-w-full"
           style={{ maxWidth: '100%' }}
         >
@@ -74,7 +74,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
       {/* AI Sparkle Icon in top left corner */}
       <div className="absolute top-3 left-3">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-          fill="currentColor" className="size-4 text-gray-300">
+          fill="currentColor" className="size-5 text-gray-300">
           <path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785
                   l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238
                   1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192

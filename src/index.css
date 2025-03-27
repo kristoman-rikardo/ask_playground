@@ -103,17 +103,17 @@
 
 @layer components {
   .chat-message-user {
-    @apply bg-transparent text-gray-800 self-end animate-fade-in shadow-none border border-transparent;
+    @apply bg-transparent text-gray-800 self-end animate-fade-in shadow-sm border border-transparent;
   }
 
   .chat-message-agent {
-    @apply bg-transparent text-gray-800 self-start animate-fade-in relative pr-12 shadow-none border border-transparent;
+    @apply bg-transparent text-gray-800 self-start animate-fade-in relative pr-12 shadow-sm border border-transparent;
   }
 
   .choice-button {
     @apply bg-transparent text-gray-800 hover:bg-gray-50/50 transition-all 
-           shadow-none border border-gray-100 rounded-xl px-4 py-2.5
-           transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-sm 
+           shadow-sm border border-gray-100 rounded-xl px-4 py-2.5
+           transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-md 
            duration-300 font-medium whitespace-nowrap overflow-hidden text-ellipsis;
     width: fit-content !important;
     display: inline-block !important;
@@ -138,16 +138,16 @@
   
   /* Enhanced input field styling */
   .chat-input {
-    @apply border border-transparent rounded-lg px-4 py-3 w-full outline-none
+    @apply border border-gray-100/30 rounded-lg px-4 py-3 w-full outline-none
            transition-all duration-200 bg-transparent font-light;
   }
   
   .chat-input:hover {
-    @apply border-transparent shadow-none;
+    @apply border-gray-100/50 shadow-sm;
   }
   
   .chat-input:focus {
-    @apply border-transparent ring-1 ring-gray-100/30;
+    @apply border-gray-200 ring-1 ring-gray-200/50;
   }
   
   /* Widget container */
@@ -179,5 +179,17 @@
       transform: scale(1);
       opacity: 1;
     }
+  }
+  
+  /* Streaming message animation */
+  @keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  
+  .streaming-cursor::after {
+    content: '|';
+    animation: cursor-blink 1s infinite;
+    margin-left: 2px;
   }
 }
