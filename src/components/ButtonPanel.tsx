@@ -28,7 +28,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
         <button
           key={`${button.name}-${index}`}
           onClick={() => onButtonClick(button)}
-          className="px-4 py-2 text-sm bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
         >
           {button.name}
         </button>

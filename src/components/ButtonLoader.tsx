@@ -5,8 +5,7 @@ const ButtonLoader: React.FC = () => {
   return (
     <div className="flex justify-center items-center p-4">
       <div className="loader">
-        <style>
-          {`
+        <style dangerouslySetInnerHTML={{ __html: `
           .loader {
             width: 100px;
             aspect-ratio: 1;
@@ -36,8 +35,7 @@ const ButtonLoader: React.FC = () => {
             75%  {transform: translate(   0,100%)}
             100% {transform: translate(   0,0)}
           }
-          `}
-        </style>
+        `}} />
       </div>
     </div>
   );
