@@ -1,12 +1,12 @@
 // src/lib/voiceflow.ts
 import { v4 as uuidv4 } from 'uuid';
 
-const RUNTIME_API_KEY = import.meta.env.VITE_VOICEFLOW_API_KEY || "VF.DM.67d466872e0fa2e87529d165.jvSM4GSGdSCXVn2z";
+const RUNTIME_API_KEY = import.meta.env.VITE_VOICEFLOW_API_KEY;
 const RUNTIME_ENDPOINT = 'https://general-runtime.voiceflow.com';
-const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID || "67d1ad605c5916e15e7ceb94";
+const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID;
 
-// User session ID - fixed for testing but can be dynamic in production
-const USER_ID = '123456777';
+// User session ID
+const USER_ID = 'user_' + uuidv4();
 
 export function parseMarkdown(text: string): string {
   if (!text) return '';
@@ -42,6 +42,7 @@ export async function vfSendLaunch(
   await sendRequest(
     {
       type: 'launch',
+      payload: {}
     },
     variables,
     traceHandler
@@ -94,8 +95,6 @@ async function sendRequest(
 
   const queryParams = new URLSearchParams({
     completion_events: 'true', // Enable streaming completion events
-    environment: 'production',
-    state: 'false'
   });
 
   try {
@@ -106,8 +105,7 @@ async function sendRequest(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': RUNTIME_API_KEY,
-          'Accept': 'text/event-stream'
+          Authorization: RUNTIME_API_KEY,
         },
         body: JSON.stringify({
           action,

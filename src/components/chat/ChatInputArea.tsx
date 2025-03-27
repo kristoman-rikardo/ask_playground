@@ -1,89 +1,130 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { delay } from '@/lib/voiceflow';
 
 interface ChatInputAreaProps {
   onSendMessage: (message: string) => void;
 }
 
-const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage }) => {
-  const [inputMessage, setInputMessage] = useState('');
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+const ChatInputArea: React.FC<ChatInputAreaProps> = ({
+  onSendMessage
+}) => {
+  const [inputValue, setInputValue] = useState('');
+  const [isInputStreaming, setIsInputStreaming] = useState(false);
+  const [placeholder, setPlaceholder] = useState('Spør meg om...');
+  const [isFocused, setIsFocused] = useState(false);
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   
-  // Auto-focus input on component mount
+  // Short suggestion variations
+  const suggestions = [
+    "Spør meg om returvilkår", 
+    "Spør meg om materialer", 
+    "Spør meg om bærekraft", 
+    "Spør meg om størrelser"
+  ];
+  
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-
-  // Handle text input changes with auto-resize
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const target = e.target;
-    setInputMessage(target.value);
-    
-    // Reset height to auto to correctly calculate the new height
-    target.style.height = 'auto';
-    
-    // Set new height based on scrollHeight, with a max of 120px
-    const newHeight = Math.min(target.scrollHeight, 120);
-    target.style.height = `${newHeight}px`;
-  };
-
-  // Handle sending messages
-  const handleSendMessage = () => {
-    if (inputMessage.trim()) {
-      onSendMessage(inputMessage.trim());
-      setInputMessage('');
-      
-      // Reset textarea height
-      if (inputRef.current) {
-        inputRef.current.style.height = 'auto';
+    const interval = setInterval(() => {
+      if (!isInputStreaming && inputValue === '' && !isFocused) {
+        streamPlaceholder();
       }
+    }, 1200); // More frequent streaming
+
+    return () => clearInterval(interval);
+  }, [inputValue, isInputStreaming, isFocused]);
+  
+  // Handle button visibility with animation delay
+  useEffect(() => {
+    if (inputValue.trim()) {
+      setIsButtonVisible(true);
+    } else {
+      const timer = setTimeout(() => {
+        setIsButtonVisible(false);
+      }, 300); // Match the exit animation duration
+      return () => clearTimeout(timer);
     }
+  }, [inputValue]);
+
+  const streamPlaceholder = async () => {
+    if (isInputStreaming || inputValue !== '') return;
+    setIsInputStreaming(true);
+    
+    const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+    const baseText = 'Spør meg om '; // Base text with space but no ellipsis
+
+    // Set the base text first
+    setPlaceholder(baseText + '...');
+
+    // Stream the remaining characters letter by letter
+    const remainingText = randomSuggestion.substring(baseText.length);
+    let currentText = baseText;
+    
+    for (let i = 0; i < remainingText.length; i++) {
+      currentText += remainingText[i];
+      setPlaceholder(currentText + '...');
+      await delay(30); // Faster typing (was 40)
+    }
+
+    // Wait when fully written
+    await delay(1200); // Shorter wait time (was 1500)
+
+    // Erase letter by letter with animation - faster deletion
+    const fullText = currentText + '...';
+    for (let i = fullText.length; i > baseText.length; i--) {
+      setPlaceholder(fullText.substring(0, i));
+      await delay(15); // Much faster deletion (was 20)
+    }
+
+    // Reset to base text with ellipsis
+    setPlaceholder('Spør meg om...');
+    setIsInputStreaming(false);
   };
 
-  // Handle key press events (Enter to send, Shift+Enter for new line)
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+  const handleSend = () => {
+    if (!inputValue.trim()) return;
+    onSendMessage(inputValue.trim());
+    setInputValue('');
   };
 
   return (
-    <div className="p-3 bg-transparent">
-      <div className="flex items-end bg-white chat-input">
-        <textarea
-          ref={inputRef}
-          value={inputMessage}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyPress}
-          className="flex-1 p-3 leading-relaxed outline-none resize-none rounded-l-lg h-[40px] max-h-[120px] bg-white"
-          placeholder="Type your message..."
-          rows={1}
+    <div className="w-full bg-transparent border-t border-transparent p-4">
+      <div className="flex items-center space-x-2 relative">
+        <input 
+          ref={inputRef} 
+          type="text" 
+          value={inputValue} 
+          onChange={e => setInputValue(e.target.value)} 
+          onKeyPress={e => e.key === 'Enter' && handleSend()} 
+          placeholder={placeholder}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 rounded-2xl bg-transparent
+            border border-gray-300 ${isFocused 
+              ? 'ring-1 ring-gray-300/50' 
+              : inputValue 
+                ? '' 
+                : 'hover:border-gray-400/50'
+            }`} 
+          style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
-        <button
-          onClick={handleSendMessage}
-          className={`p-3 flex items-center justify-center w-12 h-[40px] transition-colors rounded-r-lg ${
-            inputMessage.trim() ? 'text-blue-500 hover:text-blue-600' : 'text-gray-400'
-          }`}
-          disabled={!inputMessage.trim()}
+        
+        {/* Animated circular send button with scale-in/out and ripple effect */}
+        <div 
+          className={`absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-300 transform 
+            ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <button 
+            onClick={handleSend}
+            className="p-1.5 bg-transparent text-gray-600 rounded-full 
+                     transition-all duration-300 transform hover:scale-110 active:scale-95
+                     hover:bg-gray-100/50 focus:outline-none"
+            aria-label="Send message"
           >
-            <path d="m22 2-7 20-4-9-9-4Z" />
-            <path d="M22 2 11 13" />
-          </svg>
-        </button>
+            <ArrowRight size={14} className="transform transition-transform duration-300" />
+          </button>
+        </div>
       </div>
     </div>
   );
