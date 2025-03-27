@@ -187,28 +187,27 @@
     padding: 10px;
     box-sizing: border-box;
     display: grid;
-    background: #ccc; /* Updated to grey */
-    filter: blur(5px) contrast(5) hue-rotate(0deg); /* Reduced contrast for greyer look */
-    mix-blend-mode: darken;
+    background: #fff;
+    /* No filter or blend mode */
   }
   .loader:before,
-  .loader:after{ 
+  .loader:after { 
     content: "";
     grid-area: 1/1; 
     width: 40px;
     height: 40px;
-    background: #aaa; /* Updated to grey */
+    background: #444;  /* Dark gray color */
     animation: l7 2s infinite;
   }
-  .loader:after{ 
+  .loader:after { 
     animation-delay: -1s;
   }
-  @keyframes l7{
-    0%   {transform: translate(   0,0)}
-    25%  {transform: translate(100%,0)}
-    50%  {transform: translate(100%,100%)}
-    75%  {transform: translate(   0,100%)}
-    100% {transform: translate(   0,0)}
+  @keyframes l7 {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(100%, 0); }
+    50%  { transform: translate(100%, 100%); }
+    75%  { transform: translate(0, 100%); }
+    100% { transform: translate(0, 0); }
   }
 
   /* Streaming content animation */

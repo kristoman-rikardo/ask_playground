@@ -132,7 +132,7 @@ async function sendRequest(
       }
     });
 
-    // Process the streaming response with minimal buffering
+    // Process the streaming response with absolute minimal buffering for speed
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
@@ -160,7 +160,6 @@ function createParser(onEvent: EventSourceParserOptions['onEvent']) {
   let eventId = '';
   let eventType = '';
   let eventData = '';
-  let buffer = '';
 
   return {
     feed(chunk: string): void {
@@ -171,9 +170,9 @@ function createParser(onEvent: EventSourceParserOptions['onEvent']) {
 
   function processData() {
     let index = 0;
-    let startingPosition = 0;
     let newLinePosition = -1;
 
+    // Process each line as soon as it's available for maximum speed
     while ((newLinePosition = data.indexOf('\n', index)) !== -1) {
       const line = data.slice(index, newLinePosition);
       index = newLinePosition + 1;

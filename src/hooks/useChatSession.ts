@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { vfSendLaunch, vfSendMessage, vfSendAction } from '@/lib/voiceflow';
 
@@ -24,6 +23,7 @@ export function useChatSession() {
   const currentCompletionContentRef = useRef<string>('');
   const lastUpdateTimeRef = useRef<number>(0);
   const streamThrottleRef = useRef<NodeJS.Timeout | null>(null);
+  const receivedFirstTraceRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Only start the chat session once when the component mounts
@@ -37,13 +37,16 @@ export function useChatSession() {
     console.log('Starting chat session...');
     setIsTyping(true);
     setIsButtonsLoading(true);
+    receivedFirstTraceRef.current = false;
     try {
       await vfSendLaunch({ pageSlug: 'faq-page', productName: 'faq' }, handleTraceEvent);
     } catch (error) {
       console.error('Error starting chat session:', error);
       addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
     } finally {
-      setIsTyping(false);
+      if (!receivedFirstTraceRef.current) {
+        setIsTyping(false);
+      }
     }
   };
 
@@ -57,19 +60,19 @@ export function useChatSession() {
     setMessages(prev => [...prev, message]);
   };
 
-  // Throttled update for smoother streaming experience - now 10ms for faster streaming
+  // Throttled update for smoother streaming experience - reduced to 5ms for even faster streaming
   const updatePartialMessage = (messageId: string, text: string, isPartial = true) => {
     const now = Date.now();
     
-    // Throttle updates to ensure smooth rendering (10ms ≈ 100fps for faster streaming)
-    if (now - lastUpdateTimeRef.current < 10) {
+    // Throttle updates to ensure smooth rendering (5ms = 200fps for extremely fast streaming)
+    if (now - lastUpdateTimeRef.current < 5) {
       if (streamThrottleRef.current) {
         clearTimeout(streamThrottleRef.current);
       }
       
       streamThrottleRef.current = setTimeout(() => {
         updatePartialMessage(messageId, text, isPartial);
-      }, 10);
+      }, 5);
       
       return;
     }
@@ -126,6 +129,7 @@ export function useChatSession() {
     setButtons([]);
     setIsTyping(true);
     setIsButtonsLoading(true);
+    receivedFirstTraceRef.current = false;
 
     try {
       await vfSendMessage(userMessage, handleTraceEvent);
@@ -133,7 +137,9 @@ export function useChatSession() {
       console.error('Error sending message:', error);
       addAgentMessage('Sorry, I encountered an error processing your message. Please try again.');
     } finally {
-      setIsTyping(false);
+      if (!receivedFirstTraceRef.current) {
+        setIsTyping(false);
+      }
     }
   };
 
@@ -143,6 +149,7 @@ export function useChatSession() {
     setButtons([]);
     setIsTyping(true);
     setIsButtonsLoading(true);
+    receivedFirstTraceRef.current = false;
 
     try {
       await vfSendAction(button.request, handleTraceEvent);
@@ -150,12 +157,18 @@ export function useChatSession() {
       console.error('Error processing button action:', error);
       addAgentMessage('Sorry, I encountered an error processing your selection. Please try again.');
     } finally {
-      setIsTyping(false);
+      if (!receivedFirstTraceRef.current) {
+        setIsTyping(false);
+      }
     }
   };
 
   const handleTraceEvent = (trace: any) => {
     console.log('Trace event received:', trace.type, trace);
+    
+    // Set the receivedFirstTraceRef to true for any trace received
+    // This helps us keep the typing indicator until we receive traces
+    receivedFirstTraceRef.current = true;
     
     switch (trace.type) {
       case 'speak':
@@ -170,8 +183,8 @@ export function useChatSession() {
           let currentText = '';
           const fullText = trace.payload.message;
           
-          // Start streaming immediately for the first few characters - increased initial chunk
-          const initialChunk = fullText.substring(0, 10);
+          // Start streaming immediately for the first several characters - increased chunk size
+          const initialChunk = fullText.substring(0, 15);
           currentText = initialChunk;
           
           partialMessageIdRef.current = msgId;
@@ -182,9 +195,9 @@ export function useChatSession() {
           
           function streamNextChar() {
             if (index < fullText.length) {
-              // Stream more characters at once for faster display (3-5 chars)
+              // Stream even more characters at once for faster display (5-8 chars)
               const charsToAdd = Math.min(
-                Math.floor(Math.random() * 3) + 3, 
+                Math.floor(Math.random() * 3) + 5, 
                 fullText.length - index
               );
               
@@ -192,8 +205,8 @@ export function useChatSession() {
               addAgentMessage(currentText, true, msgId);
               index += charsToAdd;
               
-              // Much faster streaming speed (5-10ms)
-              const randomDelay = Math.floor(Math.random() * 5) + 5;
+              // Ultra-fast streaming speed (2-5ms)
+              const randomDelay = Math.floor(Math.random() * 3) + 2;
               setTimeout(streamNextChar, randomDelay);
             } else {
               // Finalize message when done
@@ -202,7 +215,7 @@ export function useChatSession() {
           }
           
           // Start streaming immediately
-          setTimeout(streamNextChar, 5);
+          setTimeout(streamNextChar, 2);
         }
         break;
       }

@@ -71,7 +71,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           </div>
         );
       }) : (
-        <div className="flex items-center justify-center h-full"></div>
+        <div className="flex items-center justify-center h-full">
+          {/* Empty state */}
+        </div>
       )}
       
       {isTyping && (
