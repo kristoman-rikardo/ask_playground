@@ -23,6 +23,7 @@ export function useChatSession() {
   const partialMessageIdRef = useRef<string | null>(null);
   const currentCompletionContentRef = useRef<string>('');
   const receivedFirstTraceRef = useRef<boolean>(false);
+  const messageSourceTracker = useRef<Record<string, string>>({});
 
   useEffect(() => {
     // Only start the chat session once when the component mounts
@@ -59,7 +60,7 @@ export function useChatSession() {
     setMessages(prev => [...prev, message]);
   };
 
-  // Character-by-character streaming update
+  // Character-by-character streaming update with improved randomness
   const updatePartialMessage = (messageId: string, text: string, isPartial = true) => {
     setMessages(prev => {
       const existingMessageIndex = prev.findIndex(msg => msg.id === messageId);
@@ -112,6 +113,7 @@ export function useChatSession() {
     setIsTyping(true);
     setIsButtonsLoading(true);
     receivedFirstTraceRef.current = false;
+    messageSourceTracker.current = {}; // Reset the source tracker for new messages
 
     try {
       await vfSendMessage(userMessage, handleTraceEvent);
@@ -132,6 +134,7 @@ export function useChatSession() {
     setIsTyping(true);
     setIsButtonsLoading(true);
     receivedFirstTraceRef.current = false;
+    messageSourceTracker.current = {}; // Reset the source tracker for new messages
 
     try {
       await vfSendAction(button.request, handleTraceEvent);
@@ -157,35 +160,38 @@ export function useChatSession() {
       case 'speak':
       case 'text': {
         if (trace.payload && trace.payload.message) {
-          console.log('Text/Speak message received:', trace.payload.message);
-          
-          // Create a new message ID for this text/speak event
+          const messageContent = trace.payload.message;
           const msgId = `text-${Date.now()}`;
           
-          // Initialize the message with an empty string
+          // Track that this message came from text/speak
+          messageSourceTracker.current[msgId] = 'text';
+          
+          console.log('Text/Speak message received:', messageContent);
+          
+          // Initialize the message immediately
           partialMessageIdRef.current = msgId;
           addAgentMessage('', true, msgId);
           
-          // Stream the full text letter by letter
+          // Stream the message with more natural, random timing
           let currentText = '';
-          const fullText = trace.payload.message;
+          let index = 0;
           
-          // Character-by-character streaming - better performance
-          const streamText = (index = 0) => {
-            if (index < fullText.length) {
-              currentText += fullText[index];
+          const streamNextCharacter = () => {
+            if (index < messageContent.length) {
+              currentText += messageContent[index];
               updatePartialMessage(msgId, currentText, true);
+              index++;
               
-              // Stream next character with a small random delay (5-10ms)
-              setTimeout(() => streamText(index + 1), 5 + Math.random() * 5);
+              // More random delays between characters (between 5-30ms)
+              setTimeout(streamNextCharacter, 5 + Math.random() * 25);
             } else {
-              // Only finalize when entire message is displayed
-              updatePartialMessage(msgId, fullText, false);
+              // Mark as complete only when fully streamed
+              updatePartialMessage(msgId, messageContent, false);
             }
           };
           
           // Start streaming immediately
-          streamText();
+          streamNextCharacter();
         }
         break;
       }
@@ -236,49 +242,62 @@ export function useChatSession() {
     
     if (state === 'start') {
       console.log('Completion started');
-      // Generate a unique ID for this streaming session
+      // Create a unique ID for this completion
       const msgId = `completion-${Date.now()}`;
-      partialMessageIdRef.current = msgId;
-      currentCompletionContentRef.current = '';
       
-      // Initialize message with empty content
-      addAgentMessage('', true, msgId);
+      // Check if we already have a text/speak message
+      const hasTextMessage = Object.entries(messageSourceTracker.current).some(([_, source]) => source === 'text');
+      
+      // Only create a new message if we don't already have a text/speak message
+      if (!hasTextMessage) {
+        partialMessageIdRef.current = msgId;
+        currentCompletionContentRef.current = '';
+        messageSourceTracker.current[msgId] = 'completion';
+        
+        // Initialize with empty content
+        addAgentMessage('', true, msgId);
+      } else {
+        console.log('Skipping completion message as we already have a text message');
+      }
       receivedFirstTraceRef.current = true;
     } 
     else if (state === 'content') {
-      if (!content) return;
+      if (!content || !partialMessageIdRef.current) return;
       
-      // Append new content to the current message
-      currentCompletionContentRef.current += content;
-      
-      if (partialMessageIdRef.current) {
-        // Stream text character by character
-        const existingContent = currentCompletionContentRef.current;
-        let currentDisplayedText = '';
-        let charIndex = 0;
+      // Only update completion content if the current message is a completion message
+      const currentMsgId = partialMessageIdRef.current;
+      if (messageSourceTracker.current[currentMsgId] === 'completion') {
+        // Append new content
+        currentCompletionContentRef.current += content;
         
-        // Immediately stream the first character, then continue character by character
-        const streamChar = () => {
-          if (charIndex < existingContent.length) {
-            currentDisplayedText += existingContent[charIndex];
-            updatePartialMessage(partialMessageIdRef.current!, currentDisplayedText, true);
+        // Stream character by character with random timing
+        let currentDisplayText = '';
+        let charIndex = 0;
+        const fullText = currentCompletionContentRef.current;
+        
+        const streamNextChar = () => {
+          if (charIndex < fullText.length) {
+            currentDisplayText += fullText[charIndex];
+            updatePartialMessage(currentMsgId, currentDisplayText, true);
             charIndex++;
             
-            // Fast but natural pacing (5-10ms per character)
-            setTimeout(streamChar, 5 + Math.random() * 5);
+            // More varied, random timing (between 5-30ms)
+            setTimeout(streamNextChar, 5 + Math.random() * 25);
           }
         };
         
         // Start streaming
-        streamChar();
+        streamNextChar();
       }
     }
     else if (state === 'end') {
       console.log('Completion ended');
       
-      // Ensure the full content is displayed
-      if (partialMessageIdRef.current) {
-        updatePartialMessage(partialMessageIdRef.current, currentCompletionContentRef.current, false);
+      // Only finalize if this is a completion message
+      const currentMsgId = partialMessageIdRef.current;
+      if (currentMsgId && messageSourceTracker.current[currentMsgId] === 'completion') {
+        // Ensure the full content is displayed
+        updatePartialMessage(currentMsgId, currentCompletionContentRef.current, false);
         partialMessageIdRef.current = null;
       }
     }
