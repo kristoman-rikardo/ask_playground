@@ -51,10 +51,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               key={message.id} 
               id={`message-${message.id}`} 
               ref={index === messages.length - 1 ? lastMessageRef : null} 
-              className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
+              className={`px-4 py-3 rounded-xl max-w-[85%] transition-all duration-300 ${
                 message.type === 'user' 
-                  ? 'chat-message-user ml-auto bg-gray-400 shadow-sm border border-transparent' 
-                  : 'chat-message-agent mr-auto shadow-sm bg-gray-300 border border-transparent'
+                  ? 'chat-message-user ml-auto bg-gray-200 shadow-sm' 
+                  : 'chat-message-agent mr-auto shadow-sm bg-gray-100'
               }`}
             >
               {message.content ? (
@@ -64,18 +64,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   }} 
                 />
               ) : (
-                <div className="h-5 w-20 bg-gray-300/50 rounded">
+                <div className="h-5 w-20 bg-gray-200 rounded">
                   {/* Empty content placeholder */}
                 </div>
               )}
             </div>
           );
         })
-      ) : (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Starting conversation...</p>
-        </div>
-      )}
+      ) : null}
       
       {isTyping && (
         <div className="mt-2">

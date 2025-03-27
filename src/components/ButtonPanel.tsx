@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/hooks/useChatSession';
 import ButtonLoader from './ButtonLoader';
+import { Sparkle } from 'lucide-react';
 
 interface ButtonPanelProps {
   buttons: Button[];
@@ -28,9 +29,10 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
         <button
           key={`${button.name}-${index}`}
           onClick={() => onButtonClick(button)}
-          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
+          className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 relative group"
         >
-          {button.name}
+          <span className="relative z-10">{button.name}</span>
+          <Sparkle className="absolute top-1/2 left-2 transform -translate-y-1/2 text-gray-400 opacity-50 z-0 size-4" />
         </button>
       ))}
     </div>
