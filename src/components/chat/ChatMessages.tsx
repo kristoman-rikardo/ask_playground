@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
-import { Message } from '@/hooks/useChatSession';
+import { Message } from '@/types/chat';
 
 interface ChatMessagesProps {
   messages: Message[];
