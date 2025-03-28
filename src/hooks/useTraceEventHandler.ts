@@ -21,6 +21,13 @@ export function useTraceEventHandler(
     scheduleUpdate
   } = streaming;
 
+  // Animation frame ID for throttling updates
+  const animationFrameIdRef = useRef<number | null>(null);
+  // Timestamp for throttling real-time streaming
+  const lastUpdateTimeRef = useRef<number>(0);
+  // Minimum update interval for real-time streaming (ms)
+  const MIN_UPDATE_INTERVAL = 30;
+
   const handleCompletionEvent = (payload: any) => {
     if (!payload) {
       console.warn('Empty completion payload received');
@@ -64,18 +71,20 @@ export function useTraceEventHandler(
         // Append new content to the buffer
         currentCompletionContentRef.current += content;
         
-        // Use the word tracker to process incoming content
-        const { processedText, newCompleteWords } = wordTrackerRef.current.appendContent(content);
+        // Use the word tracker to process incoming content with proper formatting
+        const { formattedOutput } = wordTrackerRef.current.appendContent(content);
         
-        // If we have new complete words, wrap them with fade-in class
-        if (newCompleteWords) {
-          const words = newCompleteWords.split(' ').filter(w => w.trim());
-          
-          if (words.length > 0) {
-            // Update with animated words
-            const formattedText = processedText.replace(/(\S+)\s/g, '<span class="word-fade-in">$1</span> ');
-            updatePartialMessage(currentMsgId, formattedText, true);
+        // Throttle updates to avoid too frequent DOM updates
+        const now = Date.now();
+        if (now - lastUpdateTimeRef.current >= MIN_UPDATE_INTERVAL) {
+          // Schedule an update to the UI
+          if (animationFrameIdRef.current === null) {
+            animationFrameIdRef.current = requestAnimationFrame(() => {
+              updatePartialMessage(currentMsgId, formattedOutput, true);
+              animationFrameIdRef.current = null;
+            });
           }
+          lastUpdateTimeRef.current = now;
         }
       }
     }
@@ -85,11 +94,17 @@ export function useTraceEventHandler(
       // Only finalize if this is a completion message
       const currentMsgId = partialMessageIdRef.current;
       if (currentMsgId && messageSourceTracker.current[currentMsgId] === 'completion') {
+        // Cancel any pending animation frame
+        if (animationFrameIdRef.current !== null) {
+          cancelAnimationFrame(animationFrameIdRef.current);
+          animationFrameIdRef.current = null;
+        }
+        
         // Finalize any partial content
-        const finalContent = wordTrackerRef.current.finalize();
+        const { text } = wordTrackerRef.current.finalize();
         
         // Ensure the full content is displayed without animation wrappers
-        updatePartialMessage(currentMsgId, finalContent, false);
+        updatePartialMessage(currentMsgId, text, false);
         partialMessageIdRef.current = null;
       }
     }
@@ -119,7 +134,7 @@ export function useTraceEventHandler(
           partialMessageIdRef.current = msgId;
           addAgentMessage('', true, msgId);
           
-          // Stream the message word by word with fade-in effect
+          // Stream the message word by word with fade-in effect using random delays (5-30ms)
           streamWords(
             messageContent,
             (updatedText) => {
@@ -128,8 +143,10 @@ export function useTraceEventHandler(
             () => {
               // When streaming is complete, set the final message without animation wrappers
               updatePartialMessage(msgId, messageContent, false);
+              partialMessageIdRef.current = null;
             },
-            50 // 50ms delay between words
+            5, // minimum 5ms delay
+            30  // maximum 30ms delay
           );
         }
         break;

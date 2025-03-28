@@ -45,7 +45,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   // Check if any message is currently streaming (partial)
   const hasPartialMessages = messages.some(m => m.isPartial);
 
-  // Process content to ensure we use the existing word-fade-in animations
+  // Process content to ensure we handle HTML content properly
   const processContent = (content: string, isPartial: boolean | undefined) => {
     // If the content already contains HTML (from word-by-word streaming), 
     // use it directly with dangerouslySetInnerHTML
@@ -60,7 +60,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   return (
     <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]">
       {messages.length > 0 ? messages.map((message, index) => {
-        console.log(`Rendering message ${index}:`, message);
         return (
           <div 
             key={message.id} 
