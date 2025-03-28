@@ -42,6 +42,7 @@ export function useMessageInteraction(
 
   const handleButtonClick = async (button: Button) => {
     console.log('Button clicked:', button.name);
+    // Make sure to display the button's name as the user message
     addUserMessage(button.name);
     setButtons([]);
     setIsTyping(true);
