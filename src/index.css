@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -169,10 +168,10 @@
     margin-left: 2px;
   }
 
-  /* Word fade-in animation - slower and smoother */
+  /* Word fade-in animation - longer duration (1 second) */
   .word-fade-in {
     opacity: 0;
-    animation: fadeIn 0.5s ease-in-out forwards;
+    animation: fadeIn 1s ease-in-out forwards;
   }
 
   @keyframes fadeIn {
@@ -204,7 +203,7 @@
     grid-area: 1/1; 
     width: 40px;
     height: 40px;
-    background: rgba(68, 68, 68, 0.25);  /* 25% opacity instead of 50% */
+    background: rgba(68, 68, 68, 0.25); /* 25% opacity instead of 50% */
     border-radius: 50%; /* Make pseudo-elements circular */
     animation: l7 2s infinite;
   }

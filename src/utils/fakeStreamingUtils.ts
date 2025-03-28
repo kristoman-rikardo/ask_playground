@@ -48,6 +48,6 @@ export const streamWords = (
     }
   };
 
-  // Start the streaming process
+  // Start the streaming process immediately for the first word
   appendNextWord();
 };

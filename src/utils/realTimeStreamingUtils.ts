@@ -12,6 +12,12 @@ export class StreamingWordTracker {
   private currentBuffer: string = '';
   private lastProcessedIndex: number = 0;
   private formattedOutput: string = ''; // Store the formatted output with fade-in spans
+  private firstWordProcessed: boolean = false;
+  private lastProcessTime: number = 0;
+  
+  // Minimum delay between processing words (ms) - similar to fake streaming
+  private MIN_WORD_DELAY: number = 5;
+  private MAX_WORD_DELAY: number = 30;
 
   /**
    * Updates the buffer with new content and returns any new complete words
@@ -36,29 +42,43 @@ export class StreamingWordTracker {
     // Reset regex state
     wordBoundaryRegex.lastIndex = this.lastProcessedIndex;
     
-    while ((match = wordBoundaryRegex.exec(this.currentBuffer)) !== null) {
-      if (match.index >= this.lastProcessedIndex) {
-        // Extract the word before this boundary
-        const word = this.currentBuffer.substring(this.lastProcessedIndex, match.index);
-        if (word) {
-          // Add to processed text and new words
-          this.processedText += word + match[0];
-          newWords += word + match[0];
+    // Check if we need to delay processing based on timing
+    const now = Date.now();
+    const shouldDelay = this.firstWordProcessed && 
+                       (now - this.lastProcessTime < this.getRandomDelay());
+    
+    // Always process immediately if this is the first word
+    if (!shouldDelay) {
+      while ((match = wordBoundaryRegex.exec(this.currentBuffer)) !== null) {
+        if (match.index >= this.lastProcessedIndex) {
+          // Extract the word before this boundary
+          const word = this.currentBuffer.substring(this.lastProcessedIndex, match.index);
+          if (word) {
+            // Add to processed text and new words
+            this.processedText += word + match[0];
+            newWords += word + match[0];
+            
+            // Add to formatted output with fade-in span
+            this.formattedOutput += `<span class="word-fade-in">${word}</span>${match[0]}`;
+            newFormattedWords += `<span class="word-fade-in">${word}</span>${match[0]}`;
+            
+            // Mark that we've processed at least one word
+            this.firstWordProcessed = true;
+          } else {
+            // Just a boundary with no preceding word
+            this.processedText += match[0];
+            newWords += match[0];
+            this.formattedOutput += match[0];
+            newFormattedWords += match[0];
+          }
           
-          // Add to formatted output with fade-in span
-          this.formattedOutput += `<span class="word-fade-in">${word}</span>${match[0]}`;
-          newFormattedWords += `<span class="word-fade-in">${word}</span>${match[0]}`;
-        } else {
-          // Just a boundary with no preceding word
-          this.processedText += match[0];
-          newWords += match[0];
-          this.formattedOutput += match[0];
-          newFormattedWords += match[0];
+          // Update last processed index to after this match
+          this.lastProcessedIndex = match.index + match[0].length;
+          lastIndex = this.lastProcessedIndex;
+          
+          // Update the process time
+          this.lastProcessTime = now;
         }
-        
-        // Update last processed index to after this match
-        this.lastProcessedIndex = match.index + match[0].length;
-        lastIndex = this.lastProcessedIndex;
       }
     }
     
@@ -67,6 +87,14 @@ export class StreamingWordTracker {
       formattedOutput: this.formattedOutput,
       newCompleteWords: newWords 
     };
+  }
+
+  /**
+   * Get a random delay between min and max values
+   */
+  private getRandomDelay(): number {
+    return this.MIN_WORD_DELAY + 
+           Math.random() * (this.MAX_WORD_DELAY - this.MIN_WORD_DELAY);
   }
 
   /**
@@ -121,5 +149,7 @@ export class StreamingWordTracker {
     this.currentBuffer = '';
     this.lastProcessedIndex = 0;
     this.formattedOutput = '';
+    this.firstWordProcessed = false;
+    this.lastProcessTime = 0;
   }
 }
