@@ -2,6 +2,7 @@
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
+import { streamWords } from '@/utils/streamingUtils';
 
 export function useTraceEventHandler(
   streaming: MessageStreamingHook,
@@ -14,6 +15,7 @@ export function useTraceEventHandler(
     currentCompletionContentRef,
     partialMessageIdRef,
     messageSourceTracker,
+    wordTrackerRef,
     updatePartialMessage,
     addAgentMessage,
     scheduleUpdate
@@ -36,6 +38,9 @@ export function useTraceEventHandler(
       // Check if we already have a text/speak message
       const hasTextMessage = Object.values(messageSourceTracker.current).includes('text');
       
+      // Reset word tracker for new completion
+      wordTrackerRef.current.reset();
+      
       // Only create a new message if we don't already have a text/speak message
       if (!hasTextMessage) {
         partialMessageIdRef.current = msgId;
@@ -54,12 +59,24 @@ export function useTraceEventHandler(
       
       // Only update completion content if the current message is a completion message
       const currentMsgId = partialMessageIdRef.current;
+      
       if (messageSourceTracker.current[currentMsgId] === 'completion') {
-        // Append new content
+        // Append new content to the buffer
         currentCompletionContentRef.current += content;
         
-        // Schedule an update on the next animation frame
-        scheduleUpdate(currentMsgId);
+        // Use the word tracker to process incoming content
+        const { processedText, newCompleteWords } = wordTrackerRef.current.appendContent(content);
+        
+        // If we have new complete words, wrap them with fade-in class
+        if (newCompleteWords) {
+          const words = newCompleteWords.split(' ').filter(w => w.trim());
+          
+          if (words.length > 0) {
+            // Update with animated words
+            const formattedText = processedText.replace(/(\S+)\s/g, '<span class="word-fade-in">$1</span> ');
+            updatePartialMessage(currentMsgId, formattedText, true);
+          }
+        }
       }
     }
     else if (state === 'end') {
@@ -68,8 +85,11 @@ export function useTraceEventHandler(
       // Only finalize if this is a completion message
       const currentMsgId = partialMessageIdRef.current;
       if (currentMsgId && messageSourceTracker.current[currentMsgId] === 'completion') {
-        // Ensure the full content is displayed
-        updatePartialMessage(currentMsgId, currentCompletionContentRef.current, false);
+        // Finalize any partial content
+        const finalContent = wordTrackerRef.current.finalize();
+        
+        // Ensure the full content is displayed without animation wrappers
+        updatePartialMessage(currentMsgId, finalContent, false);
         partialMessageIdRef.current = null;
       }
     }
@@ -99,31 +119,18 @@ export function useTraceEventHandler(
           partialMessageIdRef.current = msgId;
           addAgentMessage('', true, msgId);
           
-          // Stream the message with more natural, random timing
-          let currentText = '';
-          let index = 0;
-          
-          const streamNextCharacter = () => {
-            if (index < messageContent.length) {
-              currentText += messageContent[index];
-              
-              // Use requestAnimationFrame to throttle updates
-              requestAnimationFrame(() => {
-                updatePartialMessage(msgId, currentText, true);
-              });
-              
-              index++;
-              
-              // More random delays between characters (between 5-30ms)
-              setTimeout(streamNextCharacter, 5 + Math.random() * 25);
-            } else {
-              // Mark as complete only when fully streamed
+          // Stream the message word by word with fade-in effect
+          streamWords(
+            messageContent,
+            (updatedText) => {
+              updatePartialMessage(msgId, updatedText, true);
+            },
+            () => {
+              // When streaming is complete, set the final message without animation wrappers
               updatePartialMessage(msgId, messageContent, false);
-            }
-          };
-          
-          // Start streaming immediately
-          streamNextCharacter();
+            },
+            50 // 50ms delay between words
+          );
         }
         break;
       }

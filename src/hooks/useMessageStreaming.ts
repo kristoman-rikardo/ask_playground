@@ -1,6 +1,7 @@
 
 import { useRef } from 'react';
 import { Message } from '@/types/chat';
+import { StreamingWordTracker } from '@/utils/streamingUtils';
 
 // Flag to ensure we schedule only one update per animation frame
 let updateScheduled = false;
@@ -9,6 +10,7 @@ export interface MessageStreamingHook {
   currentCompletionContentRef: React.MutableRefObject<string>;
   partialMessageIdRef: React.MutableRefObject<string | null>;
   messageSourceTracker: React.MutableRefObject<Record<string, string>>;
+  wordTrackerRef: React.MutableRefObject<StreamingWordTracker>;
   updatePartialMessage: (messageId: string, text: string, isPartial?: boolean) => void;
   addAgentMessage: (text: string, isPartial?: boolean, existingId?: string) => void;
   scheduleUpdate: (msgId: string) => void;
@@ -20,6 +22,7 @@ export function useMessageStreaming(
   const partialMessageIdRef = useRef<string | null>(null);
   const currentCompletionContentRef = useRef<string>('');
   const messageSourceTracker = useRef<Record<string, string>>({});
+  const wordTrackerRef = useRef<StreamingWordTracker>(new StreamingWordTracker());
 
   // Throttles updates using requestAnimationFrame for smooth UI rendering
   const scheduleUpdate = (msgId: string) => {
@@ -33,7 +36,7 @@ export function useMessageStreaming(
     }
   };
 
-  // Character-by-character streaming update with improved randomness
+  // Update a message with new content
   const updatePartialMessage = (messageId: string, text: string, isPartial = true) => {
     setMessages(prev => {
       const existingMessageIndex = prev.findIndex(msg => msg.id === messageId);
@@ -81,6 +84,7 @@ export function useMessageStreaming(
     currentCompletionContentRef,
     partialMessageIdRef,
     messageSourceTracker,
+    wordTrackerRef,
     updatePartialMessage,
     addAgentMessage,
     scheduleUpdate

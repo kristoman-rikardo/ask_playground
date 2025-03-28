@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
@@ -46,6 +45,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   // Check if any message is currently streaming (partial)
   const hasPartialMessages = messages.some(m => m.isPartial);
 
+  // Process content to ensure we use the existing word-fade-in animations
+  const processContent = (content: string, isPartial: boolean | undefined) => {
+    // If the content already contains HTML (from word-by-word streaming), 
+    // use it directly with dangerouslySetInnerHTML
+    if (content?.includes('<span class="word-fade-in">')) {
+      return <div dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+    
+    // Otherwise, use the standard markdown parsing
+    return <div dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }} />;
+  };
+
   return (
     <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]">
       {messages.length > 0 ? messages.map((message, index) => {
@@ -62,10 +73,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             } ${message.isPartial ? 'border-l-4 border-gray-200' : ''}`}
           >
             {message.content ? (
-              <div 
-                dangerouslySetInnerHTML={{ __html: parseMarkdown(message.content) }} 
-                className={message.isPartial ? 'streaming-content' : ''}
-              />
+              processContent(message.content, message.isPartial)
             ) : (
               <div className="h-5 w-20 bg-gray-200/50 rounded animate-pulse">
                 {/* Empty content placeholder */}
