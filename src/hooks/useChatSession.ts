@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { vfSendLaunch } from '@/lib/voiceflow';
 import { Message, Button } from '@/types/chat';
@@ -6,7 +5,7 @@ import { useMessageStreaming } from './useMessageStreaming';
 import { useTraceEventHandler } from './useTraceEventHandler';
 import { useMessageInteraction } from './useMessageInteraction';
 
-export { Message, Button };
+export type { Message, Button };
 
 export function useChatSession() {
   const [isTyping, setIsTyping] = useState(false);
