@@ -63,7 +63,7 @@ export function useTraceEventHandler(
         currentCompletionContentRef.current += content;
         
         // Process content through word tracker
-        const { formattedOutput } = wordTrackerRef.current.appendContent(content);
+        const result = wordTrackerRef.current.appendContent(content);
         
         // Rate limit updates to prevent UI jank
         const now = Date.now();
@@ -71,7 +71,9 @@ export function useTraceEventHandler(
           if (animationFrameIdRef.current === null) {
             animationFrameIdRef.current = requestAnimationFrame(() => {
               // Use the formatted output with fade-in spans
-              updatePartialMessage(currentMsgId, formattedOutput, true);
+              if (result.formattedOutput) {
+                updatePartialMessage(currentMsgId, result.formattedOutput, true);
+              }
               animationFrameIdRef.current = null;
             });
           }
@@ -90,9 +92,9 @@ export function useTraceEventHandler(
         }
         
         // Use the final processed content
-        const { text } = wordTrackerRef.current.finalize();
+        const { formattedOutput } = wordTrackerRef.current.finalize();
         
-        updatePartialMessage(currentMsgId, text, false);
+        updatePartialMessage(currentMsgId, formattedOutput || currentCompletionContentRef.current, false);
         partialMessageIdRef.current = null;
       }
     }
@@ -164,7 +166,8 @@ export function useTraceEventHandler(
         break;
       
       default:
-        console.log('Unhandled trace type:', trace.type);
+        // Handle other trace types if needed
+        break;
     }
   };
 

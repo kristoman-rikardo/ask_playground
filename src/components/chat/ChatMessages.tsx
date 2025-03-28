@@ -47,9 +47,17 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const hasPartialMessages = messages.some(m => m.isPartial);
 
   // Process content to ensure we handle HTML content properly
-  const processContent = (content: string, isPartial: boolean | undefined) => {
+  const processContent = (content: string, isPartial: boolean | undefined, messageType: 'user' | 'agent') => {
+    if (!content) return <div className="h-5 w-20 bg-gray-200/50 rounded animate-pulse"></div>;
+    
+    // For user messages, just parse markdown without animation
+    if (messageType === 'user') {
+      return <div dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }} />;
+    }
+    
+    // For agent messages
     // Check if content already contains HTML (from word-by-word animation)
-    if (content?.includes('<span class="word-fade-in">')) {
+    if (content.includes('<span class="word-fade-in">')) {
       return <div dangerouslySetInnerHTML={{ __html: content }} />;
     }
     
@@ -71,13 +79,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 : 'chat-message-agent mr-auto shadow-sm bg-gray-50 border border-transparent'
             } ${message.isPartial ? 'streaming-content border-l-4 border-gray-200' : ''}`}
           >
-            {message.content ? (
-              processContent(message.content, message.isPartial)
-            ) : (
-              <div className="h-5 w-20 bg-gray-200/50 rounded animate-pulse">
-                {/* Empty content placeholder */}
-              </div>
-            )}
+            {processContent(message.content, message.isPartial, message.type)}
           </div>
         );
       }) : (

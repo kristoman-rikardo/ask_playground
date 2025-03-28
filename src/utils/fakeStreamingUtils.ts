@@ -1,3 +1,4 @@
+
 /**
  * Utility for simulating word-by-word streaming for complete text messages
  */
@@ -30,7 +31,7 @@ export const streamWords = (
       // Check if the current segment is a word or whitespace/punctuation
       if (word.trim()) {
         // This is an actual word, wrap it with fade-in class
-        currentDisplay += `<span class="word-fade-in">${word}</span>`;
+        currentDisplay += `<span class="word-fade-in">${escapeHtml(word)}</span>`;
       } else {
         // This is whitespace or punctuation, add it directly
         currentDisplay += word;
@@ -47,6 +48,19 @@ export const streamWords = (
       onComplete();
     }
   };
+
+  // Escape HTML special characters to prevent issues with dangerouslySetInnerHTML
+  function escapeHtml(text: string): string {
+    const htmlEscapes: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    
+    return text.replace(/[&<>"']/g, (match) => htmlEscapes[match]);
+  }
 
   // Start the streaming process immediately
   appendNextWord();

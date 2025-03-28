@@ -15,7 +15,7 @@ export class StreamingWordTracker {
   private firstWordProcessed: boolean = false;
   private lastProcessTime: number = 0;
   
-  // Minimum delay between processing words (ms) - similar to fake streaming
+  // Minimum delay between processing words (ms)
   private MIN_WORD_DELAY: number = 5;
   private MAX_WORD_DELAY: number = 30;
 
@@ -47,7 +47,7 @@ export class StreamingWordTracker {
     const shouldDelay = this.firstWordProcessed && 
                        (now - this.lastProcessTime < this.getRandomDelay());
     
-    if (!shouldDelay) {
+    if (!shouldDelay || !this.firstWordProcessed) {
       while ((match = wordBoundaryRegex.exec(this.currentBuffer)) !== null) {
         if (match.index >= this.lastProcessedIndex) {
           // Extract the word before this boundary
@@ -58,8 +58,8 @@ export class StreamingWordTracker {
             newWords += word + match[0];
             
             // Add to formatted output with fade-in span (ensuring proper HTML)
-            this.formattedOutput += `<span class="word-fade-in">${word}</span>${match[0]}`;
-            newFormattedWords += `<span class="word-fade-in">${word}</span>${match[0]}`;
+            this.formattedOutput += `<span class="word-fade-in">${this.escapeHtml(word)}</span>${match[0]}`;
+            newFormattedWords += `<span class="word-fade-in">${this.escapeHtml(word)}</span>${match[0]}`;
             
             // Mark that we've processed at least one word
             this.firstWordProcessed = true;
@@ -87,6 +87,21 @@ export class StreamingWordTracker {
       newCompleteWords: newWords 
     };
   }
+  
+  /**
+   * Escape HTML special characters to prevent issues with dangerouslySetInnerHTML
+   */
+  private escapeHtml(text: string): string {
+    const htmlEscapes: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    
+    return text.replace(/[&<>"']/g, (match) => htmlEscapes[match]);
+  }
 
   /**
    * Get a random delay between min and max values
@@ -105,7 +120,7 @@ export class StreamingWordTracker {
     if (this.lastProcessedIndex < this.currentBuffer.length) {
       const remaining = this.currentBuffer.substring(this.lastProcessedIndex);
       this.processedText += remaining;
-      this.formattedOutput += `<span class="word-fade-in">${remaining}</span>`;
+      this.formattedOutput += `<span class="word-fade-in">${this.escapeHtml(remaining)}</span>`;
     }
     return { 
       text: this.processedText,
