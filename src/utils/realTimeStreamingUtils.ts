@@ -42,12 +42,11 @@ export class StreamingWordTracker {
     // Reset regex state
     wordBoundaryRegex.lastIndex = this.lastProcessedIndex;
     
-    // Check if we need to delay processing based on timing
+    // Process first word immediately, then apply delays for subsequent words
     const now = Date.now();
     const shouldDelay = this.firstWordProcessed && 
                        (now - this.lastProcessTime < this.getRandomDelay());
     
-    // Always process immediately if this is the first word
     if (!shouldDelay) {
       while ((match = wordBoundaryRegex.exec(this.currentBuffer)) !== null) {
         if (match.index >= this.lastProcessedIndex) {
@@ -58,7 +57,7 @@ export class StreamingWordTracker {
             this.processedText += word + match[0];
             newWords += word + match[0];
             
-            // Add to formatted output with fade-in span
+            // Add to formatted output with fade-in span (ensuring proper HTML)
             this.formattedOutput += `<span class="word-fade-in">${word}</span>${match[0]}`;
             newFormattedWords += `<span class="word-fade-in">${word}</span>${match[0]}`;
             
@@ -76,7 +75,7 @@ export class StreamingWordTracker {
           this.lastProcessedIndex = match.index + match[0].length;
           lastIndex = this.lastProcessedIndex;
           
-          // Update the process time
+          // Update the last process time
           this.lastProcessTime = now;
         }
       }

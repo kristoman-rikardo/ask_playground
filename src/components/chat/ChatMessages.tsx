@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
@@ -47,8 +48,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   // Process content to ensure we handle HTML content properly
   const processContent = (content: string, isPartial: boolean | undefined) => {
-    // If the content already contains HTML (from word-by-word streaming), 
-    // use it directly with dangerouslySetInnerHTML
+    // Check if content already contains HTML (from word-by-word animation)
     if (content?.includes('<span class="word-fade-in">')) {
       return <div dangerouslySetInnerHTML={{ __html: content }} />;
     }
@@ -69,7 +69,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               message.type === 'user' 
                 ? 'chat-message-user ml-auto bg-gray-200 shadow-sm border border-transparent' 
                 : 'chat-message-agent mr-auto shadow-sm bg-gray-50 border border-transparent'
-            } ${message.isPartial ? 'border-l-4 border-gray-200' : ''}`}
+            } ${message.isPartial ? 'streaming-content border-l-4 border-gray-200' : ''}`}
           >
             {message.content ? (
               processContent(message.content, message.isPartial)

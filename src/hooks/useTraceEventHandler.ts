@@ -1,3 +1,4 @@
+
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -22,7 +23,8 @@ export function useTraceEventHandler(
 
   const animationFrameIdRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number>(0);
-  const MIN_UPDATE_INTERVAL = 50;
+  // Increase minimum update interval to improve streaming readability
+  const MIN_UPDATE_INTERVAL = 20; // ms
 
   const handleCompletionEvent = (payload: any) => {
     if (!payload) {
@@ -60,12 +62,15 @@ export function useTraceEventHandler(
       if (messageSourceTracker.current[currentMsgId] === 'completion') {
         currentCompletionContentRef.current += content;
         
+        // Process content through word tracker
         const { formattedOutput } = wordTrackerRef.current.appendContent(content);
         
+        // Rate limit updates to prevent UI jank
         const now = Date.now();
         if (now - lastUpdateTimeRef.current >= MIN_UPDATE_INTERVAL) {
           if (animationFrameIdRef.current === null) {
             animationFrameIdRef.current = requestAnimationFrame(() => {
+              // Use the formatted output with fade-in spans
               updatePartialMessage(currentMsgId, formattedOutput, true);
               animationFrameIdRef.current = null;
             });
@@ -84,6 +89,7 @@ export function useTraceEventHandler(
           animationFrameIdRef.current = null;
         }
         
+        // Use the final processed content
         const { text } = wordTrackerRef.current.finalize();
         
         updatePartialMessage(currentMsgId, text, false);
@@ -113,6 +119,7 @@ export function useTraceEventHandler(
           partialMessageIdRef.current = msgId;
           addAgentMessage('', true, msgId);
           
+          // Use streamWords to handle the word-by-word animation
           streamWords(
             messageContent,
             (updatedText) => {
@@ -122,8 +129,8 @@ export function useTraceEventHandler(
               updatePartialMessage(msgId, messageContent, false);
               partialMessageIdRef.current = null;
             },
-            5,
-            30
+            5,  // minDelay
+            30  // maxDelay
           );
         }
         break;
