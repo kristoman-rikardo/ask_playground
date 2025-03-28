@@ -14,6 +14,9 @@ export interface Button {
   request: any;
 }
 
+// Flag to ensure we schedule only one update per animation frame
+let updateScheduled = false;
+
 export function useChatSession() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -58,6 +61,18 @@ export function useChatSession() {
     };
     console.log('Adding user message:', message);
     setMessages(prev => [...prev, message]);
+  };
+
+  // Throttles updates using requestAnimationFrame for smooth UI rendering
+  const scheduleUpdate = (msgId: string) => {
+    if (!updateScheduled) {
+      updateScheduled = true;
+      requestAnimationFrame(() => {
+        // Update the partial message with the accumulated content buffer
+        updatePartialMessage(msgId, currentCompletionContentRef.current, true);
+        updateScheduled = false;
+      });
+    }
   };
 
   // Character-by-character streaming update with improved randomness
@@ -179,7 +194,12 @@ export function useChatSession() {
           const streamNextCharacter = () => {
             if (index < messageContent.length) {
               currentText += messageContent[index];
-              updatePartialMessage(msgId, currentText, true);
+              
+              // Use requestAnimationFrame to throttle updates
+              requestAnimationFrame(() => {
+                updatePartialMessage(msgId, currentText, true);
+              });
+              
               index++;
               
               // More random delays between characters (between 5-30ms)
@@ -246,7 +266,7 @@ export function useChatSession() {
       const msgId = `completion-${Date.now()}`;
       
       // Check if we already have a text/speak message
-      const hasTextMessage = Object.entries(messageSourceTracker.current).some(([_, source]) => source === 'text');
+      const hasTextMessage = Object.values(messageSourceTracker.current).includes('text');
       
       // Only create a new message if we don't already have a text/speak message
       if (!hasTextMessage) {
@@ -270,24 +290,8 @@ export function useChatSession() {
         // Append new content
         currentCompletionContentRef.current += content;
         
-        // Stream character by character with random timing
-        let currentDisplayText = '';
-        let charIndex = 0;
-        const fullText = currentCompletionContentRef.current;
-        
-        const streamNextChar = () => {
-          if (charIndex < fullText.length) {
-            currentDisplayText += fullText[charIndex];
-            updatePartialMessage(currentMsgId, currentDisplayText, true);
-            charIndex++;
-            
-            // More varied, random timing (between 5-30ms)
-            setTimeout(streamNextChar, 5 + Math.random() * 25);
-          }
-        };
-        
-        // Start streaming
-        streamNextChar();
+        // Schedule an update on the next animation frame
+        scheduleUpdate(currentMsgId);
       }
     }
     else if (state === 'end') {
