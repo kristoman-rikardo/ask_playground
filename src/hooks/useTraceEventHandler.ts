@@ -2,6 +2,7 @@
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
+// Import from the re-exporting file, so no changes needed in imports
 import { streamWords } from '@/utils/streamingUtils';
 
 export function useTraceEventHandler(

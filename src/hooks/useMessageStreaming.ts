@@ -1,6 +1,7 @@
 
 import { useRef } from 'react';
 import { Message } from '@/types/chat';
+// Import from the re-exporting file, so no changes needed in imports
 import { StreamingWordTracker } from '@/utils/streamingUtils';
 
 // Flag to ensure we schedule only one update per animation frame
