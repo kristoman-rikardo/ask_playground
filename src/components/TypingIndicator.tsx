@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -88,6 +89,19 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   // Keep track of whether text streaming has started
   const textStreamingStartedRef = useRef(false);
   
+  // Reset all states when isTyping changes from false to true (new message)
+  useEffect(() => {
+    if (isTyping) {
+      // Reset states for a new message
+      setCurrentProgress(0);
+      setFullCircles([]);
+      setCompletedCircles([]);
+      setFadingCircles([]);
+      setVisibleSteps(1);
+      textStreamingStartedRef.current = false;
+    }
+  }, [isTyping]);
+
   // Function to convert full circles to completed after a short delay
   useEffect(() => {
     if (fullCircles.length === 0) return;
@@ -129,7 +143,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     setFullCircles([]);
     setCompletedCircles([]);
     setFadingCircles([]);
-    setVisibleSteps(1);
+    setVisibleSteps(Math.min(steps, 3));
     textStreamingStartedRef.current = false;
   }, [steps]);
 

@@ -81,6 +81,13 @@ export function useTraceEventHandler(
     // Log the trace with our utility
     logTraceEvent(traceType, trace.payload);
     
+    // For user messages, reset the tracking state
+    if (trace.type === 'user') {
+      receivedFirstTraceRef.current = false;
+      stepProgressManager.resetProgressCircles();
+      textTraceManager.resetTextTracking();
+    }
+    
     if (trace.type === 'speak' || 
         trace.type === 'text' || 
         (trace.type === 'completion' && trace.payload?.state === 'start')) {
@@ -88,16 +95,11 @@ export function useTraceEventHandler(
       
       // Clear timeout when we receive actual trace data
       stepProgressManager.clearProgressTimeouts();
-      
-      // Reset progress and text streaming flag for every new message interaction
-      if (trace.type === 'completion' && trace.payload?.state === 'start') {
-        stepProgressManager.resetProgressCircles();
-        textTraceManager.textStreamingStartedRef.current = false;
-      }
     }
     
-    // Check for special block ID
+    // Check for special block ID - support multiple block IDs
     if (trace.type === 'block' && trace.payload?.blockID) {
+      // Mark that we received a block, which indicates a transition
       stepProgressManager.handleSpecialBlockId(trace.payload.blockID);
     }
     
@@ -111,6 +113,7 @@ export function useTraceEventHandler(
       case 'speak':
       case 'text':
         // Complete progress circles before starting text streaming
+        textTraceManager.messageCompletedRef.current = true;
         completionHandler.streamingStateRef.current.messageCompleted = true;
         
         // Add a brief delay before showing the text to ensure circles complete
@@ -127,9 +130,10 @@ export function useTraceEventHandler(
         // Handle completion events
         if (trace.payload?.state === 'start') {
           // Reset text streaming flag for new messages
-          textTraceManager.textStreamingStartedRef.current = false;
+          textTraceManager.resetTextTracking();
           // Always reset progress circles for new messages
           stepProgressManager.resetProgressCircles();
+          receivedFirstTraceRef.current = true;
         }
         completionHandler.handleCompletionEvent(trace.payload);
         break;
@@ -142,6 +146,7 @@ export function useTraceEventHandler(
       case 'end':
         console.log('Session ended');
         completionHandler.streamingStateRef.current.messageCompleted = true;
+        textTraceManager.messageCompletedRef.current = true;
         
         if (
           completionHandler.streamingStateRef.current.accumulatedContent.length > 0 && 
@@ -167,6 +172,7 @@ export function useTraceEventHandler(
 
   return {
     handleTraceEvent,
-    receivedFirstTraceRef
+    receivedFirstTraceRef,
+    textStreamingStartedRef: textTraceManager.textStreamingStartedRef
   };
 }

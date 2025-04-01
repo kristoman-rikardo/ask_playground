@@ -14,7 +14,8 @@ const ChatInterface: React.FC = () => {
     sendUserMessage,
     handleButtonClick,
     stepsTotal,
-    currentStepIndex
+    currentStepIndex,
+    textStreamingStarted
   } = useChatSession();
 
   return (
@@ -29,6 +30,7 @@ const ChatInterface: React.FC = () => {
             isTyping={isTyping}
             stepsTotal={stepsTotal}
             currentStepIndex={currentStepIndex} 
+            textStreamingStarted={textStreamingStarted}
           />
         </div>
         
