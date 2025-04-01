@@ -20,22 +20,27 @@ export const streamWords = (
   let index = 0;
   let currentDisplay = '';
 
-  // Start with an empty string and immediately begin streaming
+  // Start with an empty string
   onUpdate('');
   
   console.log(`🔄 Starting fake streaming of ${fullText.length} characters`);
 
+  // Function to add one character at a time
   const appendNextChar = () => {
     if (index < fullText.length) {
+      // Get the next character
       const char = fullText[index];
       
-      // Add the next character
+      // Add the character to our current display text
       currentDisplay += char;
       
+      // Update the UI with the new character
       onUpdate(currentDisplay);
+      
+      // Move to the next character
       index++;
       
-      // Schedule next update with 5ms delay (same as real-time streaming)
+      // Schedule the next character after exactly 5ms
       setTimeout(appendNextChar, delay);
     } else {
       // We're done, call the completion callback
@@ -44,6 +49,6 @@ export const streamWords = (
     }
   };
 
-  // Start the streaming process immediately
+  // Start the streaming process immediately with the first character
   appendNextChar();
 };
