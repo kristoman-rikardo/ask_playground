@@ -4,6 +4,7 @@ import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
 import { useCompletionEventHandler } from './useCompletionEventHandler';
 import { useTextAndChoiceHandler } from './useTextAndChoiceHandler';
+import { processContentStream } from '@/utils/streamingProcessUtils';
 
 export function useTraceEventHandler(
   streaming: MessageStreamingHook,
@@ -19,12 +20,38 @@ export function useTraceEventHandler(
     setIsTyping
   );
   
+  // Create a callback for text processing
+  const processStreamCallback = (content: string, msgId: string) => {
+    processContentStream(
+      content, 
+      msgId, 
+      streaming.wordTrackerRef.current, 
+      streaming.updatePartialMessage,
+      completionHandler.streamingStateRef.current,
+      () => {
+        if (
+          completionHandler.streamingStateRef.current.messageCompleted && 
+          !completionHandler.streamingStateRef.current.isStreaming && 
+          streaming.partialMessageIdRef.current
+        ) {
+          const currentMsgId = streaming.partialMessageIdRef.current;
+          const finalText = streaming.wordTrackerRef.current.getCurrentProcessedText();
+          streaming.updatePartialMessage(currentMsgId, finalText, false);
+          streaming.partialMessageIdRef.current = null;
+          completionHandler.streamingStateRef.current.isStreaming = false;
+          completionHandler.streamingStateRef.current.waitingForMoreContent = false;
+          streaming.currentCompletionContentRef.current = '';
+        }
+      }
+    );
+  };
+  
   const textAndChoiceHandler = useTextAndChoiceHandler(
     streaming,
     setIsTyping,
     setButtons,
     setIsButtonsLoading,
-    completionHandler.processContentStream
+    processStreamCallback
   );
   
   const handleTraceEvent = (trace: any) => {
@@ -38,7 +65,7 @@ export function useTraceEventHandler(
       case 'speak':
       case 'text':
         textAndChoiceHandler.handleTextOrSpeakEvent(trace);
-        completionHandler.messageCompletedRef.current = true;
+        completionHandler.streamingStateRef.current.messageCompleted = true;
         break;
       
       case 'completion':
@@ -52,23 +79,20 @@ export function useTraceEventHandler(
       
       case 'end':
         console.log('Session ended');
-        completionHandler.messageCompletedRef.current = true;
+        completionHandler.streamingStateRef.current.messageCompleted = true;
         
         // If we have pending content and we're not currently streaming, process it
         if (
-          completionHandler.accumulatedContentRef.current.length > 0 && 
-          !completionHandler.isStreamingRef.current && 
+          completionHandler.streamingStateRef.current.accumulatedContent.length > 0 && 
+          !completionHandler.streamingStateRef.current.isStreaming && 
           streaming.partialMessageIdRef.current
         ) {
-          completionHandler.processContentStream(
-            completionHandler.accumulatedContentRef.current, 
+          processStreamCallback(
+            completionHandler.streamingStateRef.current.accumulatedContent,
             streaming.partialMessageIdRef.current
           );
-          completionHandler.accumulatedContentRef.current = '';
+          completionHandler.streamingStateRef.current.accumulatedContent = '';
         }
-        
-        // Check and finalize any pending message
-        completionHandler.checkAndFinalizeMessage();
         
         setTimeout(() => {
           setIsTyping(false);

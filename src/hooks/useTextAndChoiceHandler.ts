@@ -15,7 +15,6 @@ export function useTextAndChoiceHandler(
   const {
     partialMessageIdRef,
     messageSourceTracker,
-    wordTrackerRef,
     addAgentMessage,
   } = streaming;
 
@@ -37,18 +36,16 @@ export function useTextAndChoiceHandler(
       // Show typing indicator for a short natural delay
       setIsTyping(true);
       
-      // After a brief delay, replace typing indicator with streaming message
-      typingIndicatorTimeoutRef.current = setTimeout(() => {
-        partialMessageIdRef.current = msgId;
-        setIsTyping(false); // Hide typing indicator when message starts
-        
-        addAgentMessage('', true, msgId);
-        typingIndicatorTimeoutRef.current = null;
-        
-        // Process the text message in the same way as completion content
-        processStreamCallback(messageContent, msgId);
-        return true; // Message is complete when delivered
-      }, 500); // 500ms delay for natural transition
+      // Immediately start the message without delay
+      partialMessageIdRef.current = msgId;
+      setIsTyping(false); // Hide typing indicator when message starts
+      
+      addAgentMessage('', true, msgId);
+      typingIndicatorTimeoutRef.current = null;
+      
+      // Process the text message in the same way as completion content
+      processStreamCallback(messageContent, msgId);
+      return true; // Message is complete when delivered
     }
   };
 
