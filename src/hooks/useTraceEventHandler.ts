@@ -86,7 +86,48 @@ export function useTraceEventHandler(
   }, []);
   
   const handleTraceEvent = (trace: any) => {
-    console.log('Trace event received:', trace.type);
+    // Enhanced logging based on trace type with visual indicators
+    const traceType = trace.type || 'unknown';
+    
+    // Visual indicators for different trace types
+    let logPrefix = '📋';
+    
+    switch (traceType) {
+      case 'speak':
+        logPrefix = '🗣️';
+        break;
+      case 'text':
+        logPrefix = '📝';
+        break;
+      case 'choice':
+        logPrefix = '🔘';
+        break;
+      case 'completion':
+        logPrefix = '✍️';
+        break;
+      case 'end':
+        logPrefix = '🏁';
+        break;
+      case 'flow':
+        logPrefix = '🌊';
+        break;
+      case 'block':
+        logPrefix = '🧱';
+        break;
+      case 'debug':
+        logPrefix = '🔍';
+        break;
+      default:
+        break;
+    }
+    
+    // Detailed logging with trace payload
+    if (trace.payload) {
+      const shortPayload = JSON.stringify(trace.payload).substring(0, 100);
+      console.log(`${logPrefix} Trace [${traceType}]: ${shortPayload}${shortPayload.length >= 100 ? '...' : ''}`);
+    } else {
+      console.log(`${logPrefix} Trace received: ${traceType}`);
+    }
     
     if (trace.type === 'speak' || trace.type === 'text' || (trace.type === 'completion' && trace.payload?.state === 'content')) {
       receivedFirstTraceRef.current = true;
