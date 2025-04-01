@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -19,18 +18,14 @@ export function useTraceEventHandler(
   const responseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const stepTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Initialize event handlers
   const completionHandler = useCompletionEventHandler(
     streaming,
     setIsTyping
   );
   
-  // Create a callback for text processing
   const processStreamCallback = (content: string, msgId: string) => {
-    // Mark that we've received text content
     receivedFirstTextRef.current = true;
     
-    // Clear any pending timeouts since we're now streaming text
     if (responseTimeoutRef.current) {
       clearTimeout(responseTimeoutRef.current);
       responseTimeoutRef.current = null;
@@ -73,7 +68,6 @@ export function useTraceEventHandler(
     processStreamCallback
   );
   
-  // Clean up timeouts on unmount
   useEffect(() => {
     return () => {
       if (responseTimeoutRef.current) {
@@ -86,10 +80,8 @@ export function useTraceEventHandler(
   }, []);
   
   const handleTraceEvent = (trace: any) => {
-    // Enhanced logging based on trace type with visual indicators
     const traceType = trace.type || 'unknown';
     
-    // Visual indicators for different trace types
     let logPrefix = '📋';
     
     switch (traceType) {
@@ -121,7 +113,6 @@ export function useTraceEventHandler(
         break;
     }
     
-    // Detailed logging with trace payload
     if (trace.payload) {
       const shortPayload = JSON.stringify(trace.payload).substring(0, 100);
       console.log(`${logPrefix} Trace [${traceType}]: ${shortPayload}${shortPayload.length >= 100 ? '...' : ''}`);
@@ -129,33 +120,27 @@ export function useTraceEventHandler(
       console.log(`${logPrefix} Trace received: ${traceType}`);
     }
     
-    if (trace.type === 'speak' || trace.type === 'text' || (trace.type === 'completion' && trace.payload?.state === 'content')) {
+    if (trace.type === 'speak' || 
+        trace.type === 'text' || 
+        (trace.type === 'completion' && trace.payload?.state === 'start')) {
       receivedFirstTraceRef.current = true;
       
-      // Clear any pending response timeout
       if (responseTimeoutRef.current) {
         clearTimeout(responseTimeoutRef.current);
         responseTimeoutRef.current = null;
       }
     }
     
-    // Handle step progress from trace payload
     if (trace.payload?.steps) {
-      // Update the total number of steps if provided
       setStepsTotal(trace.payload.steps.total || 1);
-      // Update the current step index if provided
       setCurrentStepIndex(trace.payload.steps.current || 0);
     } else {
-      // If no explicit steps in payload but we're still typing after 4 seconds (previously 3),
-      // increment the step counter automatically
       if (responseTimeoutRef.current === null && trace.type !== 'end' && !receivedFirstTextRef.current) {
         responseTimeoutRef.current = setTimeout(() => {
-          // Only update steps if we haven't received text content yet
           if (!receivedFirstTextRef.current) {
             setStepsTotal((current) => Math.max(current, 2));
             setCurrentStepIndex(1);
             
-            // Set up next step timeout (1.5s for subsequent steps)
             stepTimeoutRef.current = setTimeout(() => {
               if (!receivedFirstTextRef.current) {
                 setStepsTotal((current) => Math.max(current, 3));
@@ -163,8 +148,7 @@ export function useTraceEventHandler(
               }
             }, 1500);
           }
-          
-        }, 4000); // Changed from 3000ms to 4000ms (4 seconds)
+        }, 4000);
       }
     }
     
@@ -172,7 +156,7 @@ export function useTraceEventHandler(
       case 'speak':
       case 'text':
         textAndChoiceHandler.handleTextOrSpeakEvent(trace);
-        receivedFirstTextRef.current = true; // Mark that we've received text
+        receivedFirstTextRef.current = true;
         completionHandler.streamingStateRef.current.messageCompleted = true;
         break;
       
@@ -181,7 +165,6 @@ export function useTraceEventHandler(
         break;
       
       case 'choice':
-        // Handle choice events immediately, regardless of message streaming status
         console.log('🔴 BUTTON TRACE RECEIVED:', trace.payload?.buttons?.length || 0, 'buttons');
         textAndChoiceHandler.handleChoiceEvent(trace);
         break;
@@ -190,7 +173,6 @@ export function useTraceEventHandler(
         console.log('Session ended');
         completionHandler.streamingStateRef.current.messageCompleted = true;
         
-        // If we have pending content and we're not currently streaming, process it
         if (
           completionHandler.streamingStateRef.current.accumulatedContent.length > 0 && 
           !completionHandler.streamingStateRef.current.isStreaming && 
@@ -203,7 +185,6 @@ export function useTraceEventHandler(
           completionHandler.streamingStateRef.current.accumulatedContent = '';
         }
         
-        // Clear any pending timeouts on session end
         if (responseTimeoutRef.current) {
           clearTimeout(responseTimeoutRef.current);
           responseTimeoutRef.current = null;
@@ -215,7 +196,6 @@ export function useTraceEventHandler(
         break;
       
       default:
-        // Handle other trace types if needed
         break;
     }
   };
