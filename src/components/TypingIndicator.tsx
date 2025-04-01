@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type CheckpointStatus = 'pending' | 'loading' | 'completed';
+type CheckpointStatus = 'pending' | 'loading' | 'completed' | 'full';
 
 interface CircularCheckpointProps {
   status: CheckpointStatus;
@@ -24,11 +24,11 @@ const CircularCheckpoint: React.FC<CircularCheckpointProps> = ({ status, positio
         className={cn(
           "w-6 h-6 rounded-full flex items-center justify-center relative",
           status === 'pending' && "border border-gray-300",
-          status === 'loading' && "border-2 border-transparent",
+          (status === 'loading' || status === 'full') && "border-2 border-transparent",
           status === 'completed' && "bg-black text-white"
         )}
       >
-        {status === 'loading' && (
+        {(status === 'loading' || status === 'full') && (
           <svg className="w-full h-full" viewBox="0 0 24 24">
             <circle
               cx="12"
@@ -76,6 +76,23 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   
   // Track progress for the current circle (0-100%)
   const [currentProgress, setCurrentProgress] = useState(0);
+  // Track which circles are in "full" state (100% but not yet showing checkmark)
+  const [fullCircles, setFullCircles] = useState<number[]>([]);
+  
+  // Function to convert full circles to completed after a short delay
+  useEffect(() => {
+    if (fullCircles.length === 0) return;
+    
+    const timeouts = fullCircles.map(circleIndex => 
+      setTimeout(() => {
+        setFullCircles(prev => prev.filter(idx => idx !== circleIndex));
+      }, 300) // 300ms delay before showing the checkmark
+    );
+    
+    return () => {
+      timeouts.forEach(timeout => clearTimeout(timeout));
+    };
+  }, [fullCircles]);
   
   // Automatically animate the progress of the current circle
   useEffect(() => {
@@ -94,6 +111,10 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       
       if (progress < 100) {
         animationFrame = requestAnimationFrame(animate);
+      } else {
+        // When progress reaches 100%, add this circle to fullCircles array
+        // This will trigger a delay before showing the checkmark
+        setFullCircles(prev => [...prev, currentStep]);
       }
     };
     
@@ -113,7 +134,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           progress={i === currentStep ? currentProgress : 0}
           status={
             i < currentStep ? 'completed' : 
-            i === currentStep ? 'loading' : 'pending'
+            i === currentStep ? (fullCircles.includes(i) ? 'full' : 'loading') : 'pending'
           }
         />
       ))}
