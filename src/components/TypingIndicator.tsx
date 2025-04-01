@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Progress } from '@/components/ui/progress';
 
 type CheckpointStatus = 'pending' | 'loading' | 'completed';
 
@@ -30,31 +29,30 @@ const CircularCheckpoint: React.FC<CircularCheckpointProps> = ({ status, positio
         )}
       >
         {status === 'loading' && (
-          <div className="absolute inset-0">
-            <svg className="w-full h-full">
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="transparent"
-                className="text-gray-300"
-              />
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeDasharray="62.83" // 2πr where r=10
-                strokeDashoffset={62.83 - (62.83 * progress / 100)} // Calculate dashoffset based on progress
-                fill="transparent"
-                className="text-black"
-                transform="rotate(-90, 12, 12)" // Start from the top (12 o'clock)
-              />
-            </svg>
-          </div>
+          <svg className="w-full h-full" viewBox="0 0 24 24">
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="transparent"
+              className="text-gray-300"
+            />
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeDasharray={2 * Math.PI * 10} // 2πr where r=10
+              strokeDashoffset={(2 * Math.PI * 10) * (1 - progress / 100)} // Calculate dashoffset based on progress
+              fill="transparent"
+              className="text-black"
+              transform="rotate(-90, 12, 12)" // Start from the top (12 o'clock)
+              strokeLinecap="round"
+            />
+          </svg>
         )}
         {status === 'completed' && <Check className="h-4 w-4" />}
       </div>
