@@ -102,7 +102,13 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     }
   }, [currentStep]);
   
-  // Automatically animate the progress of the current circle with a slight lead
+  // Reset progress when steps change (for new messages)
+  useEffect(() => {
+    setCurrentProgress(0);
+    setFullCircles([]);
+  }, [steps]);
+  
+  // Automatically animate the progress of the current circle with a clear lead
   useEffect(() => {
     if (!isTyping) return;
     
@@ -113,8 +119,8 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
-      // Add 5% lead to progress to keep ahead of real progress
-      const progress = Math.min(100, ((elapsed / duration) * 100) + 5);
+      // Add 15% lead to progress to keep ahead of real progress
+      const progress = Math.min(100, ((elapsed / duration) * 100) + 15);
       
       setCurrentProgress(progress);
       

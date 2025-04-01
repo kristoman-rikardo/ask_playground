@@ -142,6 +142,11 @@ export function useTraceEventHandler(
         clearTimeout(responseTimeoutRef.current);
         responseTimeoutRef.current = null;
       }
+      
+      // Reset progress for every new message, not just the first one
+      if (trace.type === 'completion' && trace.payload?.state === 'start') {
+        resetProgressCircles();
+      }
     }
     
     // Check for the specific block ID that should trigger another circle
@@ -192,10 +197,8 @@ export function useTraceEventHandler(
       case 'completion':
         // Handle completion events
         if (trace.payload?.state === 'start') {
-          // Reset progress circles for new messages after the first one
-          if (streaming.partialMessageIdRef.current === null) {
-            resetProgressCircles();
-          }
+          // Always reset progress circles for new messages
+          resetProgressCircles();
         }
         completionHandler.handleCompletionEvent(trace.payload);
         break;
