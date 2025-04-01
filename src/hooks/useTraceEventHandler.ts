@@ -1,4 +1,3 @@
-
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -21,17 +20,16 @@ export function useTraceEventHandler(
     scheduleUpdate
   } = streaming;
 
-  const animationFrameIdRef = useRef<number | null>(null);
-  const lastUpdateTimeRef = useRef<number>(0);
-  // Use a consistent update interval for smooth streaming
-  const MIN_UPDATE_INTERVAL = 30; // ms
-  
-  // Keep track of typing indicator display status
-  const typingIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Track if we're currently streaming content
-  const isStreamingRef = useRef<boolean>(false);
   // Store accumulated content from multiple traces
   const accumulatedContentRef = useRef<string>('');
+  // Keep track of whether we're currently streaming
+  const isStreamingRef = useRef<boolean>(false);
+  // Keep track of typing indicator display status
+  const typingIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Track if we're waiting for more content
+  const waitingForMoreContentRef = useRef<boolean>(false);
+  // Track if we've completed a message
+  const messageCompletedRef = useRef<boolean>(false);
 
   const handleCompletionEvent = (payload: any) => {
     if (!payload) {
@@ -40,7 +38,7 @@ export function useTraceEventHandler(
     }
     
     const { state, content } = payload;
-    console.log('Completion event:', state, content ? content.substring(0, 50) : '');
+    console.log('Completion event:', state, content ? content.substring(0, 50) + '...' : '');
     
     if (state === 'start') {
       console.log('Completion started');
@@ -48,11 +46,48 @@ export function useTraceEventHandler(
       
       // Check if we already have a text message
       const hasTextMessage = Object.values(messageSourceTracker.current).includes('text');
+      messageCompletedRef.current = false;
       
       wordTrackerRef.current.reset();
       accumulatedContentRef.current = '';
       
       if (!hasTextMessage) {
+        // Clear any existing typing indicator timeout
+        if (typingIndicatorTimeoutRef.current) {
+          clearTimeout(typingIndicatorTimeoutRef.current);
+          typingIndicatorTimeoutRef.current = null;
+        }
+        
+        // Show typing indicator for a short natural delay
+        setIsTyping(true);
+        waitingForMoreContentRef.current = true;
+        
+        // After a brief delay, replace typing indicator with streaming message
+        typingIndicatorTimeoutRef.current = setTimeout(() => {
+          partialMessageIdRef.current = msgId;
+          currentCompletionContentRef.current = '';
+          messageSourceTracker.current[msgId] = 'completion';
+          setIsTyping(false); // Hide typing indicator when message starts
+          waitingForMoreContentRef.current = false;
+          
+          addAgentMessage('', true, msgId);
+          typingIndicatorTimeoutRef.current = null;
+        }, 500); // 500ms delay for natural transition
+      } else {
+        console.log('Skipping completion message as we already have a text message');
+      }
+      receivedFirstTraceRef.current = true;
+    } 
+    else if (state === 'content') {
+      // When we receive content from a trace
+      if (!content) return;
+      
+      console.log(`Received content trace: "${content}"`);
+      
+      // If we haven't started a message yet
+      if (!partialMessageIdRef.current && !isStreamingRef.current) {
+        const msgId = `completion-${Date.now()}`;
+        
         // Clear any existing typing indicator timeout
         if (typingIndicatorTimeoutRef.current) {
           clearTimeout(typingIndicatorTimeoutRef.current);
@@ -68,106 +103,115 @@ export function useTraceEventHandler(
           currentCompletionContentRef.current = '';
           messageSourceTracker.current[msgId] = 'completion';
           setIsTyping(false); // Hide typing indicator when message starts
-          isStreamingRef.current = true;
+          isStreamingRef.current = false;
+          waitingForMoreContentRef.current = false;
           
           addAgentMessage('', true, msgId);
           typingIndicatorTimeoutRef.current = null;
-        }, 500); // 500ms delay for natural transition
-      } else {
-        console.log('Skipping completion message as we already have a text message');
-      }
-      receivedFirstTraceRef.current = true;
-    } 
-    else if (state === 'content') {
-      if (!content || !partialMessageIdRef.current) return;
-      
-      const currentMsgId = partialMessageIdRef.current;
-      
-      // Always accumulate content, even if we're currently streaming something else
-      accumulatedContentRef.current += content;
-      
-      if (messageSourceTracker.current[currentMsgId] === 'completion' && !isStreamingRef.current) {
-        // If we're not currently streaming, start streaming the accumulated content
-        isStreamingRef.current = true;
-        
-        // Process content through character tracker
-        const contentToStream = accumulatedContentRef.current;
-        accumulatedContentRef.current = '';
-        
-        // Add the content to the total content
-        currentCompletionContentRef.current += contentToStream;
-        
-        // Process content through character tracker to maintain the 30ms delay
-        wordTrackerRef.current.appendContent(contentToStream);
-        
-        // Ensure we're updating with consistent timing
-        if (animationFrameIdRef.current === null) {
-          const updateStreaming = () => {
-            if (!partialMessageIdRef.current) return;
-            
-            const processedText = wordTrackerRef.current.getCurrentProcessedText();
-            updatePartialMessage(currentMsgId, processedText, true);
-            
-            if (!wordTrackerRef.current.isStreamingComplete()) {
-              animationFrameIdRef.current = requestAnimationFrame(updateStreaming);
-            } else {
-              animationFrameIdRef.current = null;
-              isStreamingRef.current = false;
-              
-              // If we have more accumulated content, process it now
-              if (accumulatedContentRef.current.length > 0) {
-                handleCompletionEvent({
-                  state: 'content',
-                  content: accumulatedContentRef.current
-                });
-              }
-            }
-          };
           
-          animationFrameIdRef.current = requestAnimationFrame(updateStreaming);
+          // Start streaming the first content
+          processContentStream(content, msgId);
+        }, 500); // 500ms delay for natural transition
+      } 
+      else if (partialMessageIdRef.current) {
+        // If we're already streaming a message
+        const msgId = partialMessageIdRef.current;
+        
+        if (isStreamingRef.current) {
+          // If we're currently streaming, add this content to accumulated buffer
+          accumulatedContentRef.current += content;
+          console.log(`Added to buffer (now ${accumulatedContentRef.current.length} chars)`);
+        } else {
+          // If we're not currently streaming, start streaming this content
+          processContentStream(content, msgId);
         }
       }
     }
     else if (state === 'end') {
       console.log('Completion ended');
+      messageCompletedRef.current = true;
       
-      const currentMsgId = partialMessageIdRef.current;
-      if (currentMsgId && messageSourceTracker.current[currentMsgId] === 'completion') {
-        if (animationFrameIdRef.current !== null) {
-          cancelAnimationFrame(animationFrameIdRef.current);
-          animationFrameIdRef.current = null;
-        }
-        
-        // Add any remaining accumulated content
-        if (accumulatedContentRef.current.length > 0) {
-          currentCompletionContentRef.current += accumulatedContentRef.current;
-          wordTrackerRef.current.appendContent(accumulatedContentRef.current);
-          accumulatedContentRef.current = '';
-        }
-        
-        // Let the streaming finish naturally through the word tracker
-        // The StreamingWordTracker will continue to process remaining characters
-        const { text } = wordTrackerRef.current.finalize();
-        
-        // We'll continue letting the stream tracker output the text,
-        // but mark the message as no longer partial once complete
-        const checkStreamingComplete = () => {
-          if (wordTrackerRef.current.isStreamingComplete()) {
-            updatePartialMessage(currentMsgId, wordTrackerRef.current.getCurrentProcessedText(), false);
-            partialMessageIdRef.current = null;
-            isStreamingRef.current = false;
-          } else {
-            setTimeout(checkStreamingComplete, 100);
-          }
-        };
-        
-        checkStreamingComplete();
+      // If we have pending content and we're not currently streaming, process it
+      if (accumulatedContentRef.current.length > 0 && !isStreamingRef.current && partialMessageIdRef.current) {
+        processContentStream(accumulatedContentRef.current, partialMessageIdRef.current);
+        accumulatedContentRef.current = '';
       }
+      
+      // Mark the message as no longer partial once complete and all content is processed
+      checkAndFinalizeMessage();
+    }
+  };
+  
+  const processContentStream = (content: string, msgId: string) => {
+    if (!content || content.length === 0) return;
+    
+    console.log(`Starting to stream content: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`);
+    isStreamingRef.current = true;
+    waitingForMoreContentRef.current = false;
+    
+    // Stream each character with a delay
+    let index = 0;
+    let currentText = updatePartialMessage(msgId, wordTrackerRef.current.getCurrentProcessedText(), true);
+    
+    const streamNextChar = () => {
+      if (index < content.length) {
+        const char = content[index];
+        currentText += char;
+        
+        // Update the UI with the new character
+        updatePartialMessage(msgId, currentText, true);
+        
+        // Update our word tracker's processed text
+        wordTrackerRef.current.appendContent(char);
+        
+        // Move to next character
+        index++;
+        
+        // Schedule next character with consistent 30ms delay
+        setTimeout(streamNextChar, 30);
+      } else {
+        // Done streaming this content chunk
+        console.log(`Finished streaming chunk of ${content.length} chars`);
+        isStreamingRef.current = false;
+        
+        // Check if we have more content in the buffer to process
+        if (accumulatedContentRef.current.length > 0) {
+          console.log(`Processing ${accumulatedContentRef.current.length} chars from buffer`);
+          const nextContent = accumulatedContentRef.current;
+          accumulatedContentRef.current = '';
+          processContentStream(nextContent, msgId);
+        } else if (messageCompletedRef.current) {
+          // If the message is completed and we've processed all content
+          checkAndFinalizeMessage();
+        } else {
+          // Otherwise we're waiting for more content
+          waitingForMoreContentRef.current = true;
+          console.log('Waiting for more content...');
+        }
+      }
+    };
+    
+    // Start streaming
+    streamNextChar();
+  };
+  
+  const checkAndFinalizeMessage = () => {
+    if (messageCompletedRef.current && !isStreamingRef.current && partialMessageIdRef.current) {
+      console.log('Message completed, finalizing');
+      const currentMsgId = partialMessageIdRef.current;
+      
+      // Ensure all content is processed
+      const finalText = wordTrackerRef.current.getCurrentProcessedText();
+      updatePartialMessage(currentMsgId, finalText, false);
+      partialMessageIdRef.current = null;
+      isStreamingRef.current = false;
+      waitingForMoreContentRef.current = false;
+      currentCompletionContentRef.current = '';
     }
   };
 
   const handleTraceEvent = (trace: any) => {
-    console.log('Trace event received:', trace.type, trace);
+    console.log('Trace event received:', trace.type);
     
     if (trace.type === 'speak' || trace.type === 'text' || (trace.type === 'completion' && trace.payload?.state === 'content')) {
       receivedFirstTraceRef.current = true;
@@ -181,8 +225,9 @@ export function useTraceEventHandler(
           const msgId = `text-${Date.now()}`;
           
           messageSourceTracker.current[msgId] = 'text';
+          messageCompletedRef.current = false;
           
-          console.log('Text/Speak message received:', messageContent);
+          console.log('Text/Speak message received:', messageContent.substring(0, 50) + '...');
           
           // Clear any existing typing indicator timeout
           if (typingIndicatorTimeoutRef.current) {
@@ -202,20 +247,9 @@ export function useTraceEventHandler(
             typingIndicatorTimeoutRef.current = null;
             isStreamingRef.current = true;
             
-            // Use streamWords with character-by-character animation
-            streamWords(
-              messageContent,
-              (updatedText) => {
-                updatePartialMessage(msgId, updatedText, true);
-              },
-              () => {
-                // When complete, show final text
-                updatePartialMessage(msgId, messageContent, false);
-                partialMessageIdRef.current = null;
-                isStreamingRef.current = false;
-              },
-              30  // consistent 30ms delay
-            );
+            // Process the text message in the same way as completion content
+            processContentStream(messageContent, msgId);
+            messageCompletedRef.current = true; // Text messages are complete when delivered
           }, 500); // 500ms delay for natural transition
         }
         break;
@@ -236,27 +270,16 @@ export function useTraceEventHandler(
       
       case 'end':
         console.log('Session ended');
-        if (partialMessageIdRef.current && currentCompletionContentRef.current) {
-          // Make sure we stream any remaining content
-          if (accumulatedContentRef.current.length > 0) {
-            wordTrackerRef.current.appendContent(accumulatedContentRef.current);
-            accumulatedContentRef.current = '';
-          }
-          
-          // Let the streaming finish naturally
-          const checkStreamingComplete = () => {
-            if (wordTrackerRef.current.isStreamingComplete()) {
-              updatePartialMessage(partialMessageIdRef.current!, wordTrackerRef.current.getCurrentProcessedText(), false);
-              partialMessageIdRef.current = null;
-              isStreamingRef.current = false;
-              currentCompletionContentRef.current = '';
-            } else {
-              setTimeout(checkStreamingComplete, 100);
-            }
-          };
-          
-          checkStreamingComplete();
+        messageCompletedRef.current = true;
+        
+        // If we have pending content and we're not currently streaming, process it
+        if (accumulatedContentRef.current.length > 0 && !isStreamingRef.current && partialMessageIdRef.current) {
+          processContentStream(accumulatedContentRef.current, partialMessageIdRef.current);
+          accumulatedContentRef.current = '';
         }
+        
+        // Check and finalize any pending message
+        checkAndFinalizeMessage();
         
         setTimeout(() => {
           setIsTyping(false);

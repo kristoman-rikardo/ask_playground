@@ -13,6 +13,7 @@ export class StreamingWordTracker {
   private nextCharIndex: number = 0;
   private isProcessing: boolean = false;
   private charDelay: number = 30; // 30ms delay between characters
+  private processingTimeout: NodeJS.Timeout | null = null;
   
   /**
    * Updates the buffer with new content and processes characters at a consistent rate
@@ -23,6 +24,8 @@ export class StreamingWordTracker {
   appendContent(newContent: string): { 
     processedText: string
   } {
+    console.log(`Appending new content: "${newContent}" (${newContent.length} chars)`);
+    
     // Add new content to the buffer
     this.currentBuffer += newContent;
     
@@ -40,6 +43,12 @@ export class StreamingWordTracker {
    * Process the next character with a delay
    */
   private processNextChar(): void {
+    // Clear any existing timeout
+    if (this.processingTimeout) {
+      clearTimeout(this.processingTimeout);
+      this.processingTimeout = null;
+    }
+    
     this.isProcessing = true;
     
     // If we have characters to process
@@ -53,7 +62,7 @@ export class StreamingWordTracker {
       this.nextCharIndex++;
       
       // Schedule next character processing
-      setTimeout(() => {
+      this.processingTimeout = setTimeout(() => {
         this.processNextChar();
       }, this.charDelay);
     } else {
@@ -68,6 +77,8 @@ export class StreamingWordTracker {
    * @returns Object containing the complete processed text
    */
   finalize(): { text: string } {
+    console.log(`Finalizing with ${this.currentBuffer.length - this.nextCharIndex} chars remaining in buffer`);
+    
     // Instead of immediately processing remaining characters,
     // we'll queue them for processing at the regular rate
     if (this.nextCharIndex < this.currentBuffer.length && !this.isProcessing) {
@@ -77,19 +88,6 @@ export class StreamingWordTracker {
     return { 
       text: this.processedText
     };
-  }
-
-  /**
-   * Force complete all text immediately (bypass streaming)
-   * 
-   * @returns Complete text
-   */
-  forceComplete(): string {
-    const remaining = this.currentBuffer.substring(this.nextCharIndex);
-    this.processedText += remaining;
-    this.nextCharIndex = this.currentBuffer.length;
-    this.isProcessing = false;
-    return this.processedText;
   }
 
   /**
@@ -120,9 +118,28 @@ export class StreamingWordTracker {
   }
 
   /**
+   * Checks if there is more content to process
+   */
+  hasMoreContentToProcess(): boolean {
+    return this.nextCharIndex < this.currentBuffer.length;
+  }
+
+  /**
+   * Checks if we are currently processing text
+   */
+  isCurrentlyProcessing(): boolean {
+    return this.isProcessing;
+  }
+
+  /**
    * Resets the tracker state
    */
   reset(): void {
+    if (this.processingTimeout) {
+      clearTimeout(this.processingTimeout);
+      this.processingTimeout = null;
+    }
+    
     this.processedText = '';
     this.currentBuffer = '';
     this.nextCharIndex = 0;
