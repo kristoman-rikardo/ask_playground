@@ -5,6 +5,9 @@ import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
 import { useCompletionEventHandler } from './useCompletionEventHandler';
 import { useTextAndChoiceHandler } from './useTextAndChoiceHandler';
 import { processContentStream } from '@/utils/streamingProcessUtils';
+import { useStepProgressManager } from './useStepProgressManager';
+import { useTextTraceManager } from './useTextTraceManager';
+import { logTraceEvent } from '@/utils/traceLogger';
 
 export function useTraceEventHandler(
   streaming: MessageStreamingHook,
@@ -15,10 +18,10 @@ export function useTraceEventHandler(
   setCurrentStepIndex: React.Dispatch<React.SetStateAction<number>>
 ) {
   const receivedFirstTraceRef = useRef<boolean>(false);
-  const receivedFirstTextRef = useRef<boolean>(false);
-  const responseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const stepTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const progressCompleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Initialize our specialized managers
+  const stepProgressManager = useStepProgressManager(setStepsTotal, setCurrentStepIndex);
+  const textTraceManager = useTextTraceManager();
   
   const completionHandler = useCompletionEventHandler(
     streaming,
@@ -26,17 +29,10 @@ export function useTraceEventHandler(
   );
   
   const processStreamCallback = (content: string, msgId: string) => {
-    receivedFirstTextRef.current = true;
+    stepProgressManager.receivedFirstTextRef.current = true;
     
-    if (responseTimeoutRef.current) {
-      clearTimeout(responseTimeoutRef.current);
-      responseTimeoutRef.current = null;
-    }
-    
-    if (stepTimeoutRef.current) {
-      clearTimeout(stepTimeoutRef.current);
-      stepTimeoutRef.current = null;
-    }
+    // Clear timeout references when we start processing text
+    stepProgressManager.clearProgressTimeouts();
     
     processContentStream(
       content, 
@@ -70,111 +66,43 @@ export function useTraceEventHandler(
     processStreamCallback
   );
   
-  // Reset progress circles for new message interactions
-  const resetProgressCircles = () => {
-    receivedFirstTextRef.current = false;
-    // Reset to initial state when a new message starts
-    setStepsTotal(1);
-    setCurrentStepIndex(0);
-  };
-  
+  // Cleanup all timeouts
   useEffect(() => {
     return () => {
-      if (responseTimeoutRef.current) {
-        clearTimeout(responseTimeoutRef.current);
-      }
-      if (stepTimeoutRef.current) {
-        clearTimeout(stepTimeoutRef.current);
-      }
-      if (progressCompleteTimeoutRef.current) {
-        clearTimeout(progressCompleteTimeoutRef.current);
-      }
+      stepProgressManager.clearProgressTimeouts();
+      textTraceManager.clearTextTraceTimeouts();
     };
   }, []);
   
   const handleTraceEvent = (trace: any) => {
     const traceType = trace.type || 'unknown';
     
-    let logPrefix = '📋';
-    
-    switch (traceType) {
-      case 'speak':
-        logPrefix = '🗣️';
-        break;
-      case 'text':
-        logPrefix = '📝';
-        break;
-      case 'choice':
-        logPrefix = '🔘';
-        break;
-      case 'completion':
-        logPrefix = '✍️';
-        break;
-      case 'end':
-        logPrefix = '🏁';
-        break;
-      case 'flow':
-        logPrefix = '🌊';
-        break;
-      case 'block':
-        logPrefix = '🧱';
-        break;
-      case 'debug':
-        logPrefix = '🔍';
-        break;
-      default:
-        break;
-    }
-    
-    if (trace.payload) {
-      const shortPayload = JSON.stringify(trace.payload).substring(0, 100);
-      console.log(`${logPrefix} Trace [${traceType}]: ${shortPayload}${shortPayload.length >= 100 ? '...' : ''}`);
-    } else {
-      console.log(`${logPrefix} Trace received: ${traceType}`);
-    }
+    // Log the trace with our utility
+    logTraceEvent(traceType, trace.payload);
     
     if (trace.type === 'speak' || 
         trace.type === 'text' || 
         (trace.type === 'completion' && trace.payload?.state === 'start')) {
       receivedFirstTraceRef.current = true;
       
-      if (responseTimeoutRef.current) {
-        clearTimeout(responseTimeoutRef.current);
-        responseTimeoutRef.current = null;
-      }
+      // Clear timeout when we receive actual trace data
+      stepProgressManager.clearProgressTimeouts();
       
       // Reset progress for every new message, not just the first one
       if (trace.type === 'completion' && trace.payload?.state === 'start') {
-        resetProgressCircles();
+        stepProgressManager.resetProgressCircles();
       }
     }
     
-    // Check for the specific block ID that should trigger another circle
-    if (trace.type === 'block' && trace.payload?.blockID === '67d742f919dcd04caec92381') {
-      console.log('🔵 Detected special block ID, adding another circle');
-      setStepsTotal(prev => Math.max(prev + 1, 3));
-      setCurrentStepIndex(prev => prev + 1);
+    // Check for special block ID
+    if (trace.type === 'block' && trace.payload?.blockID) {
+      stepProgressManager.handleSpecialBlockId(trace.payload.blockID);
     }
     
-    if (trace.payload?.steps) {
-      setStepsTotal(trace.payload.steps.total || 1);
-      setCurrentStepIndex(trace.payload.steps.current || 0);
-    } else {
-      if (responseTimeoutRef.current === null && trace.type !== 'end' && !receivedFirstTextRef.current) {
-        responseTimeoutRef.current = setTimeout(() => {
-          if (!receivedFirstTextRef.current) {
-            setStepsTotal((current) => Math.max(current, 2));
-            setCurrentStepIndex(1);
-            
-            stepTimeoutRef.current = setTimeout(() => {
-              if (!receivedFirstTextRef.current) {
-                setStepsTotal((current) => Math.max(current, 3));
-                setCurrentStepIndex(2);
-              }
-            }, 1500);
-          }
-        }, 4000);
-      }
+    // Handle steps data if available
+    if (!stepProgressManager.handleStepsFromPayload(trace.payload)) {
+      // Set up progress timeouts if no steps data
+      stepProgressManager.setupProgressTimeouts();
     }
     
     switch (trace.type) {
@@ -184,13 +112,11 @@ export function useTraceEventHandler(
         completionHandler.streamingStateRef.current.messageCompleted = true;
         
         // Add a brief delay before showing the text to ensure circles complete
-        if (progressCompleteTimeoutRef.current) {
-          clearTimeout(progressCompleteTimeoutRef.current);
-        }
+        textTraceManager.clearTextTraceTimeouts();
         
-        progressCompleteTimeoutRef.current = setTimeout(() => {
+        textTraceManager.progressCompleteTimeoutRef.current = setTimeout(() => {
           textAndChoiceHandler.handleTextOrSpeakEvent(trace);
-          receivedFirstTextRef.current = true;
+          stepProgressManager.receivedFirstTextRef.current = true;
         }, 500); // 500ms delay to show completed circles before text starts
         break;
       
@@ -198,7 +124,7 @@ export function useTraceEventHandler(
         // Handle completion events
         if (trace.payload?.state === 'start') {
           // Always reset progress circles for new messages
-          resetProgressCircles();
+          stepProgressManager.resetProgressCircles();
         }
         completionHandler.handleCompletionEvent(trace.payload);
         break;
@@ -224,18 +150,9 @@ export function useTraceEventHandler(
           completionHandler.streamingStateRef.current.accumulatedContent = '';
         }
         
-        if (responseTimeoutRef.current) {
-          clearTimeout(responseTimeoutRef.current);
-          responseTimeoutRef.current = null;
-        }
-        if (stepTimeoutRef.current) {
-          clearTimeout(stepTimeoutRef.current);
-          stepTimeoutRef.current = null;
-        }
-        if (progressCompleteTimeoutRef.current) {
-          clearTimeout(progressCompleteTimeoutRef.current);
-          progressCompleteTimeoutRef.current = null;
-        }
+        // Clear all timeouts on session end
+        stepProgressManager.clearProgressTimeouts();
+        textTraceManager.clearTextTraceTimeouts();
         break;
       
       default:
