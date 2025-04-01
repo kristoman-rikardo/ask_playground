@@ -17,6 +17,13 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
+  // Log button state changes
+  React.useEffect(() => {
+    if (buttons.length > 0) {
+      console.log(`📱 ButtonPanel rendering ${buttons.length} buttons`);
+    }
+  }, [buttons]);
+  
   // Custom loader component with updated animation
   const LoadingIndicator = () => (
     <div className="h-[120px] flex flex-col items-center justify-center">

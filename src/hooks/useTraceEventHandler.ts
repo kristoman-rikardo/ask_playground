@@ -74,6 +74,7 @@ export function useTraceEventHandler(
       
       case 'choice':
         // Handle choice events immediately, regardless of message streaming status
+        console.log('🔴 BUTTON TRACE RECEIVED:', trace.payload?.buttons?.length || 0, 'buttons');
         textAndChoiceHandler.handleChoiceEvent(trace);
         break;
       
