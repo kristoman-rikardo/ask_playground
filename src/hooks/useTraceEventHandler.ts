@@ -1,5 +1,5 @@
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
 import { useCompletionEventHandler } from './useCompletionEventHandler';
@@ -13,6 +13,8 @@ export function useTraceEventHandler(
   setIsButtonsLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   const receivedFirstTraceRef = useRef<boolean>(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(1);
   
   // Initialize event handlers
   const completionHandler = useCompletionEventHandler(
@@ -41,6 +43,12 @@ export function useTraceEventHandler(
           completionHandler.streamingStateRef.current.isStreaming = false;
           completionHandler.streamingStateRef.current.waitingForMoreContent = false;
           streaming.currentCompletionContentRef.current = '';
+          
+          // Advance the step when a message is completed
+          setCurrentStep(prev => {
+            const newStep = prev + 1;
+            return newStep < totalSteps ? newStep : 0; // Reset if we've reached the end
+          });
         }
       }
     );
@@ -56,6 +64,15 @@ export function useTraceEventHandler(
   
   const handleTraceEvent = (trace: any) => {
     console.log('Trace event received:', trace.type);
+    
+    // Detect if we're starting a multi-step sequence
+    if (trace.type === 'flow.start' && trace.payload?.diagramID) {
+      // A new flow starting might indicate multiple steps
+      setCurrentStep(0);
+      // We could potentially get the number of steps from the flow payload
+      // For now, let's assume a default of 2 steps for flows
+      setTotalSteps(2);
+    }
     
     if (trace.type === 'speak' || trace.type === 'text' || (trace.type === 'completion' && trace.payload?.state === 'content')) {
       receivedFirstTraceRef.current = true;
@@ -94,6 +111,10 @@ export function useTraceEventHandler(
           );
           completionHandler.streamingStateRef.current.accumulatedContent = '';
         }
+        
+        // Reset steps at the end of a session
+        setTotalSteps(1);
+        setCurrentStep(0);
         break;
       
       default:
@@ -104,6 +125,8 @@ export function useTraceEventHandler(
 
   return {
     handleTraceEvent,
-    receivedFirstTraceRef
+    receivedFirstTraceRef,
+    currentStep,
+    totalSteps
   };
 }

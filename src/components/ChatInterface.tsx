@@ -12,7 +12,9 @@ const ChatInterface: React.FC = () => {
     buttons,
     isButtonsLoading,
     sendUserMessage,
-    handleButtonClick
+    handleButtonClick,
+    currentStep,
+    totalSteps
   } = useChatSession();
 
   return (
@@ -24,7 +26,9 @@ const ChatInterface: React.FC = () => {
         <div className="flex-1 flex flex-col overflow-hidden min-h-[200px]">
           <ChatMessages 
             messages={messages} 
-            isTyping={isTyping} 
+            isTyping={isTyping}
+            currentStep={currentStep}
+            totalSteps={totalSteps}
           />
         </div>
         

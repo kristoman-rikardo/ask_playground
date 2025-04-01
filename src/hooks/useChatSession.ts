@@ -24,7 +24,7 @@ export function useChatSession() {
   }, [streaming]);
   
   // Initialize trace event handler
-  const { handleTraceEvent, receivedFirstTraceRef } = useTraceEventHandler(
+  const { handleTraceEvent, receivedFirstTraceRef, currentStep, totalSteps } = useTraceEventHandler(
     streaming,
     setIsTyping,
     setButtons,
@@ -72,6 +72,8 @@ export function useChatSession() {
     buttons,
     isButtonsLoading,
     sendUserMessage: messageInteraction.sendUserMessage,
-    handleButtonClick: messageInteraction.handleButtonClick
+    handleButtonClick: messageInteraction.handleButtonClick,
+    currentStep,
+    totalSteps
   };
 }
