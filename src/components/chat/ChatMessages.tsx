@@ -89,6 +89,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       <div ref={messagesEndRef} />
     </div>
   );
-};
+}
 
 export default ChatMessages;

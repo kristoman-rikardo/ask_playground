@@ -37,7 +37,8 @@ export function useChatSession() {
     setIsTyping,
     setButtons, 
     setIsButtonsLoading,
-    resetMessageSourceTracker
+    resetMessageSourceTracker,
+    setMessages // Pass setMessages to useMessageInteraction
   );
 
   useEffect(() => {

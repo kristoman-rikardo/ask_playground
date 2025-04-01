@@ -8,10 +8,9 @@ export function useMessageInteraction(
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>,
   setButtons: React.Dispatch<React.SetStateAction<Button[]>>,
   setIsButtonsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  resetMessageSourceTracker: () => void
+  resetMessageSourceTracker: () => void,
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>
 ) {
-  const [messages, setMessages] = useState<Message[]>([]);
-
   const addUserMessage = (text: string) => {
     // Create a unique ID for the message
     const message: Message = {
@@ -69,8 +68,6 @@ export function useMessageInteraction(
   };
 
   return {
-    messages,
-    setMessages,
     sendUserMessage,
     handleButtonClick
   };
