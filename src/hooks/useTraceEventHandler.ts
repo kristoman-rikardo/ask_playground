@@ -151,7 +151,7 @@ export function useTraceEventHandler(
     
     // Stream each character with a delay
     let index = 0;
-    let currentText = updatePartialMessage(msgId, wordTrackerRef.current.getCurrentProcessedText(), true);
+    let currentText = wordTrackerRef.current.getCurrentProcessedText();
     
     const streamNextChar = () => {
       if (index < content.length) {
