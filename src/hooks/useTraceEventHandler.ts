@@ -93,11 +93,6 @@ export function useTraceEventHandler(
           );
           completionHandler.streamingStateRef.current.accumulatedContent = '';
         }
-        
-        setTimeout(() => {
-          setIsTyping(false);
-          // Don't reset buttons loading here as they may have already been displayed
-        }, 50);
         break;
       
       default:

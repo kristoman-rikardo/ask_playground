@@ -1,3 +1,4 @@
+
 import { StreamingWordTracker } from '@/utils/streamingUtils';
 
 /**
@@ -52,7 +53,7 @@ export const processContentStream = (
       // Move to next character
       index++;
       
-      // Schedule next character with 5ms delay
+      // Schedule next character with 5ms delay (as requested)
       setTimeout(streamNextChar, 5);
     } else {
       // Done streaming this content chunk
@@ -71,7 +72,7 @@ export const processContentStream = (
       } else {
         // Otherwise we're waiting for more content
         streamingState.waitingForMoreContent = true;
-        console.log('Waiting for more content...');
+        console.log('Waiting for more traces...');
       }
     }
   };

@@ -1,3 +1,4 @@
+
 import { StreamingProcessState, processContentStream } from '@/utils/streamingProcessUtils';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
 
@@ -34,25 +35,14 @@ export const createCompletionHandlers = (
     streamingState.accumulatedContent = '';
     
     if (!hasTextMessage) {
-      // Clear any existing typing indicator timeout
-      if (typingIndicatorTimeoutRef.current) {
-        clearTimeout(typingIndicatorTimeoutRef.current);
-        typingIndicatorTimeoutRef.current = null;
-      }
-      
-      // Keep typing indicator until just before streaming starts
+      // Show typing indicator until we get content
       setIsTyping(true);
       streamingState.waitingForMoreContent = true;
       
-      // Immediately start the message without delay
+      // Set up message container but don't display yet
       partialMessageIdRef.current = msgId;
       currentCompletionContentRef.current = '';
       messageSourceTracker.current[msgId] = 'completion';
-      setIsTyping(false); // Hide typing indicator when message starts
-      streamingState.waitingForMoreContent = false;
-      
-      addAgentMessage('', true, msgId);
-      typingIndicatorTimeoutRef.current = null;
     } else {
       console.log('Skipping completion message as we already have a text message');
     }
@@ -68,28 +58,17 @@ export const createCompletionHandlers = (
     console.log(`Received content trace: "${content}"`);
     
     // If we haven't started a message yet
-    if (!partialMessageIdRef.current && !streamingState.isStreaming) {
+    if (!partialMessageIdRef.current) {
       const msgId = `completion-${Date.now()}`;
       
-      // Clear any existing typing indicator timeout
-      if (typingIndicatorTimeoutRef.current) {
-        clearTimeout(typingIndicatorTimeoutRef.current);
-        typingIndicatorTimeoutRef.current = null;
-      }
-      
-      // Show typing indicator for a short natural delay
-      setIsTyping(true);
-      
-      // Immediately start the message without delay
+      // Hide typing indicator and start streaming immediately
+      setIsTyping(false);
       partialMessageIdRef.current = msgId;
       currentCompletionContentRef.current = '';
       messageSourceTracker.current[msgId] = 'completion';
-      setIsTyping(false); // Hide typing indicator when message starts
-      streamingState.isStreaming = false;
-      streamingState.waitingForMoreContent = false;
       
+      // Create empty message container
       addAgentMessage('', true, msgId);
-      typingIndicatorTimeoutRef.current = null;
       
       // Start streaming the first content
       processContentStream(
@@ -104,6 +83,12 @@ export const createCompletionHandlers = (
     else if (partialMessageIdRef.current) {
       // If we're already streaming a message
       const msgId = partialMessageIdRef.current;
+      
+      // If first content and still showing typing indicator, create message and hide indicator
+      if (setIsTyping && wordTrackerRef.current.getCurrentProcessedText() === '') {
+        setIsTyping(false);
+        addAgentMessage('', true, msgId);
+      }
       
       if (streamingState.isStreaming) {
         // If we're currently streaming, add this content to accumulated buffer
@@ -164,7 +149,7 @@ export const createCompletionHandlers = (
       const currentMsgId = partialMessageIdRef.current;
       
       // Ensure all content is processed
-      const finalText = wordTrackerRef.current.getCurrentProcessedText();
+      const finalText = wordTracker.getCurrentProcessedText();
       updatePartialMessage(currentMsgId, finalText, false);
       partialMessageIdRef.current = null;
       streamingState.isStreaming = false;

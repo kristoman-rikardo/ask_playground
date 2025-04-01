@@ -27,23 +27,14 @@ export function useTextAndChoiceHandler(
       
       console.log('Text/Speak message received:', messageContent.substring(0, 50) + '...');
       
-      // Clear any existing typing indicator timeout
-      if (typingIndicatorTimeoutRef.current) {
-        clearTimeout(typingIndicatorTimeoutRef.current);
-        typingIndicatorTimeoutRef.current = null;
-      }
+      // Hide typing indicator when starting to stream
+      setIsTyping(false);
       
-      // Show typing indicator for a short natural delay
-      setIsTyping(true);
-      
-      // Immediately start the message without delay
+      // Create message container and start streaming
       partialMessageIdRef.current = msgId;
-      setIsTyping(false); // Hide typing indicator when message starts
-      
       addAgentMessage('', true, msgId);
-      typingIndicatorTimeoutRef.current = null;
       
-      // Process the text message in the same way as completion content
+      // Process the text message character by character at 5ms intervals
       processStreamCallback(messageContent, msgId);
       return true; // Message is complete when delivered
     }

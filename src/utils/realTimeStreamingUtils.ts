@@ -12,7 +12,7 @@ export class StreamingWordTracker {
   private currentBuffer: string = '';
   private nextCharIndex: number = 0;
   private isProcessing: boolean = false;
-  private charDelay: number = 10; // Faster 10ms delay between characters (was 30ms)
+  private charDelay: number = 5; // 5ms delay between characters as requested
   private processingTimeout: NodeJS.Timeout | null = null;
   
   /**
@@ -61,7 +61,7 @@ export class StreamingWordTracker {
       // Move to next character
       this.nextCharIndex++;
       
-      // Schedule next character processing with faster delay
+      // Schedule next character processing with 5ms delay
       this.processingTimeout = setTimeout(() => {
         this.processNextChar();
       }, this.charDelay);
