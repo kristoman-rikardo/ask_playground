@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { vfSendLaunch } from '@/lib/voiceflow';
 import { Message, Button } from '@/types/chat';
 import { useMessageStreaming } from './useMessageStreaming';
@@ -13,6 +13,8 @@ export function useChatSession() {
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [stepsTotal, setStepsTotal] = useState(1);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   
   // Initialize message streaming
   const [messages, setMessages] = useState<Message[]>([]);
@@ -28,7 +30,9 @@ export function useChatSession() {
     streaming,
     setIsTyping,
     setButtons,
-    setIsButtonsLoading
+    setIsButtonsLoading,
+    setStepsTotal,
+    setCurrentStepIndex
   );
   
   // Initialize message interaction
@@ -72,6 +76,8 @@ export function useChatSession() {
     buttons,
     isButtonsLoading,
     sendUserMessage: messageInteraction.sendUserMessage,
-    handleButtonClick: messageInteraction.handleButtonClick
+    handleButtonClick: messageInteraction.handleButtonClick,
+    stepsTotal,
+    currentStepIndex
   };
 }

@@ -7,11 +7,15 @@ import { Message } from '@/types/chat';
 interface ChatMessagesProps {
   messages: Message[];
   isTyping: boolean;
+  stepsTotal?: number;
+  currentStepIndex?: number;
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
-  isTyping
+  isTyping,
+  stepsTotal = 1,
+  currentStepIndex = 0
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
@@ -21,6 +25,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   console.log('Rendering ChatMessages:', {
     messageCount: messages.length,
     isTyping,
+    stepsTotal,
+    currentStepIndex,
     messages: messages.map(m => ({
       id: m.id,
       type: m.type,
@@ -82,7 +88,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       {/* Only show typing indicator when isTyping is true and no messages are currently streaming */}
       {isTyping && !hasPartialMessages && (
         <div className="mt-2">
-          <TypingIndicator />
+          <TypingIndicator 
+            steps={stepsTotal}
+            currentStep={currentStepIndex}
+            isTyping={isTyping}
+          />
         </div>
       )}
       
