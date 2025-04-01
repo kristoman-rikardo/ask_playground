@@ -65,12 +65,14 @@ interface TypingIndicatorProps {
   steps?: number;
   currentStep?: number;
   isTyping?: boolean;
+  textStreamingStarted?: boolean; // Add the new prop with optional typing
 }
 
 const TypingIndicator: React.FC<TypingIndicatorProps> = ({ 
   steps = 1,
   currentStep = 0,
-  isTyping = true 
+  isTyping = true,
+  textStreamingStarted = false // Add default value
 }) => {
   // If not typing, don't show anything
   if (!isTyping) return null;
