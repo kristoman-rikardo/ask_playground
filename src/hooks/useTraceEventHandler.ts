@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -17,6 +18,7 @@ export function useTraceEventHandler(
   const receivedFirstTextRef = useRef<boolean>(false);
   const responseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const stepTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressCompleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const completionHandler = useCompletionEventHandler(
     streaming,
@@ -68,6 +70,14 @@ export function useTraceEventHandler(
     processStreamCallback
   );
   
+  // Reset progress circles for new message interactions
+  const resetProgressCircles = () => {
+    receivedFirstTextRef.current = false;
+    // Reset to initial state when a new message starts
+    setStepsTotal(1);
+    setCurrentStepIndex(0);
+  };
+  
   useEffect(() => {
     return () => {
       if (responseTimeoutRef.current) {
@@ -75,6 +85,9 @@ export function useTraceEventHandler(
       }
       if (stepTimeoutRef.current) {
         clearTimeout(stepTimeoutRef.current);
+      }
+      if (progressCompleteTimeoutRef.current) {
+        clearTimeout(progressCompleteTimeoutRef.current);
       }
     };
   }, []);
@@ -131,6 +144,13 @@ export function useTraceEventHandler(
       }
     }
     
+    // Check for the specific block ID that should trigger another circle
+    if (trace.type === 'block' && trace.payload?.blockID === '67d742f919dcd04caec92381') {
+      console.log('🔵 Detected special block ID, adding another circle');
+      setStepsTotal(prev => Math.max(prev + 1, 3));
+      setCurrentStepIndex(prev => prev + 1);
+    }
+    
     if (trace.payload?.steps) {
       setStepsTotal(trace.payload.steps.total || 1);
       setCurrentStepIndex(trace.payload.steps.current || 0);
@@ -155,12 +175,28 @@ export function useTraceEventHandler(
     switch (trace.type) {
       case 'speak':
       case 'text':
-        textAndChoiceHandler.handleTextOrSpeakEvent(trace);
-        receivedFirstTextRef.current = true;
+        // Complete progress circles before starting text streaming
         completionHandler.streamingStateRef.current.messageCompleted = true;
+        
+        // Add a brief delay before showing the text to ensure circles complete
+        if (progressCompleteTimeoutRef.current) {
+          clearTimeout(progressCompleteTimeoutRef.current);
+        }
+        
+        progressCompleteTimeoutRef.current = setTimeout(() => {
+          textAndChoiceHandler.handleTextOrSpeakEvent(trace);
+          receivedFirstTextRef.current = true;
+        }, 500); // 500ms delay to show completed circles before text starts
         break;
       
       case 'completion':
+        // Handle completion events
+        if (trace.payload?.state === 'start') {
+          // Reset progress circles for new messages after the first one
+          if (streaming.partialMessageIdRef.current === null) {
+            resetProgressCircles();
+          }
+        }
         completionHandler.handleCompletionEvent(trace.payload);
         break;
       
@@ -192,6 +228,10 @@ export function useTraceEventHandler(
         if (stepTimeoutRef.current) {
           clearTimeout(stepTimeoutRef.current);
           stepTimeoutRef.current = null;
+        }
+        if (progressCompleteTimeoutRef.current) {
+          clearTimeout(progressCompleteTimeoutRef.current);
+          progressCompleteTimeoutRef.current = null;
         }
         break;
       

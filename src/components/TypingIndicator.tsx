@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -96,18 +95,26 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     };
   }, [fullCircles]);
   
-  // Automatically animate the progress of the current circle
+  // Reset progress when currentStep changes
+  useEffect(() => {
+    if (currentStep >= 0) {
+      setCurrentProgress(0);
+    }
+  }, [currentStep]);
+  
+  // Automatically animate the progress of the current circle with a slight lead
   useEffect(() => {
     if (!isTyping) return;
     
     let animationFrame: number;
     let startTime: number;
-    const duration = 4000; // 4 seconds for a full circle (changed from 3s)
+    const duration = 3800; // Slightly faster than 4s to stay ahead of real progress
     
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
-      const progress = Math.min(100, (elapsed / duration) * 100);
+      // Add 5% lead to progress to keep ahead of real progress
+      const progress = Math.min(100, ((elapsed / duration) * 100) + 5);
       
       setCurrentProgress(progress);
       
@@ -118,7 +125,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
         // This will trigger a delay before showing the checkmark
         setFullCircles(prev => [...prev, currentStep]);
         
-        // If we've filled the first circle (after 4 seconds) and no text has started yet,
+        // If we've filled the first circle (after ~3.8 seconds) and no text has started yet,
         // add another circle
         if (currentStep === 0 && visibleSteps === 1) {
           setVisibleSteps(2);
@@ -158,4 +165,3 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
 };
 
 export default TypingIndicator;
-
