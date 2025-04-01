@@ -149,7 +149,7 @@ export const createCompletionHandlers = (
       const currentMsgId = partialMessageIdRef.current;
       
       // Ensure all content is processed
-      const finalText = wordTracker.getCurrentProcessedText();
+      const finalText = wordTrackerRef.current.getCurrentProcessedText();
       updatePartialMessage(currentMsgId, finalText, false);
       partialMessageIdRef.current = null;
       streamingState.isStreaming = false;
