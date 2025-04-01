@@ -53,7 +53,7 @@ export function useTypingAnimation({
         // When a circle is completed, if not already streaming and this is the last step
         if (circleIndex === visibleSteps - 1 && !textStreamingStartedRef.current) {
           // Add next circle if needed
-          setVisibleSteps(prev => Math.max(prev + 1, Math.min(steps + 1, 3)));
+          setVisibleSteps(prev => Math.min(prev + 1, steps, 3));
         }
       }, 300) // 300ms delay before showing the checkmark
     );
@@ -74,7 +74,7 @@ export function useTypingAnimation({
         setFullCircles(prev => [...prev.filter(c => c !== currentStep - 1), currentStep - 1]);
       }
     }
-  }, [currentStep]);
+  }, [currentStep, completedCircles]);
   
   // Reset everything when steps change (for new messages)
   useEffect(() => {
@@ -82,7 +82,7 @@ export function useTypingAnimation({
     setFullCircles([]);
     setCompletedCircles([]);
     setFadingCircles([]);
-    setVisibleSteps(Math.min(steps, 3));
+    setVisibleSteps(1); // Start with just one circle
     textStreamingStartedRef.current = false;
   }, [steps]);
 
@@ -101,19 +101,18 @@ export function useTypingAnimation({
     }
   }, [textStreamingStarted, completedCircles]);
   
-  // Automatically animate the progress of the current circle with a clear lead
+  // Automatically animate the progress of the current circle
   useEffect(() => {
     if (!isTyping) return;
     
     let animationFrame: number;
     let startTime: number;
-    const duration = 3800; // Slightly faster than 4s to stay ahead of real progress
+    const duration = 3000; // 3 seconds to fill a circle
     
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
-      // Add 15% lead to progress to keep ahead of real progress
-      const progress = Math.min(100, ((elapsed / duration) * 100) + 15);
+      const progress = Math.min(100, (elapsed / duration) * 100);
       
       setCurrentProgress(progress);
       
@@ -121,17 +120,14 @@ export function useTypingAnimation({
         animationFrame = requestAnimationFrame(animate);
       } else {
         // When progress reaches 100%, add this circle to fullCircles array
-        // This will trigger a delay before showing the checkmark
         setFullCircles(prev => [...prev, currentStep]);
         
-        // If we've filled the first circle (after ~3.8 seconds) and no text has started yet,
+        // If we've filled the first circle and no text has started yet,
         // add another circle
-        if (currentStep === 0 && visibleSteps === 1) {
-          setVisibleSteps(prev => Math.min(prev + 1, 3));
-        }
-        // For subsequent circles, add new ones every 1.5 seconds if needed
-        else if (currentStep > 0 && currentStep === visibleSteps - 1 && visibleSteps < 3) {
-          setVisibleSteps(prev => Math.min(prev + 1, 3));
+        if (currentStep === 0 && visibleSteps === 1 && !textStreamingStartedRef.current) {
+          setTimeout(() => {
+            setVisibleSteps(prev => Math.min(prev + 1, 3));
+          }, 300);
         }
       }
     };
@@ -154,7 +150,7 @@ export function useTypingAnimation({
 
   return {
     currentProgress,
-    visibleSteps: Math.max(Math.min(steps, visibleSteps), 1),
+    visibleSteps: Math.min(visibleSteps, steps),
     getCheckpointStatus
   };
 }
