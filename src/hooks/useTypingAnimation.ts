@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { CheckpointStatus } from '@/components/typing/CircularCheckpoint';
 
@@ -27,6 +28,8 @@ export function useTypingAnimation({
 
   // Keep track of whether text streaming has started
   const textStreamingStartedRef = useRef(false);
+  // Track if animation is in progress
+  const animationInProgressRef = useRef(false);
   
   // Reset all states when isTyping changes from false to true (new message)
   useEffect(() => {
@@ -38,6 +41,7 @@ export function useTypingAnimation({
       setFadingCircles([]);
       setVisibleSteps(1);
       textStreamingStartedRef.current = false;
+      animationInProgressRef.current = false;
     }
   }, [isTyping]);
 
@@ -66,7 +70,8 @@ export function useTypingAnimation({
   // Reset progress and status when currentStep changes
   useEffect(() => {
     if (currentStep >= 0) {
-      // Start fresh for this step
+      // Reset animation progress for the new step
+      animationInProgressRef.current = false;
       setCurrentProgress(0);
       
       // Clear completed status for new circles when step changes
@@ -84,6 +89,7 @@ export function useTypingAnimation({
     setFadingCircles([]);
     setVisibleSteps(1); // Start with just one circle
     textStreamingStartedRef.current = false;
+    animationInProgressRef.current = false;
   }, [steps]);
 
   // Fade out checkmarks when text starts streaming
@@ -103,7 +109,10 @@ export function useTypingAnimation({
   
   // Automatically animate the progress of the current circle
   useEffect(() => {
-    if (!isTyping) return;
+    if (!isTyping || animationInProgressRef.current) return;
+    
+    // Set animation as in progress to prevent duplicate animations
+    animationInProgressRef.current = true;
     
     let animationFrame: number;
     let startTime: number;
@@ -129,6 +138,9 @@ export function useTypingAnimation({
             setVisibleSteps(prev => Math.min(prev + 1, 3));
           }, 300);
         }
+        
+        // Reset animation in progress flag so next step can animate
+        animationInProgressRef.current = false;
       }
     };
     
@@ -136,6 +148,7 @@ export function useTypingAnimation({
     
     return () => {
       cancelAnimationFrame(animationFrame);
+      animationInProgressRef.current = false;
     };
   }, [isTyping, currentStep, visibleSteps]);
 
