@@ -15,6 +15,7 @@ export function useTraceEventHandler(
   setCurrentStepIndex: React.Dispatch<React.SetStateAction<number>>
 ) {
   const receivedFirstTraceRef = useRef<boolean>(false);
+  const receivedFirstTextRef = useRef<boolean>(false);
   const responseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const stepTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -26,6 +27,20 @@ export function useTraceEventHandler(
   
   // Create a callback for text processing
   const processStreamCallback = (content: string, msgId: string) => {
+    // Mark that we've received text content
+    receivedFirstTextRef.current = true;
+    
+    // Clear any pending timeouts since we're now streaming text
+    if (responseTimeoutRef.current) {
+      clearTimeout(responseTimeoutRef.current);
+      responseTimeoutRef.current = null;
+    }
+    
+    if (stepTimeoutRef.current) {
+      clearTimeout(stepTimeoutRef.current);
+      stepTimeoutRef.current = null;
+    }
+    
     processContentStream(
       content, 
       msgId, 
@@ -90,20 +105,25 @@ export function useTraceEventHandler(
       // Update the current step index if provided
       setCurrentStepIndex(trace.payload.steps.current || 0);
     } else {
-      // If no explicit steps in payload but we're still typing after 3 seconds,
+      // If no explicit steps in payload but we're still typing after 4 seconds (previously 3),
       // increment the step counter automatically
-      if (responseTimeoutRef.current === null && trace.type !== 'end') {
+      if (responseTimeoutRef.current === null && trace.type !== 'end' && !receivedFirstTextRef.current) {
         responseTimeoutRef.current = setTimeout(() => {
-          setStepsTotal((current) => Math.max(current, 2));
-          setCurrentStepIndex(1);
+          // Only update steps if we haven't received text content yet
+          if (!receivedFirstTextRef.current) {
+            setStepsTotal((current) => Math.max(current, 2));
+            setCurrentStepIndex(1);
+            
+            // Set up next step timeout (1.5s for subsequent steps)
+            stepTimeoutRef.current = setTimeout(() => {
+              if (!receivedFirstTextRef.current) {
+                setStepsTotal((current) => Math.max(current, 3));
+                setCurrentStepIndex(2);
+              }
+            }, 1500);
+          }
           
-          // Set up next step timeout (1.5s for subsequent steps)
-          stepTimeoutRef.current = setTimeout(() => {
-            setStepsTotal((current) => Math.max(current, 3));
-            setCurrentStepIndex(2);
-          }, 1500);
-          
-        }, 3000);
+        }, 4000); // Changed from 3000ms to 4000ms (4 seconds)
       }
     }
     
@@ -111,6 +131,7 @@ export function useTraceEventHandler(
       case 'speak':
       case 'text':
         textAndChoiceHandler.handleTextOrSpeakEvent(trace);
+        receivedFirstTextRef.current = true; // Mark that we've received text
         completionHandler.streamingStateRef.current.messageCompleted = true;
         break;
       

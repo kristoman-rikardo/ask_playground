@@ -78,6 +78,8 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   const [currentProgress, setCurrentProgress] = useState(0);
   // Track which circles are in "full" state (100% but not yet showing checkmark)
   const [fullCircles, setFullCircles] = useState<number[]>([]);
+  // We track the actual number of steps to display (starting with 1)
+  const [visibleSteps, setVisibleSteps] = useState(1);
   
   // Function to convert full circles to completed after a short delay
   useEffect(() => {
@@ -100,7 +102,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     
     let animationFrame: number;
     let startTime: number;
-    const duration = 3000; // 3 seconds for a full circle
+    const duration = 4000; // 4 seconds for a full circle (changed from 3s)
     
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
@@ -115,6 +117,16 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
         // When progress reaches 100%, add this circle to fullCircles array
         // This will trigger a delay before showing the checkmark
         setFullCircles(prev => [...prev, currentStep]);
+        
+        // If we've filled the first circle (after 4 seconds) and no text has started yet,
+        // add another circle
+        if (currentStep === 0 && visibleSteps === 1) {
+          setVisibleSteps(2);
+        }
+        // For subsequent circles, add new ones every 1.5 seconds
+        else if (currentStep > 0 && currentStep === visibleSteps - 1) {
+          setVisibleSteps(prev => prev + 1);
+        }
       }
     };
     
@@ -123,11 +135,14 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     return () => {
       cancelAnimationFrame(animationFrame);
     };
-  }, [isTyping, currentStep]);
+  }, [isTyping, currentStep, visibleSteps]);
+  
+  // Use the smaller of the provided steps or our visibleSteps
+  const actualVisibleSteps = Math.min(steps, visibleSteps);
   
   return (
     <div className="flex items-center space-x-8 p-4 bg-gray-50 rounded-xl my-2">
-      {Array.from({ length: steps }).map((_, i) => (
+      {Array.from({ length: actualVisibleSteps }).map((_, i) => (
         <CircularCheckpoint 
           key={i}
           position={i}
@@ -143,3 +158,4 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
 };
 
 export default TypingIndicator;
+
