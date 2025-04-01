@@ -1,5 +1,5 @@
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
 import { useCompletionEventHandler } from './useCompletionEventHandler';
@@ -15,6 +15,8 @@ export function useTraceEventHandler(
   setCurrentStepIndex: React.Dispatch<React.SetStateAction<number>>
 ) {
   const receivedFirstTraceRef = useRef<boolean>(false);
+  const responseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stepTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Initialize event handlers
   const completionHandler = useCompletionEventHandler(
@@ -56,19 +58,53 @@ export function useTraceEventHandler(
     processStreamCallback
   );
   
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (responseTimeoutRef.current) {
+        clearTimeout(responseTimeoutRef.current);
+      }
+      if (stepTimeoutRef.current) {
+        clearTimeout(stepTimeoutRef.current);
+      }
+    };
+  }, []);
+  
   const handleTraceEvent = (trace: any) => {
     console.log('Trace event received:', trace.type);
     
     if (trace.type === 'speak' || trace.type === 'text' || (trace.type === 'completion' && trace.payload?.state === 'content')) {
       receivedFirstTraceRef.current = true;
+      
+      // Clear any pending response timeout
+      if (responseTimeoutRef.current) {
+        clearTimeout(responseTimeoutRef.current);
+        responseTimeoutRef.current = null;
+      }
     }
     
-    // Track multi-step progress for complex responses
+    // Handle step progress from trace payload
     if (trace.payload?.steps) {
       // Update the total number of steps if provided
       setStepsTotal(trace.payload.steps.total || 1);
       // Update the current step index if provided
       setCurrentStepIndex(trace.payload.steps.current || 0);
+    } else {
+      // If no explicit steps in payload but we're still typing after 3 seconds,
+      // increment the step counter automatically
+      if (responseTimeoutRef.current === null && trace.type !== 'end') {
+        responseTimeoutRef.current = setTimeout(() => {
+          setStepsTotal((current) => Math.max(current, 2));
+          setCurrentStepIndex(1);
+          
+          // Set up next step timeout (1.5s for subsequent steps)
+          stepTimeoutRef.current = setTimeout(() => {
+            setStepsTotal((current) => Math.max(current, 3));
+            setCurrentStepIndex(2);
+          }, 1500);
+          
+        }, 3000);
+      }
     }
     
     switch (trace.type) {
@@ -103,6 +139,16 @@ export function useTraceEventHandler(
             streaming.partialMessageIdRef.current
           );
           completionHandler.streamingStateRef.current.accumulatedContent = '';
+        }
+        
+        // Clear any pending timeouts on session end
+        if (responseTimeoutRef.current) {
+          clearTimeout(responseTimeoutRef.current);
+          responseTimeoutRef.current = null;
+        }
+        if (stepTimeoutRef.current) {
+          clearTimeout(stepTimeoutRef.current);
+          stepTimeoutRef.current = null;
         }
         break;
       

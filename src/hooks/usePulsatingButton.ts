@@ -9,7 +9,7 @@ interface UsePulsatingButtonOptions {
 
 /**
  * Custom hook that manages the pulsating button effect
- * Note: This hook is now deprecated as the pulsating animation has been removed.
+ * Note: This hook is now deprecated as the circular loading animation has replaced it.
  * Keeping this file for backward compatibility.
  */
 export function usePulsatingButton({ 
