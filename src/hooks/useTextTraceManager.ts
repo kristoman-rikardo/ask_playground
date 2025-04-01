@@ -3,6 +3,7 @@ import { useRef } from 'react';
 
 export function useTextTraceManager() {
   const progressCompleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textStreamingStartedRef = useRef<boolean>(false);
   
   const clearTextTraceTimeouts = () => {
     if (progressCompleteTimeoutRef.current) {
@@ -13,6 +14,7 @@ export function useTextTraceManager() {
 
   return {
     progressCompleteTimeoutRef,
+    textStreamingStartedRef,
     clearTextTraceTimeouts
   };
 }

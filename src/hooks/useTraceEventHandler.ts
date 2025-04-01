@@ -30,6 +30,7 @@ export function useTraceEventHandler(
   
   const processStreamCallback = (content: string, msgId: string) => {
     stepProgressManager.receivedFirstTextRef.current = true;
+    textTraceManager.textStreamingStartedRef.current = true;
     
     // Clear timeout references when we start processing text
     stepProgressManager.clearProgressTimeouts();
@@ -88,9 +89,10 @@ export function useTraceEventHandler(
       // Clear timeout when we receive actual trace data
       stepProgressManager.clearProgressTimeouts();
       
-      // Reset progress for every new message, not just the first one
+      // Reset progress and text streaming flag for every new message interaction
       if (trace.type === 'completion' && trace.payload?.state === 'start') {
         stepProgressManager.resetProgressCircles();
+        textTraceManager.textStreamingStartedRef.current = false;
       }
     }
     
@@ -115,14 +117,17 @@ export function useTraceEventHandler(
         textTraceManager.clearTextTraceTimeouts();
         
         textTraceManager.progressCompleteTimeoutRef.current = setTimeout(() => {
+          textTraceManager.textStreamingStartedRef.current = true;
           textAndChoiceHandler.handleTextOrSpeakEvent(trace);
           stepProgressManager.receivedFirstTextRef.current = true;
-        }, 500); // 500ms delay to show completed circles before text starts
+        }, 800); // 800ms delay to show completed circles before text starts
         break;
       
       case 'completion':
         // Handle completion events
         if (trace.payload?.state === 'start') {
+          // Reset text streaming flag for new messages
+          textTraceManager.textStreamingStartedRef.current = false;
           // Always reset progress circles for new messages
           stepProgressManager.resetProgressCircles();
         }

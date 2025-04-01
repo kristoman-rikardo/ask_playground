@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type CheckpointStatus = 'pending' | 'loading' | 'completed' | 'full';
+type CheckpointStatus = 'pending' | 'loading' | 'completed' | 'full' | 'fade-out';
 
 interface CircularCheckpointProps {
   status: CheckpointStatus;
@@ -21,10 +21,11 @@ const CircularCheckpoint: React.FC<CircularCheckpointProps> = ({ status, positio
       {/* Circle with different states */}
       <div 
         className={cn(
-          "w-6 h-6 rounded-full flex items-center justify-center relative",
+          "w-6 h-6 rounded-full flex items-center justify-center relative transition-all duration-300",
           status === 'pending' && "border border-gray-300",
           (status === 'loading' || status === 'full') && "border-2 border-transparent",
-          status === 'completed' && "bg-black text-white"
+          status === 'completed' && "bg-black text-white",
+          status === 'fade-out' && "bg-black text-white opacity-50"
         )}
       >
         {(status === 'loading' || status === 'full') && (
@@ -53,7 +54,7 @@ const CircularCheckpoint: React.FC<CircularCheckpointProps> = ({ status, positio
             />
           </svg>
         )}
-        {status === 'completed' && <Check className="h-4 w-4" />}
+        {(status === 'completed' || status === 'fade-out') && <Check className="h-4 w-4" />}
       </div>
     </div>
   );
@@ -77,8 +78,15 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   const [currentProgress, setCurrentProgress] = useState(0);
   // Track which circles are in "full" state (100% but not yet showing checkmark)
   const [fullCircles, setFullCircles] = useState<number[]>([]);
+  // Track which circles are completed and showing checkmarks
+  const [completedCircles, setCompletedCircles] = useState<number[]>([]);
+  // Track which circles should fade out
+  const [fadingCircles, setFadingCircles] = useState<number[]>([]);
   // We track the actual number of steps to display (starting with 1)
   const [visibleSteps, setVisibleSteps] = useState(1);
+
+  // Keep track of whether text streaming has started
+  const textStreamingStartedRef = useRef(false);
   
   // Function to convert full circles to completed after a short delay
   useEffect(() => {
@@ -87,26 +95,55 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     const timeouts = fullCircles.map(circleIndex => 
       setTimeout(() => {
         setFullCircles(prev => prev.filter(idx => idx !== circleIndex));
+        setCompletedCircles(prev => [...prev, circleIndex]);
+
+        // When a circle is completed, if not already streaming and this is the last step
+        if (circleIndex === visibleSteps - 1 && !textStreamingStartedRef.current) {
+          // Add next circle if needed
+          setVisibleSteps(prev => Math.max(prev + 1, Math.min(steps + 1, 3)));
+        }
       }, 300) // 300ms delay before showing the checkmark
     );
     
     return () => {
       timeouts.forEach(timeout => clearTimeout(timeout));
     };
-  }, [fullCircles]);
+  }, [fullCircles, visibleSteps, steps]);
   
-  // Reset progress when currentStep changes
+  // Reset progress and status when currentStep changes
   useEffect(() => {
     if (currentStep >= 0) {
+      // Start fresh for this step
       setCurrentProgress(0);
+      
+      // Clear completed status for new circles when step changes
+      if (currentStep > 0 && !completedCircles.includes(currentStep - 1)) {
+        setFullCircles(prev => [...prev.filter(c => c !== currentStep - 1), currentStep - 1]);
+      }
     }
   }, [currentStep]);
   
-  // Reset progress when steps change (for new messages)
+  // Reset everything when steps change (for new messages)
   useEffect(() => {
     setCurrentProgress(0);
     setFullCircles([]);
+    setCompletedCircles([]);
+    setFadingCircles([]);
+    setVisibleSteps(1);
+    textStreamingStartedRef.current = false;
   }, [steps]);
+
+  // Fade out checkmarks when text starts streaming
+  useEffect(() => {
+    // When text streaming starts, transition all completed circles to fade-out
+    if (textStreamingStartedRef.current) {
+      const allToFade = [...completedCircles];
+      if (allToFade.length > 0) {
+        setFadingCircles(allToFade);
+        setCompletedCircles([]);
+      }
+    }
+  }, [textStreamingStartedRef.current, completedCircles]);
   
   // Automatically animate the progress of the current circle with a clear lead
   useEffect(() => {
@@ -134,11 +171,11 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
         // If we've filled the first circle (after ~3.8 seconds) and no text has started yet,
         // add another circle
         if (currentStep === 0 && visibleSteps === 1) {
-          setVisibleSteps(2);
+          setVisibleSteps(prev => Math.min(prev + 1, 3));
         }
-        // For subsequent circles, add new ones every 1.5 seconds
-        else if (currentStep > 0 && currentStep === visibleSteps - 1) {
-          setVisibleSteps(prev => prev + 1);
+        // For subsequent circles, add new ones every 1.5 seconds if needed
+        else if (currentStep > 0 && currentStep === visibleSteps - 1 && visibleSteps < 3) {
+          setVisibleSteps(prev => Math.min(prev + 1, 3));
         }
       }
     };
@@ -149,9 +186,23 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       cancelAnimationFrame(animationFrame);
     };
   }, [isTyping, currentStep, visibleSteps]);
+
+  // Update the text streaming started ref based on the presence of checkmarks
+  useEffect(() => {
+    const hasCheckmarks = completedCircles.length > 0;
+    
+    if (hasCheckmarks && isTyping) {
+      // Set a timeout to mark text as streaming after the last circle completes
+      const timeout = setTimeout(() => {
+        textStreamingStartedRef.current = true;
+      }, 500);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [completedCircles, isTyping]);
   
   // Use the smaller of the provided steps or our visibleSteps
-  const actualVisibleSteps = Math.min(steps, visibleSteps);
+  const actualVisibleSteps = Math.max(Math.min(steps, visibleSteps), 1);
   
   return (
     <div className="flex items-center space-x-8 p-4 bg-gray-50 rounded-xl my-2">
@@ -161,8 +212,10 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           position={i}
           progress={i === currentStep ? currentProgress : 0}
           status={
-            i < currentStep ? 'completed' : 
-            i === currentStep ? (fullCircles.includes(i) ? 'full' : 'loading') : 'pending'
+            fadingCircles.includes(i) ? 'fade-out' :
+            completedCircles.includes(i) ? 'completed' : 
+            fullCircles.includes(i) ? 'full' :
+            i === currentStep ? 'loading' : 'pending'
           }
         />
       ))}
