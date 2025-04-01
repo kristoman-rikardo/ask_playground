@@ -9,16 +9,21 @@
  * @param fullText The complete text to stream
  * @param onUpdate Callback function to update UI with each change
  * @param onComplete Callback function when streaming is complete
- * @param delay Optional delay between characters (default: 10ms)
+ * @param delay Optional delay between characters (default: 5ms)
  */
 export const streamWords = (
   fullText: string,
   onUpdate: (text: string) => void,
   onComplete: () => void,
-  delay: number = 10
+  delay: number = 5
 ): void => {
   let index = 0;
   let currentDisplay = '';
+
+  // Start with an empty string and immediately begin streaming
+  onUpdate('');
+  
+  console.log(`🔄 Starting fake streaming of ${fullText.length} characters`);
 
   const appendNextChar = () => {
     if (index < fullText.length) {
@@ -30,10 +35,11 @@ export const streamWords = (
       onUpdate(currentDisplay);
       index++;
       
-      // Schedule next update with faster 10ms delay
+      // Schedule next update with 5ms delay (same as real-time streaming)
       setTimeout(appendNextChar, delay);
     } else {
       // We're done, call the completion callback
+      console.log(`✅ Completed fake streaming of ${fullText.length} characters`);
       onComplete();
     }
   };

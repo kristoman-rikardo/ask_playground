@@ -25,14 +25,16 @@ export function useTextAndChoiceHandler(
       
       messageSourceTracker.current[msgId] = 'text';
       
-      console.log('Text/Speak message received:', messageContent.substring(0, 50) + '...');
+      console.log('🟡 Text/Speak message received:', messageContent.substring(0, 50) + '...');
       
       // Hide typing indicator when starting to stream
       setIsTyping(false);
       
-      // Create message container and start streaming
+      // Create empty message container first and start streaming immediately
       partialMessageIdRef.current = msgId;
       addAgentMessage('', true, msgId);
+      
+      console.log('🟢 Beginning text stream with character-by-character rendering');
       
       // Process the text message character by character at 5ms intervals
       processStreamCallback(messageContent, msgId);
