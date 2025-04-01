@@ -30,14 +30,8 @@ export function useMessageStreaming(
     if (!updateScheduled) {
       updateScheduled = true;
       requestAnimationFrame(() => {
-        // Update the partial message with the accumulated content buffer
-        // For real-time streaming, we'll use the formatted output with fade-in spans
-        const formattedOutput = wordTrackerRef.current.getFormattedOutput();
-        if (formattedOutput) {
-          updatePartialMessage(msgId, formattedOutput, true);
-        } else {
-          updatePartialMessage(msgId, currentCompletionContentRef.current, true);
-        }
+        // Update the partial message with the current processed text
+        updatePartialMessage(msgId, wordTrackerRef.current.getCurrentProcessedText(), true);
         updateScheduled = false;
       });
     }

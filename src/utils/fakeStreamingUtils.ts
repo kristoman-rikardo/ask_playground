@@ -24,7 +24,7 @@ export const streamWords = (
     if (index < fullText.length) {
       const char = fullText[index];
       
-      // Add the next character (without fade-in animation)
+      // Add the next character
       currentDisplay += char;
       
       onUpdate(currentDisplay);

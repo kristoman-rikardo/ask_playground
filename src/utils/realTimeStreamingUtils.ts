@@ -68,16 +68,28 @@ export class StreamingWordTracker {
    * @returns Object containing the complete processed text
    */
   finalize(): { text: string } {
-    // Process any remaining characters in the buffer immediately
-    if (this.nextCharIndex < this.currentBuffer.length) {
-      const remaining = this.currentBuffer.substring(this.nextCharIndex);
-      this.processedText += remaining;
-      this.nextCharIndex = this.currentBuffer.length;
+    // Instead of immediately processing remaining characters,
+    // we'll queue them for processing at the regular rate
+    if (this.nextCharIndex < this.currentBuffer.length && !this.isProcessing) {
+      this.processNextChar();
     }
     
     return { 
       text: this.processedText
     };
+  }
+
+  /**
+   * Force complete all text immediately (bypass streaming)
+   * 
+   * @returns Complete text
+   */
+  forceComplete(): string {
+    const remaining = this.currentBuffer.substring(this.nextCharIndex);
+    this.processedText += remaining;
+    this.nextCharIndex = this.currentBuffer.length;
+    this.isProcessing = false;
+    return this.processedText;
   }
 
   /**
@@ -96,6 +108,15 @@ export class StreamingWordTracker {
    */
   getCompleteText(): string {
     return this.currentBuffer;
+  }
+
+  /**
+   * Checks if streaming is complete
+   * 
+   * @returns Boolean indicating if all content has been processed
+   */
+  isStreamingComplete(): boolean {
+    return this.nextCharIndex >= this.currentBuffer.length && !this.isProcessing;
   }
 
   /**
