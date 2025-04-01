@@ -35,7 +35,7 @@ export const createCompletionHandlers = (
     streamingState.accumulatedContent = '';
     
     if (!hasTextMessage) {
-      // Show typing indicator but only briefly - it will be hidden as soon as content arrives
+      // Show typing indicator until we get content
       setIsTyping(true);
       streamingState.waitingForMoreContent = true;
       
@@ -43,8 +43,6 @@ export const createCompletionHandlers = (
       partialMessageIdRef.current = msgId;
       currentCompletionContentRef.current = '';
       messageSourceTracker.current[msgId] = 'completion';
-      
-      console.log('🔄 Completion started, showing typing indicator briefly');
     } else {
       console.log('Skipping completion message as we already have a text message');
     }
@@ -57,7 +55,7 @@ export const createCompletionHandlers = (
   const handleCompletionContent = (content: string | undefined) => {
     if (!content) return;
     
-    console.log(`Received content trace: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`);
+    console.log(`Received content trace: "${content}"`);
     
     // If we haven't started a message yet
     if (!partialMessageIdRef.current) {
@@ -65,8 +63,6 @@ export const createCompletionHandlers = (
       
       // Hide typing indicator and start streaming immediately
       setIsTyping(false);
-      console.log('🚀 Starting new message stream immediately');
-      
       partialMessageIdRef.current = msgId;
       currentCompletionContentRef.current = '';
       messageSourceTracker.current[msgId] = 'completion';
@@ -89,9 +85,8 @@ export const createCompletionHandlers = (
       const msgId = partialMessageIdRef.current;
       
       // If first content and still showing typing indicator, create message and hide indicator
-      if (wordTrackerRef.current.getCurrentProcessedText() === '') {
+      if (setIsTyping && wordTrackerRef.current.getCurrentProcessedText() === '') {
         setIsTyping(false);
-        console.log('🚀 Starting to stream content immediately');
         addAgentMessage('', true, msgId);
       }
       

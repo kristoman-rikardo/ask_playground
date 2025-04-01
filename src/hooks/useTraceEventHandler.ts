@@ -57,15 +57,8 @@ export function useTraceEventHandler(
   const handleTraceEvent = (trace: any) => {
     console.log('Trace event received:', trace.type);
     
-    // Detect first content-bearing trace and ensure we start streaming immediately
     if (trace.type === 'speak' || trace.type === 'text' || (trace.type === 'completion' && trace.payload?.state === 'content')) {
       receivedFirstTraceRef.current = true;
-      
-      // Ensure we immediately hide typing indicator for any content-bearing trace
-      if (trace.type !== 'completion' || (trace.type === 'completion' && trace.payload?.state === 'content' && trace.payload?.content)) {
-        console.log('⚡ First content received, hiding typing indicator');
-        setIsTyping(false);
-      }
     }
     
     switch (trace.type) {

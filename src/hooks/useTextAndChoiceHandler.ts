@@ -27,9 +27,8 @@ export function useTextAndChoiceHandler(
       
       console.log('Text/Speak message received:', messageContent.substring(0, 50) + '...');
       
-      // Hide typing indicator immediately when text arrives
+      // Hide typing indicator when starting to stream
       setIsTyping(false);
-      console.log('⚡ Text content received, starting streaming immediately');
       
       // Create message container and start streaming
       partialMessageIdRef.current = msgId;
