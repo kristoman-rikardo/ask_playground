@@ -4,7 +4,7 @@
  */
 
 /**
- * Streams text character by character with a fade-in animation
+ * Streams text character by character
  * 
  * @param fullText The complete text to stream
  * @param onUpdate Callback function to update UI with each change
@@ -24,8 +24,8 @@ export const streamWords = (
     if (index < fullText.length) {
       const char = fullText[index];
       
-      // Add the next character with fade-in class
-      currentDisplay += `<span class="char-fade-in">${escapeHtml(char)}</span>`;
+      // Add the next character (without fade-in animation)
+      currentDisplay += char;
       
       onUpdate(currentDisplay);
       index++;
@@ -37,19 +37,6 @@ export const streamWords = (
       onComplete();
     }
   };
-
-  // Escape HTML special characters to prevent issues with dangerouslySetInnerHTML
-  function escapeHtml(text: string): string {
-    const htmlEscapes: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    };
-    
-    return text.replace(/[&<>"']/g, (match) => htmlEscapes[match]);
-  }
 
   // Start the streaming process immediately
   appendNextChar();

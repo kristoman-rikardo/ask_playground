@@ -70,10 +70,8 @@ export function useTraceEventHandler(
         if (now - lastUpdateTimeRef.current >= MIN_UPDATE_INTERVAL) {
           if (animationFrameIdRef.current === null) {
             animationFrameIdRef.current = requestAnimationFrame(() => {
-              // Use the formatted output with fade-in spans
-              if (result.formattedOutput) {
-                updatePartialMessage(currentMsgId, result.formattedOutput, true);
-              }
+              // Use the processed text directly
+              updatePartialMessage(currentMsgId, result.processedText, true);
               animationFrameIdRef.current = null;
             });
           }
@@ -92,9 +90,9 @@ export function useTraceEventHandler(
         }
         
         // Use the final processed content
-        const { formattedOutput } = wordTrackerRef.current.finalize();
+        const { text } = wordTrackerRef.current.finalize();
         
-        updatePartialMessage(currentMsgId, formattedOutput || currentCompletionContentRef.current, false);
+        updatePartialMessage(currentMsgId, text || currentCompletionContentRef.current, false);
         partialMessageIdRef.current = null;
       }
     }
@@ -128,7 +126,7 @@ export function useTraceEventHandler(
               updatePartialMessage(msgId, updatedText, true);
             },
             () => {
-              // When complete, show without animation spans
+              // When complete, show final text
               updatePartialMessage(msgId, messageContent, false);
               partialMessageIdRef.current = null;
             },
