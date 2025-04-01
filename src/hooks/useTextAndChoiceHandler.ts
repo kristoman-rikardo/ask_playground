@@ -1,7 +1,7 @@
-
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
+import { streamWords } from '@/utils/streamingUtils';
 
 export function useTextAndChoiceHandler(
   streaming: MessageStreamingHook,
@@ -30,15 +30,27 @@ export function useTextAndChoiceHandler(
       // Hide typing indicator when starting to stream
       setIsTyping(false);
       
-      // Create empty message container first and start streaming immediately
+      // Create empty message container first
       partialMessageIdRef.current = msgId;
       addAgentMessage('', true, msgId);
       
       console.log('🟢 Beginning text stream with character-by-character rendering');
       
-      // Process the text message character by character at 5ms intervals
-      processStreamCallback(messageContent, msgId);
-      return true; // Message is complete when delivered
+      // Stream the message character by character using streamWords
+      streamWords(
+        messageContent,
+        (updatedText) => {
+          streaming.updatePartialMessage(msgId, updatedText, true);
+        },
+        () => {
+          // Mark as complete when done
+          streaming.updatePartialMessage(msgId, messageContent, false);
+          partialMessageIdRef.current = null;
+        },
+        5 // 5ms delay between characters
+      );
+      
+      return true;
     }
   };
 
