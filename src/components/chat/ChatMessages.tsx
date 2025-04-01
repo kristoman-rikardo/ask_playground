@@ -57,16 +57,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   return (
     <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]">
       {messages.length > 0 ? messages.map((message, index) => {
+        const isLast = index === messages.length - 1;
+        
         return (
           <div 
             key={message.id} 
             id={`message-${message.id}`} 
-            ref={index === messages.length - 1 ? lastMessageRef : null} 
+            ref={isLast ? lastMessageRef : null} 
             className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
               message.type === 'user' 
                 ? 'chat-message-user ml-auto bg-gray-200 shadow-sm border border-transparent' 
                 : 'chat-message-agent mr-auto shadow-sm bg-gray-50 border border-transparent'
-            } ${message.isPartial ? 'border-l-4 border-gray-200' : ''}`}
+            } ${message.isPartial ? 'border-l-2 border-gray-300' : ''}`}
           >
             {processContent(message.content, message.isPartial, message.type)}
           </div>

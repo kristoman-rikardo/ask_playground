@@ -30,7 +30,7 @@ export const streamWords = (
       onUpdate(currentDisplay);
       index++;
       
-      // Schedule next update with fixed delay
+      // Schedule next update with consistent 30ms delay
       setTimeout(appendNextChar, delay);
     } else {
       // We're done, call the completion callback

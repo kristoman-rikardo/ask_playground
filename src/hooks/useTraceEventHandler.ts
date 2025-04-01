@@ -1,3 +1,4 @@
+
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -27,6 +28,10 @@ export function useTraceEventHandler(
   
   // Keep track of typing indicator display status
   const typingIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Track if we're currently streaming content
+  const isStreamingRef = useRef<boolean>(false);
+  // Store accumulated content from multiple traces
+  const accumulatedContentRef = useRef<string>('');
 
   const handleCompletionEvent = (payload: any) => {
     if (!payload) {
@@ -45,6 +50,7 @@ export function useTraceEventHandler(
       const hasTextMessage = Object.values(messageSourceTracker.current).includes('text');
       
       wordTrackerRef.current.reset();
+      accumulatedContentRef.current = '';
       
       if (!hasTextMessage) {
         // Clear any existing typing indicator timeout
@@ -62,6 +68,7 @@ export function useTraceEventHandler(
           currentCompletionContentRef.current = '';
           messageSourceTracker.current[msgId] = 'completion';
           setIsTyping(false); // Hide typing indicator when message starts
+          isStreamingRef.current = true;
           
           addAgentMessage('', true, msgId);
           typingIndicatorTimeoutRef.current = null;
@@ -76,23 +83,48 @@ export function useTraceEventHandler(
       
       const currentMsgId = partialMessageIdRef.current;
       
-      if (messageSourceTracker.current[currentMsgId] === 'completion') {
-        currentCompletionContentRef.current += content;
+      // Always accumulate content, even if we're currently streaming something else
+      accumulatedContentRef.current += content;
+      
+      if (messageSourceTracker.current[currentMsgId] === 'completion' && !isStreamingRef.current) {
+        // If we're not currently streaming, start streaming the accumulated content
+        isStreamingRef.current = true;
         
         // Process content through character tracker
-        const result = wordTrackerRef.current.appendContent(content);
+        const contentToStream = accumulatedContentRef.current;
+        accumulatedContentRef.current = '';
         
-        // Update with consistent timing
-        const now = Date.now();
-        if (now - lastUpdateTimeRef.current >= MIN_UPDATE_INTERVAL) {
-          if (animationFrameIdRef.current === null) {
-            animationFrameIdRef.current = requestAnimationFrame(() => {
-              // Use the processed text directly
-              updatePartialMessage(currentMsgId, result.processedText, true);
+        // Add the content to the total content
+        currentCompletionContentRef.current += contentToStream;
+        
+        // Process content through character tracker to maintain the 30ms delay
+        wordTrackerRef.current.appendContent(contentToStream);
+        
+        // Ensure we're updating with consistent timing
+        if (animationFrameIdRef.current === null) {
+          const updateStreaming = () => {
+            if (!partialMessageIdRef.current) return;
+            
+            const processedText = wordTrackerRef.current.getCurrentProcessedText();
+            updatePartialMessage(currentMsgId, processedText, true);
+            
+            if (!wordTrackerRef.current.isStreamingComplete()) {
+              animationFrameIdRef.current = requestAnimationFrame(updateStreaming);
+            } else {
               animationFrameIdRef.current = null;
-            });
-          }
-          lastUpdateTimeRef.current = now;
+              isStreamingRef.current = false;
+              
+              // If we have more accumulated content, process it now
+              if (accumulatedContentRef.current.length > 0) {
+                handleCompletionEvent({
+                  state: 'content',
+                  content: accumulatedContentRef.current
+                });
+              }
+            }
+          };
+          
+          animationFrameIdRef.current = requestAnimationFrame(updateStreaming);
         }
       }
     }
@@ -106,7 +138,14 @@ export function useTraceEventHandler(
           animationFrameIdRef.current = null;
         }
         
-        // Instead of finishing immediately, ensure the streaming completes naturally
+        // Add any remaining accumulated content
+        if (accumulatedContentRef.current.length > 0) {
+          currentCompletionContentRef.current += accumulatedContentRef.current;
+          wordTrackerRef.current.appendContent(accumulatedContentRef.current);
+          accumulatedContentRef.current = '';
+        }
+        
+        // Let the streaming finish naturally through the word tracker
         // The StreamingWordTracker will continue to process remaining characters
         const { text } = wordTrackerRef.current.finalize();
         
@@ -116,6 +155,7 @@ export function useTraceEventHandler(
           if (wordTrackerRef.current.isStreamingComplete()) {
             updatePartialMessage(currentMsgId, wordTrackerRef.current.getCurrentProcessedText(), false);
             partialMessageIdRef.current = null;
+            isStreamingRef.current = false;
           } else {
             setTimeout(checkStreamingComplete, 100);
           }
@@ -160,6 +200,7 @@ export function useTraceEventHandler(
             
             addAgentMessage('', true, msgId);
             typingIndicatorTimeoutRef.current = null;
+            isStreamingRef.current = true;
             
             // Use streamWords with character-by-character animation
             streamWords(
@@ -171,6 +212,7 @@ export function useTraceEventHandler(
                 // When complete, show final text
                 updatePartialMessage(msgId, messageContent, false);
                 partialMessageIdRef.current = null;
+                isStreamingRef.current = false;
               },
               30  // consistent 30ms delay
             );
@@ -195,12 +237,18 @@ export function useTraceEventHandler(
       case 'end':
         console.log('Session ended');
         if (partialMessageIdRef.current && currentCompletionContentRef.current) {
-          // Instead of immediately showing the full message,
-          // let the streaming finish naturally
+          // Make sure we stream any remaining content
+          if (accumulatedContentRef.current.length > 0) {
+            wordTrackerRef.current.appendContent(accumulatedContentRef.current);
+            accumulatedContentRef.current = '';
+          }
+          
+          // Let the streaming finish naturally
           const checkStreamingComplete = () => {
             if (wordTrackerRef.current.isStreamingComplete()) {
               updatePartialMessage(partialMessageIdRef.current!, wordTrackerRef.current.getCurrentProcessedText(), false);
               partialMessageIdRef.current = null;
+              isStreamingRef.current = false;
               currentCompletionContentRef.current = '';
             } else {
               setTimeout(checkStreamingComplete, 100);
