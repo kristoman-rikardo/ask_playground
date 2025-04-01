@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
@@ -56,14 +55,52 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
     
     // For agent messages
-    // Check if content already contains HTML (from word-by-word animation)
-    if (content.includes('<span class="word-fade-in">')) {
-      return <div dangerouslySetInnerHTML={{ __html: content }} />;
+    // Check if content already contains HTML (from character-by-character animation)
+    if (content.includes('<span class="char-fade-in">')) {
+      return <div dangerouslySetInnerHTML={{ __html: content }} className="streaming-text" />;
     }
     
     // Otherwise, use the standard markdown parsing
     return <div dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }} />;
   };
+  
+  // Add CSS for character fade-in animation
+  useEffect(() => {
+    // Create a style element if it doesn't exist
+    let styleElement = document.getElementById('streaming-styles');
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = 'streaming-styles';
+      document.head.appendChild(styleElement);
+    }
+    
+    // Define animation for characters
+    const css = `
+      @keyframes charFadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+      }
+      
+      .char-fade-in {
+        animation: charFadeIn 0.3s ease-in-out forwards;
+        display: inline-block;
+      }
+      
+      .streaming-text {
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+    `;
+    
+    styleElement.textContent = css;
+    
+    // Cleanup
+    return () => {
+      if (styleElement && document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+      }
+    };
+  }, []);
 
   return (
     <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]">

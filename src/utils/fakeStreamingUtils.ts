@@ -1,48 +1,37 @@
 
 /**
- * Utility for simulating word-by-word streaming for complete text messages
+ * Utility for simulating character-by-character streaming for complete text messages
  */
 
 /**
- * Streams text word by word with a fade-in animation
+ * Streams text character by character with a fade-in animation
  * 
  * @param fullText The complete text to stream
  * @param onUpdate Callback function to update UI with each change
  * @param onComplete Callback function when streaming is complete
- * @param minDelay Optional minimum delay between words (default: 5ms)
- * @param maxDelay Optional maximum delay between words (default: 30ms)
+ * @param delay Optional delay between characters (default: 30ms)
  */
 export const streamWords = (
   fullText: string,
   onUpdate: (text: string) => void,
   onComplete: () => void,
-  minDelay: number = 5,
-  maxDelay: number = 30
+  delay: number = 30
 ): void => {
-  // Split text into words but keep separators
-  const words = fullText.split(/(\s+|[.,!?;:]\s*)/g).filter(word => word);
   let index = 0;
   let currentDisplay = '';
 
-  const appendNextWord = () => {
-    if (index < words.length) {
-      const word = words[index];
+  const appendNextChar = () => {
+    if (index < fullText.length) {
+      const char = fullText[index];
       
-      // Check if the current segment is a word or whitespace/punctuation
-      if (word.trim()) {
-        // This is an actual word, wrap it with fade-in class
-        currentDisplay += `<span class="word-fade-in">${escapeHtml(word)}</span>`;
-      } else {
-        // This is whitespace or punctuation, add it directly
-        currentDisplay += word;
-      }
+      // Add the next character with fade-in class
+      currentDisplay += `<span class="char-fade-in">${escapeHtml(char)}</span>`;
       
       onUpdate(currentDisplay);
       index++;
       
-      // Schedule next update with a random delay in the specified range
-      const randomDelay = minDelay + Math.random() * (maxDelay - minDelay);
-      setTimeout(appendNextWord, randomDelay);
+      // Schedule next update with fixed delay
+      setTimeout(appendNextChar, delay);
     } else {
       // We're done, call the completion callback
       onComplete();
@@ -63,5 +52,5 @@ export const streamWords = (
   }
 
   // Start the streaming process immediately
-  appendNextWord();
+  appendNextChar();
 };

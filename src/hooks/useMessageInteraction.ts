@@ -13,12 +13,16 @@ export function useMessageInteraction(
   const [messages, setMessages] = useState<Message[]>([]);
 
   const addUserMessage = (text: string) => {
+    // Create a unique ID for the message
     const message: Message = {
-      id: Date.now().toString(),
+      id: `user-${Date.now()}`,
       type: 'user',
       content: text
     };
+    
     console.log('Adding user message:', message);
+    
+    // Add the message to the chat
     setMessages(prev => [...prev, message]);
   };
 
@@ -26,7 +30,11 @@ export function useMessageInteraction(
     if (!userMessage.trim()) return;
 
     console.log('Sending user message:', userMessage);
+    
+    // Add the user's message to the chat before sending
     addUserMessage(userMessage);
+    
+    // Clear buttons and show typing indicator
     setButtons([]);
     setIsTyping(true);
     setIsButtonsLoading(true);
@@ -42,8 +50,11 @@ export function useMessageInteraction(
 
   const handleButtonClick = async (button: Button) => {
     console.log('Button clicked:', button.name);
-    // Make sure to display the button's name as the user message
+    
+    // Display the button's name as the user message
     addUserMessage(button.name);
+    
+    // Clear buttons and show typing indicator
     setButtons([]);
     setIsTyping(true);
     setIsButtonsLoading(true);

@@ -23,8 +23,8 @@ export function useTraceEventHandler(
 
   const animationFrameIdRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number>(0);
-  // Increase minimum update interval to improve streaming readability
-  const MIN_UPDATE_INTERVAL = 20; // ms
+  // Use a consistent update interval for smooth streaming
+  const MIN_UPDATE_INTERVAL = 30; // ms
 
   const handleCompletionEvent = (payload: any) => {
     if (!payload) {
@@ -62,10 +62,10 @@ export function useTraceEventHandler(
       if (messageSourceTracker.current[currentMsgId] === 'completion') {
         currentCompletionContentRef.current += content;
         
-        // Process content through word tracker
+        // Process content through character tracker
         const result = wordTrackerRef.current.appendContent(content);
         
-        // Rate limit updates to prevent UI jank
+        // Update with consistent timing
         const now = Date.now();
         if (now - lastUpdateTimeRef.current >= MIN_UPDATE_INTERVAL) {
           if (animationFrameIdRef.current === null) {
@@ -121,18 +121,18 @@ export function useTraceEventHandler(
           partialMessageIdRef.current = msgId;
           addAgentMessage('', true, msgId);
           
-          // Use streamWords to handle the word-by-word animation
+          // Use streamWords with character-by-character animation
           streamWords(
             messageContent,
             (updatedText) => {
               updatePartialMessage(msgId, updatedText, true);
             },
             () => {
+              // When complete, show without animation spans
               updatePartialMessage(msgId, messageContent, false);
               partialMessageIdRef.current = null;
             },
-            5,  // minDelay
-            30  // maxDelay
+            30  // consistent 30ms delay
           );
         }
         break;

@@ -1,91 +1,71 @@
 
 /**
- * Utilities for handling real-time token-by-token streaming
+ * Utilities for handling real-time character-by-character streaming
  */
 
 /**
- * Tracks already processed words to avoid re-animating them
+ * Tracks characters for real-time streaming with consistent timing
  * Used for real-time streaming scenarios
  */
 export class StreamingWordTracker {
   private processedText: string = '';
   private currentBuffer: string = '';
-  private lastProcessedIndex: number = 0;
   private formattedOutput: string = ''; // Store the formatted output with fade-in spans
-  private firstWordProcessed: boolean = false;
-  private lastProcessTime: number = 0;
+  private nextCharIndex: number = 0;
+  private isProcessing: boolean = false;
+  private charDelay: number = 30; // 30ms delay between characters
   
-  // Minimum delay between processing words (ms)
-  private MIN_WORD_DELAY: number = 5;
-  private MAX_WORD_DELAY: number = 30;
-
   /**
-   * Updates the buffer with new content and returns any new complete words
+   * Updates the buffer with new content and processes characters at a consistent rate
    * 
    * @param newContent New content to append to the buffer
-   * @returns Object containing processed text, formatted output with spans, and newCompleteWords
+   * @returns Object containing processed text, formatted output with spans
    */
   appendContent(newContent: string): { 
     processedText: string, 
     formattedOutput: string,
-    newCompleteWords: string 
   } {
+    // Add new content to the buffer
     this.currentBuffer += newContent;
     
-    // Find word boundaries (space, punctuation followed by space, etc.)
-    const wordBoundaryRegex = /(\s+|[.,!?;:]\s*)/g;
-    let match;
-    let lastIndex = 0;
-    let newWords = '';
-    let newFormattedWords = '';
-    
-    // Reset regex state
-    wordBoundaryRegex.lastIndex = this.lastProcessedIndex;
-    
-    // Process first word immediately, then apply delays for subsequent words
-    const now = Date.now();
-    const shouldDelay = this.firstWordProcessed && 
-                       (now - this.lastProcessTime < this.getRandomDelay());
-    
-    if (!shouldDelay || !this.firstWordProcessed) {
-      while ((match = wordBoundaryRegex.exec(this.currentBuffer)) !== null) {
-        if (match.index >= this.lastProcessedIndex) {
-          // Extract the word before this boundary
-          const word = this.currentBuffer.substring(this.lastProcessedIndex, match.index);
-          if (word) {
-            // Add to processed text and new words
-            this.processedText += word + match[0];
-            newWords += word + match[0];
-            
-            // Add to formatted output with fade-in span (ensuring proper HTML)
-            this.formattedOutput += `<span class="word-fade-in">${this.escapeHtml(word)}</span>${match[0]}`;
-            newFormattedWords += `<span class="word-fade-in">${this.escapeHtml(word)}</span>${match[0]}`;
-            
-            // Mark that we've processed at least one word
-            this.firstWordProcessed = true;
-          } else {
-            // Just a boundary with no preceding word
-            this.processedText += match[0];
-            newWords += match[0];
-            this.formattedOutput += match[0];
-            newFormattedWords += match[0];
-          }
-          
-          // Update last processed index to after this match
-          this.lastProcessedIndex = match.index + match[0].length;
-          lastIndex = this.lastProcessedIndex;
-          
-          // Update the last process time
-          this.lastProcessTime = now;
-        }
-      }
+    // Start processing if not already doing so
+    if (!this.isProcessing) {
+      this.processNextChar();
     }
     
     return { 
       processedText: this.processedText, 
       formattedOutput: this.formattedOutput,
-      newCompleteWords: newWords 
     };
+  }
+  
+  /**
+   * Process the next character with a delay
+   */
+  private processNextChar(): void {
+    this.isProcessing = true;
+    
+    // If we have characters to process
+    if (this.nextCharIndex < this.currentBuffer.length) {
+      const char = this.currentBuffer.charAt(this.nextCharIndex);
+      
+      // Add to processed text
+      this.processedText += char;
+      
+      // Add to formatted output with fade-in span
+      this.formattedOutput += `<span class="char-fade-in">${this.escapeHtml(char)}</span>`;
+      
+      // Move to next character
+      this.nextCharIndex++;
+      
+      // Schedule next character processing
+      setTimeout(() => {
+        this.processNextChar();
+      }, this.charDelay);
+    } else {
+      // No more characters to process at the moment
+      this.isProcessing = false;
+    }
   }
   
   /**
@@ -104,24 +84,24 @@ export class StreamingWordTracker {
   }
 
   /**
-   * Get a random delay between min and max values
-   */
-  private getRandomDelay(): number {
-    return this.MIN_WORD_DELAY + 
-           Math.random() * (this.MAX_WORD_DELAY - this.MIN_WORD_DELAY);
-  }
-
-  /**
-   * Finalizes the buffer, processing any remaining content
+   * Finalizes the buffer, processing any remaining content immediately
    * 
    * @returns Object containing the complete processed text and formatted output
    */
   finalize(): { text: string, formattedOutput: string } {
-    if (this.lastProcessedIndex < this.currentBuffer.length) {
-      const remaining = this.currentBuffer.substring(this.lastProcessedIndex);
+    // Process any remaining characters in the buffer immediately
+    if (this.nextCharIndex < this.currentBuffer.length) {
+      const remaining = this.currentBuffer.substring(this.nextCharIndex);
       this.processedText += remaining;
-      this.formattedOutput += `<span class="word-fade-in">${this.escapeHtml(remaining)}</span>`;
+      
+      // Add remaining chars with fade-in spans
+      for (let i = 0; i < remaining.length; i++) {
+        this.formattedOutput += `<span class="char-fade-in">${this.escapeHtml(remaining[i])}</span>`;
+      }
+      
+      this.nextCharIndex = this.currentBuffer.length;
     }
+    
     return { 
       text: this.processedText,
       formattedOutput: this.formattedOutput
@@ -152,7 +132,7 @@ export class StreamingWordTracker {
    * @returns Complete text
    */
   getCompleteText(): string {
-    return this.processedText + this.currentBuffer.substring(this.lastProcessedIndex);
+    return this.currentBuffer;
   }
 
   /**
@@ -161,9 +141,8 @@ export class StreamingWordTracker {
   reset(): void {
     this.processedText = '';
     this.currentBuffer = '';
-    this.lastProcessedIndex = 0;
     this.formattedOutput = '';
-    this.firstWordProcessed = false;
-    this.lastProcessTime = 0;
+    this.nextCharIndex = 0;
+    this.isProcessing = false;
   }
 }
