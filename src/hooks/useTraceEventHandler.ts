@@ -10,7 +10,9 @@ export function useTraceEventHandler(
   streaming: MessageStreamingHook,
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>,
   setButtons: React.Dispatch<React.SetStateAction<Button[]>>,
-  setIsButtonsLoading: React.Dispatch<React.SetStateAction<boolean>>
+  setIsButtonsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setStepsTotal: React.Dispatch<React.SetStateAction<number>>,
+  setCurrentStepIndex: React.Dispatch<React.SetStateAction<number>>
 ) {
   const receivedFirstTraceRef = useRef<boolean>(false);
   
@@ -59,6 +61,14 @@ export function useTraceEventHandler(
     
     if (trace.type === 'speak' || trace.type === 'text' || (trace.type === 'completion' && trace.payload?.state === 'content')) {
       receivedFirstTraceRef.current = true;
+    }
+    
+    // Track multi-step progress for complex responses
+    if (trace.payload?.steps) {
+      // Update the total number of steps if provided
+      setStepsTotal(trace.payload.steps.total || 1);
+      // Update the current step index if provided
+      setCurrentStepIndex(trace.payload.steps.current || 0);
     }
     
     switch (trace.type) {
