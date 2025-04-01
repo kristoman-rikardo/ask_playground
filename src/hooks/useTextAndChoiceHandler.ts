@@ -55,6 +55,7 @@ export function useTextAndChoiceHandler(
   const handleChoiceEvent = (trace: any) => {
     if (trace.payload && trace.payload.buttons) {
       console.log('Choices received:', trace.payload.buttons);
+      // Display buttons immediately when they arrive, regardless of message streaming status
       setButtons(trace.payload.buttons || []);
       setIsButtonsLoading(false);
     }

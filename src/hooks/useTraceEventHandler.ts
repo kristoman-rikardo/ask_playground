@@ -46,6 +46,7 @@ export function useTraceEventHandler(
         break;
       
       case 'choice':
+        // Handle choice events immediately, regardless of message streaming status
         textAndChoiceHandler.handleChoiceEvent(trace);
         break;
       
@@ -71,7 +72,7 @@ export function useTraceEventHandler(
         
         setTimeout(() => {
           setIsTyping(false);
-          setIsButtonsLoading(false);
+          // Don't reset buttons loading here as they may have already been displayed
         }, 50);
         break;
       

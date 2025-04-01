@@ -1,3 +1,4 @@
+
 import { useRef } from 'react';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
 
@@ -172,8 +173,8 @@ export function useCompletionEventHandler(
         // Move to next character
         index++;
         
-        // Schedule next character with consistent 30ms delay
-        setTimeout(streamNextChar, 30);
+        // Schedule next character with faster 10ms delay instead of 30ms
+        setTimeout(streamNextChar, 10);
       } else {
         // Done streaming this content chunk
         console.log(`Finished streaming chunk of ${content.length} chars`);

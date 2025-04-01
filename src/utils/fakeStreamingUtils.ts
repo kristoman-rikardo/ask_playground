@@ -9,13 +9,13 @@
  * @param fullText The complete text to stream
  * @param onUpdate Callback function to update UI with each change
  * @param onComplete Callback function when streaming is complete
- * @param delay Optional delay between characters (default: 30ms)
+ * @param delay Optional delay between characters (default: 10ms)
  */
 export const streamWords = (
   fullText: string,
   onUpdate: (text: string) => void,
   onComplete: () => void,
-  delay: number = 30
+  delay: number = 10
 ): void => {
   let index = 0;
   let currentDisplay = '';
@@ -30,7 +30,7 @@ export const streamWords = (
       onUpdate(currentDisplay);
       index++;
       
-      // Schedule next update with consistent 30ms delay
+      // Schedule next update with faster 10ms delay
       setTimeout(appendNextChar, delay);
     } else {
       // We're done, call the completion callback
