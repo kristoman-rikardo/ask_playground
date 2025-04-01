@@ -67,17 +67,15 @@ export function useCompletionEventHandler(
       setIsTyping(true);
       waitingForMoreContentRef.current = true;
       
-      // After a brief delay, replace typing indicator with streaming message
-      typingIndicatorTimeoutRef.current = setTimeout(() => {
-        partialMessageIdRef.current = msgId;
-        currentCompletionContentRef.current = '';
-        messageSourceTracker.current[msgId] = 'completion';
-        setIsTyping(false); // Hide typing indicator when message starts
-        waitingForMoreContentRef.current = false;
-        
-        addAgentMessage('', true, msgId);
-        typingIndicatorTimeoutRef.current = null;
-      }, 500); // 500ms delay for natural transition
+      // Immediately start the message without delay
+      partialMessageIdRef.current = msgId;
+      currentCompletionContentRef.current = '';
+      messageSourceTracker.current[msgId] = 'completion';
+      setIsTyping(false); // Hide typing indicator when message starts
+      waitingForMoreContentRef.current = false;
+      
+      addAgentMessage('', true, msgId);
+      typingIndicatorTimeoutRef.current = null;
     } else {
       console.log('Skipping completion message as we already have a text message');
     }
@@ -154,7 +152,7 @@ export function useCompletionEventHandler(
     isStreamingRef.current = true;
     waitingForMoreContentRef.current = false;
     
-    // Stream each character with a delay
+    // Stream each character with a 5ms delay
     let index = 0;
     let currentText = wordTrackerRef.current.getCurrentProcessedText();
     
@@ -172,8 +170,8 @@ export function useCompletionEventHandler(
         // Move to next character
         index++;
         
-        // Schedule next character with consistent 10ms delay
-        setTimeout(streamNextChar, 10);
+        // Schedule next character with 5ms delay
+        setTimeout(streamNextChar, 5);
       } else {
         // Done streaming this content chunk
         console.log(`Finished streaming chunk of ${content.length} chars`);
