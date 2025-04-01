@@ -9,13 +9,15 @@ interface ChatMessagesProps {
   isTyping: boolean;
   stepsTotal?: number;
   currentStepIndex?: number;
+  textStreamingStarted?: boolean; // Added the new prop
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
   isTyping,
   stepsTotal = 1,
-  currentStepIndex = 0
+  currentStepIndex = 0,
+  textStreamingStarted = false // Added default value
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
@@ -27,6 +29,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     isTyping,
     stepsTotal,
     currentStepIndex,
+    textStreamingStarted, // Log the new prop
     messages: messages.map(m => ({
       id: m.id,
       type: m.type,
@@ -92,6 +95,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             steps={stepsTotal}
             currentStep={currentStepIndex}
             isTyping={isTyping}
+            textStreamingStarted={textStreamingStarted} // Pass the prop to TypingIndicator
           />
         </div>
       )}
