@@ -122,11 +122,15 @@ export function useTraceEventHandler(
         // Add a brief delay before showing the text to ensure circles complete
         textTraceManager.clearTextTraceTimeouts();
         
+        // First ensure loading bar completes fully
         textTraceManager.progressCompleteTimeoutRef.current = setTimeout(() => {
-          textTraceManager.textStreamingStartedRef.current = true;
-          textAndChoiceHandler.handleTextOrSpeakEvent(trace);
-          stepProgressManager.receivedFirstTextRef.current = true;
-        }, 800); // 800ms delay to show completed circles before text starts
+          // Then after a small delay, start text streaming
+          textTraceManager.textTraceTimeoutRef.current = setTimeout(() => {
+            textTraceManager.textStreamingStartedRef.current = true;
+            textAndChoiceHandler.handleTextOrSpeakEvent(trace);
+            stepProgressManager.receivedFirstTextRef.current = true;
+          }, 500); // Additional 500ms delay for smooth transition after progress completion
+        }, 600); // 600ms delay to show completed loading before text starts
         break;
       
       case 'completion':

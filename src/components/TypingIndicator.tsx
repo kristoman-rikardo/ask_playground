@@ -72,7 +72,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
         </span>
       </div>
       
-      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+      <div className="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
         <motion.div 
           className="h-full bg-gray-400 rounded-full"
           initial={{ width: '0%' }}
@@ -80,7 +80,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
             width: textStreamingStarted ? '100%' : `${currentProgress}%` 
           }}
           transition={{ 
-            duration: textStreamingStarted ? 0.3 : 0.5,
+            duration: textStreamingStarted ? 0.5 : 0.3,
             ease: "easeInOut" 
           }}
         />
