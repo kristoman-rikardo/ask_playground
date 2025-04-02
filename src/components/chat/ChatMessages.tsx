@@ -6,6 +6,7 @@ import { Message } from '@/types/chat';
 import CarouselMessage from './CarouselMessage';
 import { Button } from '@/types/chat';
 import { ArrowDown } from "lucide-react";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -32,33 +33,38 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   
-  // Check if user is near bottom of chat
+  // Check if user is near bottom of chat - improved threshold for better detection
   const isNearBottom = () => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return true;
     
-    const threshold = 50; // pixels from bottom to consider "near bottom"
+    const threshold = 80; // Increased threshold for better "near bottom" detection
     const scrollBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight;
     return scrollBottom <= threshold;
   };
 
-  // Scroll to bottom function
+  // Improved smooth scroll to bottom function
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth'
+        behavior: 'smooth',
+        block: 'end'
       });
     }
   };
   
   // Auto-scroll when messages change or typing state changes, but only if we should auto-scroll
   useEffect(() => {
+    // Add small delay to ensure DOM is fully updated before scrolling
     if (shouldAutoScroll) {
-      scrollToBottom();
+      const timer = setTimeout(() => {
+        scrollToBottom();
+      }, 10);
+      return () => clearTimeout(timer);
     }
-  }, [messages, isTyping, shouldAutoScroll]);
+  }, [messages, isTyping, carouselData, shouldAutoScroll]);
 
-  // Detect if user has manually scrolled
+  // Detect if user has manually scrolled - improved detection logic
   useEffect(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return;
@@ -70,7 +76,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         setShowScrollButton(!nearBottom);
         
         // If user scrolls to bottom, re-enable auto-scroll
-        if (nearBottom && !shouldAutoScroll) {
+        if (nearBottom) {
           setShouldAutoScroll(true);
         } 
         // If user scrolls up, disable auto-scroll
@@ -92,6 +98,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   }, [messages.length]);
 
+  // Added effect to handle new messages specifically
+  useEffect(() => {
+    if (messages.length > 0 && shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messages.length]);
+
   // Check if any message is currently streaming (partial)
   const hasPartialMessages = messages.some(m => m.isPartial);
   
@@ -110,7 +123,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     <div 
       ref={chatBoxRef} 
       className="flex-1 overflow-y-auto p-4 space-y-4 relative" 
-      style={{ minHeight: messages.length > 0 ? '0' : '0' }}
+      style={{ minHeight: messages.length > 0 ? '0' : '0', maxHeight: '100%' }}
     >
       {visibleMessages.length > 0 ? visibleMessages.map((message, index) => {
         const isLast = index === visibleMessages.length - 1;
