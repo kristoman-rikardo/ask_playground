@@ -12,9 +12,10 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
+  const [thinkingText, setThinkingText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const placeholder = "Spør om produktet...";
+  const placeholder = "Ask about the product...";
   
   React.useEffect(() => {
     if (inputValue.trim()) {
@@ -26,6 +27,24 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [inputValue]);
+
+  // Thinking text animation effect
+  React.useEffect(() => {
+    if (!isButtonVisible) {
+      const thinkingTexts = ['T', 'Th', 'Thi', 'Thin', 'Think', 'Thinki', 'Thinkin', 'Thinking', 'Thinking.', 'Thinking..', 'Thinking...'];
+      let index = 0;
+      const interval = setInterval(() => {
+        if (index < thinkingTexts.length) {
+          setThinkingText(thinkingTexts[index]);
+          index++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 200);
+
+      return () => clearInterval(interval);
+    }
+  }, [isButtonVisible]);
 
   const handleSend = () => {
     if (!inputValue.trim()) return;
@@ -60,8 +79,8 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-100'}`}
         >
           {!isButtonVisible && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm text-gray-600 bg-white/80 px-2 py-0.5 rounded shadow-sm">
-              Tenker<span className="dots-animation">...</span>
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm text-gray-600 bg-white/80 px-2 py-0.5 rounded shadow-sm">
+              {thinkingText}
             </div>
           )}
           
@@ -82,3 +101,4 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 };
 
 export default ChatInputArea;
+
