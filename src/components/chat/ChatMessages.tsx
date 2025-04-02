@@ -150,11 +150,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         </div>
       )}
       
-      {/* Scroll to bottom button */}
+      {/* Scroll to bottom button - now centered */}
       {showScrollButton && (
         <button 
           onClick={scrollToBottom}
-          className="absolute bottom-4 right-4 bg-gray-100 hover:bg-gray-200 rounded-full p-2 shadow-md transition-all duration-200 z-10"
+          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-100 hover:bg-gray-200 rounded-full p-2 shadow-md transition-all duration-200 z-10"
           aria-label="Scroll to bottom"
         >
           <ArrowDown size={20} className="text-gray-600" />
@@ -167,4 +167,3 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 }
 
 export default ChatMessages;
-

@@ -2,16 +2,10 @@
 import { useRef } from 'react';
 
 export function useTextTraceManager() {
-  const progressCompleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textStreamingStartedRef = useRef<boolean>(false);
   const messageCompletedRef = useRef<boolean>(false);
-  
-  const clearTextTraceTimeouts = () => {
-    if (progressCompleteTimeoutRef.current) {
-      clearTimeout(progressCompleteTimeoutRef.current);
-      progressCompleteTimeoutRef.current = null;
-    }
-  };
+  const progressCompleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textTraceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const resetTextTracking = () => {
     textStreamingStartedRef.current = false;
@@ -19,11 +13,24 @@ export function useTextTraceManager() {
     clearTextTraceTimeouts();
   };
 
+  const clearTextTraceTimeouts = () => {
+    if (progressCompleteTimeoutRef.current) {
+      clearTimeout(progressCompleteTimeoutRef.current);
+      progressCompleteTimeoutRef.current = null;
+    }
+    
+    if (textTraceTimeoutRef.current) {
+      clearTimeout(textTraceTimeoutRef.current);
+      textTraceTimeoutRef.current = null;
+    }
+  };
+
   return {
-    progressCompleteTimeoutRef,
     textStreamingStartedRef,
     messageCompletedRef,
-    clearTextTraceTimeouts,
-    resetTextTracking
+    progressCompleteTimeoutRef,
+    textTraceTimeoutRef,
+    resetTextTracking,
+    clearTextTraceTimeouts
   };
 }
