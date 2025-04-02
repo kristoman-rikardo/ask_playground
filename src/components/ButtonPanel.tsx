@@ -26,9 +26,9 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   
   // Custom loader component with updated animation
   const LoadingIndicator = () => (
-    <div className="h-[80px] flex flex-col items-center justify-center">
+    <div className="h-[120px] flex flex-col items-center justify-center">
       <div className="loader"></div>
-      <p className="text-gray-500 mt-2 text-sm font-light">Laster spørsmål...</p>
+      <p className="text-gray-500 mt-4 text-sm font-light">Laster spørsmål...</p>
     </div>
   );
 
@@ -63,8 +63,8 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
           className="choice-button whitespace-nowrap overflow-hidden text-ellipsis transition-all 
                    duration-300 text-base text-left rounded-2xl 
                    px-4 py-2.5 border border-gray-200/50 
-                   shadow-md hover:shadow-lg bg-gray-100/70 
-                   hover:bg-gray-100/80"
+                   shadow-sm hover:shadow-md bg-gray-200 
+                   hover:bg-gray-300"
           style={{ maxWidth: '100%' }}
         >
           {button.name}

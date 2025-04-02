@@ -155,8 +155,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           <TypingIndicator 
             isTyping={isTyping} 
             textStreamingStarted={textStreamingStarted}
-            steps={stepsTotal}
-            currentStep={currentStepIndex}
           />
         </div>
       )}
@@ -167,7 +165,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             scrollToBottom();
             setShouldAutoScroll(true);
           }}
-          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-100 hover:bg-gray-200 rounded-full p-2 shadow-md transition-all duration-200 z-10"
+          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-2 shadow-sm transition-all duration-200 z-10"
           aria-label="Scroll to bottom"
         >
           <ArrowDown size={20} className="text-gray-600" />
