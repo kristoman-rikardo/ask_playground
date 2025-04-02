@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface Button {
@@ -63,8 +64,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
                    duration-300 text-base text-left rounded-2xl 
                    px-4 py-2.5 border border-gray-200/50 
                    shadow-md hover:shadow-lg bg-gray-100/70 
-                   hover:bg-gray-100/80 
-                   active:shadow-inner"
+                   hover:bg-gray-100/80"
           style={{ maxWidth: '100%' }}
         >
           {button.name}
@@ -75,7 +75,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   );
   
   return (
-    <div className="w-full bg-transparent border-t border-transparent p-0 relative">
+    <div className="w-full bg-transparent p-0 relative">
       {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[5px]"></div>}
     </div>
   );

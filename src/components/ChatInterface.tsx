@@ -65,7 +65,7 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div 
-      className="w-full mx-auto bg-transparent shadow-sm rounded-2xl overflow-hidden transition-all font-sans border border-transparent"
+      className="w-full mx-auto bg-transparent shadow-none rounded-2xl overflow-hidden transition-all font-sans"
       style={{ height: 'auto' }}
     >
       <div className="flex flex-col h-full">
@@ -103,11 +103,11 @@ const ChatInterface: React.FC = () => {
         
         {/* Show initial prompt if conversation hasn't started */}
         {!conversationStarted && (
-          <div className="w-full bg-transparent border-t border-transparent p-4">
+          <div className="w-full bg-transparent p-4">
             <button
               onClick={() => handleSendMessage("Hei, kan du hjelpe meg?")}
               className="w-full px-4 py-2 font-light font-sans transition-all duration-300 rounded-2xl
-                bg-transparent border border-gray-300 text-gray-500 hover:bg-gray-50 hover:border-gray-400/50 text-left"
+                bg-gray-100/80 shadow-md hover:shadow-lg text-gray-500 hover:bg-gray-100/90 text-left"
               style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
             >
               Spør om produktet...

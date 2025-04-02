@@ -58,22 +58,6 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       transition={{ duration: 0.3 }}
       className="flex flex-col items-start space-y-2"
     >
-      <div className="flex items-center space-x-2 mb-1">
-        <Loader size={16} className="animate-spin text-gray-600" />
-        <AnimatePresence mode="wait">
-          <motion.span 
-            key={loadingTextIndex}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.3 }}
-            className="text-sm text-gray-600 font-medium"
-          >
-            {loadingMessages[loadingTextIndex]}
-          </motion.span>
-        </AnimatePresence>
-      </div>
-      
       <div className="relative h-10 w-10">
         <svg className="w-full h-full" viewBox="0 0 44 44">
           <circle
@@ -128,14 +112,18 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
         </svg>
       </div>
       
-      {!textStreamingStarted && visibleSteps > 1 && (
-        <div className="text-xs text-gray-500 mt-1">
-          {getCheckpointStatus(currentStep) === 'loading' ? 
-            `Steg ${currentStep + 1} av ${visibleSteps}` : 
-            'Behandler forespørselen...'
-          }
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        <motion.span 
+          key={loadingTextIndex}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          transition={{ duration: 0.3 }}
+          className="text-sm text-gray-600 font-medium ml-2 mt-1"
+        >
+          {loadingMessages[loadingTextIndex]}
+        </motion.span>
+      </AnimatePresence>
     </motion.div>
   );
 };

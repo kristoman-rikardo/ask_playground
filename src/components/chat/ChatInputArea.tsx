@@ -89,7 +89,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   };
 
   return (
-    <div className="w-full bg-transparent border-t border-transparent p-4">
+    <div className="w-full bg-transparent p-4">
       <div className="flex items-center space-x-2 relative">
         <input 
           ref={inputRef} 
@@ -101,15 +101,15 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 
-            rounded-2xl bg-gray-100/50 border-transparent 
-            shadow-[0_2px_5px_rgba(0,0,0,0.1),_inset_0_2px_4px_rgba(0,0,0,0.05)] 
-            hover:shadow-[0_4px_8px_rgba(0,0,0,0.15),_inset_0_2px_4px_rgba(0,0,0,0.1)] 
-            focus:shadow-[0_6px_12px_rgba(0,0,0,0.2),_inset_0_2px_6px_rgba(0,0,0,0.15)] 
+            rounded-2xl bg-gray-100/70 border-transparent 
+            shadow-[0_2px_4px_rgba(0,0,0,0.08),_inset_0_1px_2px_rgba(0,0,0,0.03)] 
+            hover:shadow-[0_3px_6px_rgba(0,0,0,0.1)] 
+            focus:shadow-[0_4px_8px_rgba(0,0,0,0.15)] 
             ${isFocused 
-              ? 'ring-1 ring-gray-300/50 shadow-lg' 
+              ? 'ring-1 ring-gray-300/50' 
               : inputValue 
-                ? 'shadow-inner' 
-                : 'hover:shadow-md'
+                ? '' 
+                : 'hover:bg-gray-100/80'
             }`} 
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
@@ -120,7 +120,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         >
           <button 
             onClick={handleSend}
-            className="p-1.5 bg-gray-100/30 text-gray-600 rounded-full 
+            className="p-1.5 bg-gray-100/50 text-gray-600 rounded-full 
                      transition-all duration-300 transform hover:scale-110 active:scale-95
                      shadow-md hover:shadow-lg focus:outline-none"
             aria-label="Send message"
