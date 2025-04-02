@@ -147,7 +147,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           <TypingIndicator 
             isTyping={isTyping} 
             textStreamingStarted={textStreamingStarted}
-            stepsTotal={stepsTotal}
+            steps={stepsTotal}
             currentStep={currentStepIndex}
           />
         </div>
