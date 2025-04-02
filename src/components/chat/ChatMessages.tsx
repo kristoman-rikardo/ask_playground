@@ -5,6 +5,7 @@ import TypingIndicator from '../TypingIndicator';
 import { Message } from '@/types/chat';
 import CarouselMessage from './CarouselMessage';
 import { Button } from '@/types/chat';
+import { ArrowDown } from "lucide-react";
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -29,6 +30,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   // Auto-scroll when messages change or typing state changes, but only if user hasn't scrolled
   useEffect(() => {
@@ -44,17 +46,34 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
     const handleScroll = () => {
       if (chatBox) {
+        // Check if user is not at the bottom
+        const isNotAtBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight > 50;
+        
         // If user scrolls up by a significant amount, disable autoscroll
-        const isScrolledUp = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight > 50;
-        if (isScrolledUp && !userHasScrolled) {
+        if (isNotAtBottom && !userHasScrolled) {
           setUserHasScrolled(true);
         }
+        
+        // Show/hide scroll button based on scroll position
+        setShowScrollButton(isNotAtBottom);
       }
     };
 
     chatBox.addEventListener('scroll', handleScroll);
     return () => chatBox.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Also check for scroll events outside of the chat component
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      if (!userHasScrolled) {
+        setUserHasScrolled(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [userHasScrolled]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -68,6 +87,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   useEffect(() => {
     if (messages.length === 0) {
       setUserHasScrolled(false);
+      setShowScrollButton(false);
     }
   }, [messages.length]);
 
@@ -88,7 +108,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   return (
     <div 
       ref={chatBoxRef} 
-      className="flex-1 overflow-y-auto p-4 space-y-4" 
+      className="flex-1 overflow-y-auto p-4 space-y-4 relative" 
       style={{ minHeight: messages.length > 0 ? '0' : '0' }}
     >
       {visibleMessages.length > 0 ? visibleMessages.map((message, index) => {
@@ -128,6 +148,17 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             textStreamingStarted={textStreamingStarted}
           />
         </div>
+      )}
+      
+      {/* Scroll to bottom button */}
+      {showScrollButton && (
+        <button 
+          onClick={scrollToBottom}
+          className="absolute bottom-4 right-4 bg-gray-100 hover:bg-gray-200 rounded-full p-2 shadow-md transition-all duration-200 z-10"
+          aria-label="Scroll to bottom"
+        >
+          <ArrowDown size={20} className="text-gray-600" />
+        </button>
       )}
       
       <div ref={messagesEndRef} />

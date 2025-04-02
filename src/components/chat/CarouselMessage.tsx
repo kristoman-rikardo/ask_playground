@@ -27,11 +27,11 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
 
   return (
     <div className={cn("w-full py-4", className)}>
-      <Carousel className="w-full max-w-md mx-auto">
-        <CarouselContent>
+      <Carousel className="w-full max-w-md mx-auto" opts={{ align: 'start', containScroll: 'trimSnaps' }}>
+        <CarouselContent className="flex -ml-4">
           {cards.map((card) => (
-            <CarouselItem key={card.id || card.title}>
-              <Card className="border rounded-xl overflow-hidden h-full">
+            <CarouselItem key={card.id || card.title} className="basis-full md:basis-1/2 lg:basis-1/3 pl-4">
+              <Card className="border rounded-xl overflow-hidden h-full flex flex-col">
                 {card.imageUrl && (
                   <div className="relative aspect-[16/9] w-full overflow-hidden">
                     <img 
@@ -41,14 +41,14 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
                     />
                   </div>
                 )}
-                <CardHeader className="p-4 pb-2">
+                <CardHeader className="p-4 pb-2 flex-none">
                   <CardTitle className="text-lg font-medium">{card.title}</CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
+                <CardContent className="p-4 pt-0 flex-grow">
                   <CardDescription>{card.description.text}</CardDescription>
                 </CardContent>
                 {card.buttons && card.buttons.length > 0 && (
-                  <CardFooter className="p-4 pt-0 flex flex-wrap gap-2">
+                  <CardFooter className="p-4 pt-0 flex flex-wrap gap-2 flex-none">
                     {card.buttons.map((button, idx) => (
                       <UIButton
                         key={idx}
