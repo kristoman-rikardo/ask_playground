@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 
 interface Button {
   name: string;
@@ -17,101 +17,9 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
-  const [loadingTextIndex, setLoadingTextIndex] = useState(0);
-  const [loadingPhase, setLoadingPhase] = useState<'thinking' | 'streaming' | 'products'>('thinking');
-  const lastChangeTime = useRef<number>(Date.now());
-  const [currentText, setCurrentText] = useState<string>("Tenker...");
-  const [isTextChanging, setIsTextChanging] = useState(false);
-  
-  // Define different loading messages for each phase
-  const loadingMessages = {
-    thinking: [
-      "Tenker...",
-      "Grubler...",
-      "Resonnerer..."
-    ],
-    streaming: [
-      "Laster inn spørsmål...",
-      "Fører samtalen videre...",
-      "Finner noe å snakke om..."
-    ],
-    products: [
-      "Finner produkter...",
-      "Laster inn produkter...",
-      "Presenterer produkter..."
-    ]
-  };
-  
-  // Log button state changes
-  useEffect(() => {
-    if (buttons.length > 0) {
-      console.log(`📱 ButtonPanel rendering ${buttons.length} buttons`);
-    }
-  }, [buttons]);
-  
-  // Listen for loading phase change events
-  useEffect(() => {
-    const handleLoadingPhaseChange = (event: any) => {
-      if (event.detail && event.detail.phase) {
-        setLoadingPhase(event.detail.phase);
-        
-        // Set initial text for this phase
-        setCurrentText(loadingMessages[event.detail.phase][0]);
-        setLoadingTextIndex(0);
-        
-        // Reset the last change time to prevent immediate change
-        lastChangeTime.current = Date.now();
-      }
-    };
-    
-    // Add event listener for custom loading phase change events
-    window.addEventListener('loadingPhaseChange', handleLoadingPhaseChange);
-    
-    return () => {
-      window.removeEventListener('loadingPhaseChange', handleLoadingPhaseChange);
-    };
-  }, [loadingMessages]);
-  
-  // Rotate through loading messages every 2.5 seconds
-  useEffect(() => {
-    if (isLoading) {
-      const interval = setInterval(() => {
-        const now = Date.now();
-        
-        // Only change if 2.5 seconds have passed since last change
-        if (now - lastChangeTime.current >= 2500) {
-          setIsTextChanging(true);
-          
-          // After animation out completes, change the text
-          setTimeout(() => {
-            const messages = loadingMessages[loadingPhase];
-            const newIndex = (loadingTextIndex + 1) % messages.length;
-            setLoadingTextIndex(newIndex);
-            setCurrentText(messages[newIndex]);
-            
-            // Then animate back in
-            setTimeout(() => {
-              setIsTextChanging(false);
-              lastChangeTime.current = Date.now();
-            }, 300);
-          }, 300);
-        }
-      }, 500); // Check more frequently than we change
-      
-      return () => clearInterval(interval);
-    }
-  }, [isLoading, loadingTextIndex, loadingPhase]);
-  
-  // Custom loader component with animation and text above the animation
+  // Simplified loader component
   const LoadingIndicator = () => (
-    <div className="h-[90px] flex flex-col items-center justify-center mb-4 mt-2">
-      <p 
-        className={`text-gray-500 mb-3 text-sm font-medium transition-all duration-300 ${
-          isTextChanging ? 'opacity-0 transform -translate-y-2' : 'opacity-100 transform translate-y-0'
-        }`}
-      >
-        {currentText}
-      </p>
+    <div className="h-[90px] flex items-center justify-center">
       <div className="loader" aria-label="Loading" role="status"></div>
     </div>
   );
@@ -136,7 +44,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </svg>
   );
 
-  // Updated ButtonList with improved padding and spacing
+  // Button List component
   const ButtonList = () => (
     <div className="flex flex-wrap gap-2 px-4 py-2 content-start">
       {buttons.map((button, index) => (
