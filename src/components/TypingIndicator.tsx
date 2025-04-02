@@ -49,8 +49,10 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       transition={{ duration: 0.3 }}
       className="flex flex-col items-start space-y-2"
     >
-      <div className="relative h-[100px] w-[100px]">
-        <div className="loader"></div>
+      <div className="flex space-x-2 px-1">
+        <div className="w-3 h-3 rounded-full bg-gray-500 animate-typing-dot-1"></div>
+        <div className="w-3 h-3 rounded-full bg-gray-500 animate-typing-dot-2"></div>
+        <div className="w-3 h-3 rounded-full bg-gray-500 animate-typing-dot-3"></div>
       </div>
       
       <AnimatePresence mode="wait">

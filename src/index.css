@@ -127,12 +127,12 @@
   /* Enhanced input field styling */
   .chat-input {
     @apply border-transparent rounded-lg px-4 py-3 w-full outline-none
-           transition-all duration-200 bg-gray-200
-           hover:bg-gray-200/95;
+           transition-all duration-200 bg-gray-100
+           hover:bg-gray-100/95;
   }
   
   .chat-input:hover {
-    @apply shadow-sm bg-gray-200/95;
+    @apply shadow-sm bg-gray-100/95;
   }
   
   .chat-input:focus {
@@ -184,7 +184,7 @@
     animation-delay: 0.4s;
   }
   
-  /* New loader animation */
+  /* New loader animation for buttons only */
   .loader {
     width: 100px;
     aspect-ratio: 1;
