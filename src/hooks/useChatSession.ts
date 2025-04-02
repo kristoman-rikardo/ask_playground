@@ -16,6 +16,7 @@ export function useChatSession() {
   const [stepsTotal, setStepsTotal] = useState(1);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [carouselData, setCarouselData] = useState<any | null>(null);
+  const [externalContent, setExternalContent] = useState<string | null>(null);
   
   // Initialize message streaming
   const [messages, setMessages] = useState<Message[]>([]);
@@ -47,21 +48,49 @@ export function useChatSession() {
     setMessages
   );
 
+  // Listen for postMessage events from parent window
   useEffect(() => {
-    // Only start the chat session once when the component mounts
-    if (!sessionStarted) {
+    const handleMessage = (event: MessageEvent) => {
+      // Check origin for security
+      if (event.data && typeof event.data === 'object' && event.data.type === 'PAGE_CONTENT') {
+        console.log('Received page content via postMessage:', event.data.content.substring(0, 100) + '...');
+        setExternalContent(event.data.content);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Only start the chat session once when the component mounts or when external content is received
+    if (!sessionStarted && (externalContent !== null || !window.parent || window.parent === window)) {
       startChatSession();
       setSessionStarted(true);
     }
-  }, [sessionStarted]);
+  }, [sessionStarted, externalContent]);
 
   const startChatSession = async () => {
     console.log('Starting chat session...');
     setIsTyping(true);
     setIsButtonsLoading(true);
     receivedFirstTraceRef.current = false;
+    
+    const variables = {
+      pageSlug: 'faq-page',
+      productName: 'faq'
+    };
+    
+    // If we have external content, add it to the variables
+    if (externalContent) {
+      variables['pageContent'] = externalContent;
+      console.log('Starting chat with page content:', externalContent.substring(0, 100) + '...');
+    }
+    
     try {
-      await vfSendLaunch({ pageSlug: 'faq-page', productName: 'faq' }, handleTraceEvent);
+      await vfSendLaunch(variables, handleTraceEvent);
     } catch (error) {
       console.error('Error starting chat session:', error);
       streaming.addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
