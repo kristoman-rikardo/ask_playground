@@ -18,7 +18,6 @@ export function useTraceEventHandler(
   setCurrentStepIndex: React.Dispatch<React.SetStateAction<number>>
 ) {
   const receivedFirstTraceRef = useRef<boolean>(false);
-  const lastTraceTypeRef = useRef<string | null>(null);
   
   // Initialize our specialized managers
   const stepProgressManager = useStepProgressManager(setStepsTotal, setCurrentStepIndex);
@@ -85,17 +84,6 @@ export function useTraceEventHandler(
     // For user messages, reset the tracking state
     if (trace.type === 'user') {
       receivedFirstTraceRef.current = false;
-      lastTraceTypeRef.current = 'user';
-      stepProgressManager.resetProgressCircles();
-      textTraceManager.resetTextTracking();
-    }
-    
-    // Reset animation state when we get a new message after a user message
-    if (lastTraceTypeRef.current === 'user' && 
-       (trace.type === 'speak' || trace.type === 'text' || trace.type === 'completion')) {
-      console.log('Resetting animation state for new message after user message');
-      setIsTyping(true); // Ensure typing indicator is shown
-      lastTraceTypeRef.current = trace.type;
       stepProgressManager.resetProgressCircles();
       textTraceManager.resetTextTracking();
     }
@@ -104,7 +92,6 @@ export function useTraceEventHandler(
         trace.type === 'text' || 
         (trace.type === 'completion' && trace.payload?.state === 'start')) {
       receivedFirstTraceRef.current = true;
-      lastTraceTypeRef.current = trace.type;
       
       // Clear timeout when we receive actual trace data
       stepProgressManager.clearProgressTimeouts();
@@ -113,7 +100,6 @@ export function useTraceEventHandler(
     // Check for special block ID - support multiple block IDs
     if (trace.type === 'block' && trace.payload?.blockID) {
       // Mark that we received a block, which indicates a transition
-      lastTraceTypeRef.current = 'block';
       stepProgressManager.handleSpecialBlockId(trace.payload.blockID);
     }
     
@@ -145,19 +131,19 @@ export function useTraceEventHandler(
         if (trace.payload?.state === 'start') {
           // Reset text streaming flag for new messages
           textTraceManager.resetTextTracking();
+          // Always reset progress circles for new messages
+          stepProgressManager.resetProgressCircles();
           receivedFirstTraceRef.current = true;
         }
         completionHandler.handleCompletionEvent(trace.payload);
         break;
       
       case 'choice':
-        lastTraceTypeRef.current = 'choice';
         console.log('🔴 BUTTON TRACE RECEIVED:', trace.payload?.buttons?.length || 0, 'buttons');
         textAndChoiceHandler.handleChoiceEvent(trace);
         break;
       
       case 'end':
-        lastTraceTypeRef.current = 'end';
         console.log('Session ended');
         completionHandler.streamingStateRef.current.messageCompleted = true;
         textTraceManager.messageCompletedRef.current = true;

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import CircularCheckpoint from './typing/CircularCheckpoint';
 import { useTypingAnimation } from '@/hooks/useTypingAnimation';
 
@@ -16,16 +16,8 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   isTyping = true,
   textStreamingStarted = false
 }) => {
-  const prevTypingRef = useRef<boolean>(false);
-  
   // If not typing, don't show anything
   if (!isTyping) return null;
-  
-  // Reset animation if isTyping changes from false to true
-  useEffect(() => {
-    // This will track if we're transitioning from not typing to typing
-    prevTypingRef.current = isTyping;
-  }, [isTyping]);
   
   // Use our extracted animation hook
   const { currentProgress, visibleSteps, getCheckpointStatus } = useTypingAnimation({
@@ -36,10 +28,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   });
   
   return (
-    <div 
-      key={`typing-indicator-${steps}-${currentStep}`}
-      className="flex items-center space-x-8 p-4 bg-gray-50 rounded-xl my-2"
-    >
+    <div className="flex items-center space-x-8 p-4 bg-gray-50 rounded-xl my-2">
       {Array.from({ length: visibleSteps }).map((_, i) => (
         <CircularCheckpoint 
           key={i}
@@ -52,4 +41,4 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   );
 };
 
-export default React.memo(TypingIndicator);
+export default TypingIndicator;

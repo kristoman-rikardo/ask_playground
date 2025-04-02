@@ -30,38 +30,18 @@ export function useTypingAnimation({
   const textStreamingStartedRef = useRef(false);
   // Track if animation is in progress
   const animationInProgressRef = useRef(false);
-  // Track animation frame
-  const animationFrameRef = useRef<number | null>(null);
-  // Track if we're currently in a reset cycle
-  const isResettingRef = useRef(false);
   
-  // Completely reset all states when isTyping changes from false to true (new message)
+  // Reset all states when isTyping changes from false to true (new message)
   useEffect(() => {
     if (isTyping) {
-      // Only reset if we aren't already in the middle of a reset
-      if (!isResettingRef.current) {
-        isResettingRef.current = true;
-        
-        // Cancel any ongoing animations
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = null;
-        }
-        
-        // Reset states for a new message
-        setCurrentProgress(0);
-        setFullCircles([]);
-        setCompletedCircles([]);
-        setFadingCircles([]);
-        setVisibleSteps(1);
-        textStreamingStartedRef.current = false;
-        animationInProgressRef.current = false;
-        
-        // Allow for a slight delay to ensure the reset is complete
-        setTimeout(() => {
-          isResettingRef.current = false;
-        }, 50);
-      }
+      // Reset states for a new message
+      setCurrentProgress(0);
+      setFullCircles([]);
+      setCompletedCircles([]);
+      setFadingCircles([]);
+      setVisibleSteps(1);
+      textStreamingStartedRef.current = false;
+      animationInProgressRef.current = false;
     }
   }, [isTyping]);
 
@@ -89,7 +69,7 @@ export function useTypingAnimation({
   
   // Reset progress and status when currentStep changes
   useEffect(() => {
-    if (currentStep >= 0 && !isResettingRef.current) {
+    if (currentStep >= 0) {
       // Reset animation progress for the new step
       animationInProgressRef.current = false;
       setCurrentProgress(0);
@@ -103,28 +83,13 @@ export function useTypingAnimation({
   
   // Reset everything when steps change (for new messages)
   useEffect(() => {
-    if (!isResettingRef.current) {
-      isResettingRef.current = true;
-      
-      // Cancel any existing animation frame
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-      
-      setCurrentProgress(0);
-      setFullCircles([]);
-      setCompletedCircles([]);
-      setFadingCircles([]);
-      setVisibleSteps(1); // Start with just one circle
-      textStreamingStartedRef.current = false;
-      animationInProgressRef.current = false;
-      
-      // Small delay to ensure reset is complete
-      setTimeout(() => {
-        isResettingRef.current = false;
-      }, 50);
-    }
+    setCurrentProgress(0);
+    setFullCircles([]);
+    setCompletedCircles([]);
+    setFadingCircles([]);
+    setVisibleSteps(1); // Start with just one circle
+    textStreamingStartedRef.current = false;
+    animationInProgressRef.current = false;
   }, [steps]);
 
   // Fade out checkmarks when text starts streaming
@@ -144,13 +109,13 @@ export function useTypingAnimation({
   
   // Automatically animate the progress of the current circle
   useEffect(() => {
-    // Don't run animation if typing is false, animation in progress, or we're in reset mode
-    if (!isTyping || animationInProgressRef.current || isResettingRef.current) return;
+    if (!isTyping || animationInProgressRef.current) return;
     
     // Set animation as in progress to prevent duplicate animations
     animationInProgressRef.current = true;
     
-    let startTime: number | null = null;
+    let animationFrame: number;
+    let startTime: number;
     const duration = 3000; // 3 seconds to fill a circle
     
     const animate = (timestamp: number) => {
@@ -161,7 +126,7 @@ export function useTypingAnimation({
       setCurrentProgress(progress);
       
       if (progress < 100) {
-        animationFrameRef.current = requestAnimationFrame(animate);
+        animationFrame = requestAnimationFrame(animate);
       } else {
         // When progress reaches 100%, add this circle to fullCircles array
         setFullCircles(prev => [...prev, currentStep]);
@@ -176,29 +141,16 @@ export function useTypingAnimation({
         
         // Reset animation in progress flag so next step can animate
         animationInProgressRef.current = false;
-        animationFrameRef.current = null;
       }
     };
     
-    animationFrameRef.current = requestAnimationFrame(animate);
+    animationFrame = requestAnimationFrame(animate);
     
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
+      cancelAnimationFrame(animationFrame);
       animationInProgressRef.current = false;
     };
   }, [isTyping, currentStep, visibleSteps]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
 
   // Helper function to determine the status of a checkpoint
   const getCheckpointStatus = (index: number): CheckpointStatus => {
