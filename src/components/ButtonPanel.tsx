@@ -74,7 +74,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   );
   
   return (
-    <div className="w-full bg-transparent border-t border-transparent p-3 relative">
+    <div className="w-full bg-transparent border-t border-transparent p-2 relative">
       {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[120px]"></div>}
     </div>
   );
