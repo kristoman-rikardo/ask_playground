@@ -104,9 +104,9 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   
   // Custom loader component with animation and text above the animation
   const LoadingIndicator = () => (
-    <div className="h-[90px] flex flex-col items-center justify-center -mb-4">
+    <div className="h-[90px] flex flex-col items-center justify-center mb-2 mt-1">
       <p 
-        className={`text-gray-500 mb-2 text-sm font-medium transition-all duration-300 ${
+        className={`text-gray-500 mb-3 text-sm font-medium transition-all duration-300 ${
           isTextChanging ? 'opacity-0 transform -translate-y-2' : 'opacity-100 transform translate-y-0'
         }`}
       >
@@ -159,7 +159,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   );
   
   return (
-    <div className="w-full bg-transparent p-0 relative mt-2">
+    <div className="w-full bg-transparent p-0 relative mt-6">
       {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[5px]"></div>}
     </div>
   );

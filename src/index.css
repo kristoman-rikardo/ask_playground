@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -192,11 +193,11 @@
     }
   }
   
-  /* Optimized loader animation for buttons - updated for continuous animation */
+  /* Improved continuous loader animation */
   .loader {
-    width: 150px;
+    width: 120px;
     aspect-ratio: 1;
-    padding: 15px;
+    padding: 12px;
     box-sizing: border-box;
     display: grid;
     background: #fff;
@@ -210,24 +211,25 @@
   .loader:after {
     content: "";
     grid-area: 1/1;
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     background: #888;
     border-radius: 25%;
-    animation: l7 3.5s infinite;
+    animation: l7 4s infinite linear;
     will-change: transform;
     transform-origin: center;
   }
 
   .loader:after {
-    animation-delay: -1.75s;
+    animation-delay: -2s;
+    animation-duration: 4s;
   }
 
   @keyframes l7 {
-    0%   { transform: translate(0, 0); }
-    25%  { transform: translate(100%, 0); }
-    50%  { transform: translate(100%, 100%); }
-    75%  { transform: translate(0, 100%); }
-    100% { transform: translate(0, 0); }
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    25%  { transform: translate(100%, 0) rotate(90deg); }
+    50%  { transform: translate(100%, 100%) rotate(180deg); }
+    75%  { transform: translate(0, 100%) rotate(270deg); }
+    100% { transform: translate(0, 0) rotate(360deg); }
   }
 }
