@@ -25,6 +25,7 @@ const ChatInterface: React.FC = () => {
   const [messagesHeight, setMessagesHeight] = useState(0);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const lastContentHeightRef = useRef<number>(0);
+  const visibleContentHeightRef = useRef<number>(0);
   
   // Mark conversation as started when user sends first message or when we have any messages
   useEffect(() => {
@@ -36,8 +37,11 @@ const ChatInterface: React.FC = () => {
   // Update the height when messages change
   useEffect(() => {
     if (messagesContainerRef.current && messages.length > 0) {
-      // Get the current content height
+      // Get the current visible content height
       const currentHeight = messagesContainerRef.current.scrollHeight;
+      
+      // Store the height of visible content
+      visibleContentHeightRef.current = currentHeight;
       
       // Only update if the new content height is greater than the previous maximum
       if (currentHeight > lastContentHeightRef.current) {
@@ -63,16 +67,16 @@ const ChatInterface: React.FC = () => {
   return (
     <div 
       className="w-full mx-auto bg-white shadow-sm rounded-2xl overflow-hidden transition-all font-sans border border-gray-200"
-      style={{ height: '100%' }}
+      style={{ height: 'auto' }}
     >
       <div className="flex flex-col h-full">
         <div 
           ref={messagesContainerRef}
           className="flex-1 flex flex-col overflow-hidden overflow-y-auto transition-all duration-300"
           style={{ 
-            height: conversationStarted ? `${messagesHeight}px` : '0px',
+            height: conversationStarted ? `${visibleContentHeightRef.current}px` : '0px',
             minHeight: conversationStarted ? (messagesHeight > 0 ? `${messagesHeight}px` : '100px') : '0px',
-            maxHeight: conversationStarted ? '600px' : '0px',
+            maxHeight: '600px',
           }}
         >
           <ChatMessages 

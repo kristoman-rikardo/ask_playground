@@ -44,6 +44,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   // Check if any message is currently streaming (partial)
   const hasPartialMessages = messages.some(m => m.isPartial);
+  
+  // Get only the most recent messages for display
+  const visibleMessages = messages;
 
   // Process content to ensure we handle HTML content properly
   const processContent = (content: string, isPartial: boolean | undefined, messageType: 'user' | 'agent') => {
@@ -54,9 +57,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   return (
-    <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4" style={{ minHeight: messages.length > 0 ? '100px' : '0' }}>
-      {messages.length > 0 ? messages.map((message, index) => {
-        const isLast = index === messages.length - 1;
+    <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4" style={{ minHeight: messages.length > 0 ? '0' : '0' }}>
+      {visibleMessages.length > 0 ? visibleMessages.map((message, index) => {
+        const isLast = index === visibleMessages.length - 1;
         
         return (
           <div 
