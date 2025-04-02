@@ -17,11 +17,10 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
-  // Loading indicator with text
+  // Simplified loader component
   const LoadingIndicator = () => (
-    <div className="h-[90px] flex flex-col items-center justify-center gap-3">
-      <div className="simple-loader" aria-label="Loading" role="status"></div>
-      <div className="text-sm text-gray-500 font-medium">Thinking...</div>
+    <div className="h-[90px] flex items-center justify-center">
+      <div className="loader" aria-label="Loading" role="status"></div>
     </div>
   );
 
