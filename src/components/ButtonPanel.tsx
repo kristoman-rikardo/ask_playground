@@ -17,36 +17,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
-  const [dotsText, setDotsText] = useState('');
-  
-  // Dots animation effect
-  useEffect(() => {
-    if (isLoading) {
-      const dotsVariations = ['', '.', '..', '...'];
-      let index = 0;
-      const interval = setInterval(() => {
-        setDotsText(dotsVariations[index % dotsVariations.length]);
-        index++;
-      }, 400);
-      
-      return () => clearInterval(interval);
-    } else {
-      setDotsText('');
-    }
-  }, [isLoading]);
-  
-  // Simplified loader component with thinking text
-  const LoadingIndicator = () => (
-    <div className="h-[70px] flex flex-col items-center justify-center transition-opacity duration-300">
-      <div className="mb-3 text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-md shadow-sm transition-all duration-300 animate-fade-in">
-        <span className="font-medium">Thinking</span>
-        <span className="dots-animation">{dotsText}</span>
-      </div>
-      <div className="simple-loader" aria-label="Loading" role="status"></div>
-    </div>
-  );
-
-  // Sparkle SVG icon
+  // Sparkle SVG icon for buttons
   const SparkleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
       fill="currentColor" className="size-5 inline-block ml-1 text-gray-400">
@@ -64,6 +35,23 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
               .632-.633l.551-.183a1 1 0 0 0 0-1.898l-.551-.184a1 1 0 0 1
               -.633-.632l-.183-.551Z" />
     </svg>
+  );
+  
+  // Enhanced thinking indicator with separate animation for dots
+  const ThinkingIndicator = () => (
+    <div className="mb-3 bg-white/80 px-4 py-2 rounded-lg shadow-sm 
+                   animate-fade-in transition-all duration-300">
+      <span className="thinking-text">Thinking</span>
+      <span className="dots-animation"></span>
+    </div>
+  );
+  
+  // Simplified loader component with thinking text
+  const LoadingIndicator = () => (
+    <div className="h-[70px] flex flex-col items-center justify-center transition-opacity duration-300">
+      <ThinkingIndicator />
+      <div className="simple-loader" aria-label="Loading" role="status"></div>
+    </div>
   );
 
   // Button List component

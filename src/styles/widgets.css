@@ -5,14 +5,13 @@
     @apply flex flex-col h-full;
   }
 
-  /* Improved circular loader animation */
+  /* Improved circular loader animation - completely separate from thinking dots */
   .simple-loader {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: 3px solid rgba(140, 140, 140, 0.15);
     border-top-color: #888;
-    position: relative;
     animation: smooth-spin 1.2s linear infinite;
   }
   
