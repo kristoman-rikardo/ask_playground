@@ -103,6 +103,10 @@ export function useTraceEventHandler(
       
       // Begin in thinking phase
       createLoadingPhaseEvent('thinking');
+      
+      // Always start with buttons cleared and loading indicator showing after user input
+      setButtons([]);
+      setIsButtonsLoading(true);
     }
     
     if (trace.type === 'speak' || 
@@ -151,8 +155,8 @@ export function useTraceEventHandler(
             
             // Now in streaming phase
             createLoadingPhaseEvent('streaming');
-          }, 500); // Additional 500ms delay for smooth transition after progress completion
-        }, 600); // 600ms delay to show completed loading before text starts
+          }, 300); // Reduced delay for smoother transition
+        }, 300); // Reduced delay to show completed loading before text starts
         break;
       
       case 'completion':
@@ -165,6 +169,9 @@ export function useTraceEventHandler(
           receivedFirstTraceRef.current = true;
           // Start in thinking phase
           createLoadingPhaseEvent('thinking');
+          // Ensure buttons are cleared and loading indicator is shown
+          setButtons([]);
+          setIsButtonsLoading(true);
         }
         completionHandler.handleCompletionEvent(trace.payload);
         break;

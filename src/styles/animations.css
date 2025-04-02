@@ -35,7 +35,7 @@
     }
   }
   
-  /* Improved continuous loader animation */
+  /* Fixed continuous loader animation */
   .loader {
     width: 150px;
     aspect-ratio: 1;
