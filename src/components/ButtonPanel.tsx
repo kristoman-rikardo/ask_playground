@@ -37,10 +37,9 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </svg>
   );
   
-  // Enhanced thinking indicator with separate animation for dots
+  // Enhanced thinking indicator with separate animation for dots - no background label
   const ThinkingIndicator = () => (
-    <div className="mb-3 bg-white/80 px-4 py-2 rounded-lg shadow-sm 
-                   animate-fade-in transition-all duration-300">
+    <div className="mb-3 transition-all duration-300">
       <span className="thinking-text">Thinking</span>
       <span className="dots-animation"></span>
     </div>
