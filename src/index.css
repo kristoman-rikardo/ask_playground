@@ -127,7 +127,7 @@
   /* Enhanced input field styling */
   .chat-input {
     @apply border-transparent rounded-lg px-4 py-3 w-full outline-none
-           transition-all duration-200 bg-gray-100/30 shadow-inner font-light;
+           transition-all duration-200 bg-gray-100/50 shadow-inner shadow-gray-200/30 font-light;
   }
   
   .chat-input:hover {

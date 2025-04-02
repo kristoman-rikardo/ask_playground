@@ -36,7 +36,7 @@ const CircularCheckpoint: React.FC<CircularCheckpointProps> = ({ status, positio
               cy="12"
               r="10"
               stroke="currentColor"
-              strokeWidth="3"
+              strokeWidth="4"
               fill="transparent"
               className="text-gray-300"
             />
@@ -45,7 +45,7 @@ const CircularCheckpoint: React.FC<CircularCheckpointProps> = ({ status, positio
               cy="12"
               r="10"
               stroke="currentColor"
-              strokeWidth="3"
+              strokeWidth="4"
               strokeDasharray={2 * Math.PI * 10} // 2πr where r=10
               strokeDashoffset={(2 * Math.PI * 10) * (1 - progress / 100)} // Calculate dashoffset based on progress
               fill="transparent"

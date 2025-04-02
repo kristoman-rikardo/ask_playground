@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTypingAnimation } from '@/hooks/useTypingAnimation';
 import { Loader, Check } from 'lucide-react';
 
@@ -60,16 +60,18 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     >
       <div className="flex items-center space-x-2 mb-1">
         <Loader size={16} className="animate-spin text-gray-600" />
-        <motion.span 
-          key={loadingTextIndex}
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -5 }}
-          transition={{ duration: 0.3 }}
-          className="text-sm text-gray-600 font-medium"
-        >
-          {loadingMessages[loadingTextIndex]}
-        </motion.span>
+        <AnimatePresence mode="wait">
+          <motion.span 
+            key={loadingTextIndex}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.3 }}
+            className="text-sm text-gray-600 font-medium"
+          >
+            {loadingMessages[loadingTextIndex]}
+          </motion.span>
+        </AnimatePresence>
       </div>
       
       <div className="relative h-10 w-10">
@@ -79,7 +81,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
             cy="22"
             r="20"
             stroke="currentColor"
-            strokeWidth="3"
+            strokeWidth="4"
             fill="transparent"
             className="text-gray-200"
           />
@@ -88,7 +90,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
             cy="22"
             r="20"
             stroke="currentColor"
-            strokeWidth="3"
+            strokeWidth="4"
             strokeDasharray={2 * Math.PI * 20} // 2πr where r=20
             strokeDashoffset={(2 * Math.PI * 20) * (1 - (currentProgress * 1.35) / 100)} // Multiply by 1.35 to start with 35% more progress
             fill={textStreamingStarted ? "currentColor" : "transparent"}

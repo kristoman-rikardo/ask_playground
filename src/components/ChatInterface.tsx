@@ -65,7 +65,7 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div 
-      className="w-full mx-auto bg-white shadow-sm rounded-2xl overflow-hidden transition-all font-sans border border-gray-200"
+      className="w-full mx-auto bg-transparent shadow-sm rounded-2xl overflow-hidden transition-all font-sans border border-transparent"
       style={{ height: 'auto' }}
     >
       <div className="flex flex-col h-full">
@@ -103,7 +103,7 @@ const ChatInterface: React.FC = () => {
         
         {/* Show initial prompt if conversation hasn't started */}
         {!conversationStarted && (
-          <div className="w-full bg-transparent border-t border-gray-100 p-4">
+          <div className="w-full bg-transparent border-t border-transparent p-4">
             <button
               onClick={() => handleSendMessage("Hei, kan du hjelpe meg?")}
               className="w-full px-4 py-2 font-light font-sans transition-all duration-300 rounded-2xl
