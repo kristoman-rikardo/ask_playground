@@ -61,7 +61,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
           key={`button-${index}-${button.name.substring(0, 10)}`} 
           onClick={() => onButtonClick(button)} 
           title={button.name} 
-          className="choice-button whitespace-nowrap overflow-hidden text-ellipsis transition-all 
+          className="choice-button whitespace-normal break-words transition-all 
                    duration-300 text-base text-left rounded-2xl 
                    px-4 py-2.5 border border-gray-200/50 
                    shadow-sm hover:shadow-md bg-gray-200 
