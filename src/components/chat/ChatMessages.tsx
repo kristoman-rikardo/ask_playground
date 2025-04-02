@@ -66,10 +66,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             key={message.id} 
             id={`message-${message.id}`} 
             ref={isLast ? lastMessageRef : null} 
-            className={`px-4 py-3 rounded-xl max-w-[85%] relative ${
+            className={`px-4 py-3 rounded-xl relative ${
               message.type === 'user' 
-                ? 'chat-message-user ml-auto bg-gray-200 shadow-sm border border-transparent' 
-                : 'chat-message-agent mr-auto shadow-sm bg-gray-50 border border-transparent'
+                ? 'chat-message-user ml-auto bg-gray-200 shadow-sm border border-transparent inline-block max-w-[85%] w-auto' 
+                : 'chat-message-agent mr-auto shadow-sm bg-gray-50 border border-transparent max-w-[85%]'
             } ${message.isPartial ? 'border-l-2 border-gray-300' : ''}`}
           >
             {processContent(message.content, message.isPartial, message.type)}
