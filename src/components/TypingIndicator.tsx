@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTypingAnimation } from '@/hooks/useTypingAnimation';
-import { Loader } from 'lucide-react';
+import { Loader, Check } from 'lucide-react';
 
 export interface TypingIndicatorProps {
   steps?: number;
@@ -60,9 +60,16 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     >
       <div className="flex items-center space-x-2 mb-1">
         <Loader size={16} className="animate-spin text-gray-600" />
-        <span className="text-sm text-gray-600 font-medium">
+        <motion.span 
+          key={loadingTextIndex}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          transition={{ duration: 0.3 }}
+          className="text-sm text-gray-600 font-medium"
+        >
           {loadingMessages[loadingTextIndex]}
-        </span>
+        </motion.span>
       </div>
       
       <div className="relative h-10 w-10">
@@ -72,7 +79,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
             cy="22"
             r="20"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="3"
             fill="transparent"
             className="text-gray-200"
           />
@@ -81,10 +88,10 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
             cy="22"
             r="20"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="3"
             strokeDasharray={2 * Math.PI * 20} // 2πr where r=20
             strokeDashoffset={(2 * Math.PI * 20) * (1 - (currentProgress * 1.35) / 100)} // Multiply by 1.35 to start with 35% more progress
-            fill="transparent"
+            fill={textStreamingStarted ? "currentColor" : "transparent"}
             className="text-gray-500"
             transform="rotate(-90, 22, 22)" // Start from the top (12 o'clock)
             strokeLinecap="round"
@@ -92,13 +99,30 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
             animate={{ 
               strokeDashoffset: textStreamingStarted 
                 ? 0 
-                : (2 * Math.PI * 20) * (1 - (currentProgress * 1.35) / 100)
+                : (2 * Math.PI * 20) * (1 - (currentProgress * 1.35) / 100),
+              fill: textStreamingStarted ? "currentColor" : "transparent"
             }}
             transition={{ 
               duration: 0.5,
               ease: "easeInOut" 
             }}
           />
+          
+          {textStreamingStarted && (
+            <motion.g
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+            >
+              <Check
+                x="13"
+                y="13"
+                width="18"
+                height="18"
+                className="text-white"
+              />
+            </motion.g>
+          )}
         </svg>
       </div>
       

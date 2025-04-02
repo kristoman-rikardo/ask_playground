@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
@@ -124,8 +125,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             ref={isLast ? lastMessageRef : null} 
             className={`px-4 py-3 rounded-xl relative ${
               message.type === 'user' 
-                ? 'chat-message-user ml-auto bg-gray-200 shadow-sm border border-transparent inline-block max-w-[85%] w-auto' 
-                : 'chat-message-agent mr-auto shadow-sm bg-gray-50 border border-transparent max-w-[85%]'
+                ? 'chat-message-user ml-auto bg-gray-200/90 shadow-inner border-transparent inline-block max-w-[85%] w-auto' 
+                : 'chat-message-agent mr-auto shadow-inner bg-gray-50/90 border-transparent max-w-[85%]'
             } ${message.isPartial ? 'border-l-2 border-gray-300' : ''}`}
           >
             {processContent(message.content, message.isPartial, message.type)}

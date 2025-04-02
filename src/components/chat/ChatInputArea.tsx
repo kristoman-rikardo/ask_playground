@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { delay } from '@/lib/voiceflow';
@@ -89,7 +88,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   };
 
   return (
-    <div className="w-full bg-transparent border-t border-gray-100 p-4">
+    <div className="w-full bg-transparent border-t border-gray-100/50 p-4">
       <div className="flex items-center space-x-2 relative">
         <input 
           ref={inputRef} 
@@ -100,12 +99,12 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 rounded-2xl bg-transparent
-            border border-gray-300 ${isFocused 
-              ? 'ring-1 ring-gray-300/50' 
+          className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 rounded-2xl 
+            bg-gray-100/30 shadow-inner border-transparent ${isFocused 
+              ? 'ring-1 ring-gray-300/50 shadow-lg' 
               : inputValue 
-                ? '' 
-                : 'hover:border-gray-400/50'
+                ? 'shadow-inner' 
+                : 'hover:shadow-md'
             }`} 
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
