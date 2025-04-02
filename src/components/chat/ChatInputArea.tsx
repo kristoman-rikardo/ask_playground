@@ -14,17 +14,15 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   const [isButtonVisible, setIsButtonVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Static placeholder - no streaming
   const placeholder = "Spør om produktet...";
   
-  // Handle button visibility with animation delay
   React.useEffect(() => {
     if (inputValue.trim()) {
       setIsButtonVisible(true);
     } else {
       const timer = setTimeout(() => {
         setIsButtonVisible(false);
-      }, 300); // Match the exit animation duration
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [inputValue]);
@@ -48,9 +46,10 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 
-            rounded-2xl bg-gray-100/90 border-transparent 
-            hover:bg-gray-100 
-            focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-200/70 
+            rounded-2xl bg-gray-100/90 
+            border border-gray-200/50 
+            shadow-sm hover:shadow-md 
+            focus:border-gray-300 focus:ring-2 focus:ring-gray-200/70 
             active:translate-y-[1px]
             ${isFocused ? 'bg-white' : ''}`} 
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
