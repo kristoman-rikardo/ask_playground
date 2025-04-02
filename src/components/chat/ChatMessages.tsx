@@ -86,6 +86,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     return () => chatBox.removeEventListener('scroll', handleScroll);
   }, [shouldAutoScroll]);
 
+  // Check for carousel data specifically and update scroll button visibility
+  useEffect(() => {
+    if (carouselData && chatBoxRef.current) {
+      const nearBottom = isNearBottom();
+      setShowScrollButton(!nearBottom);
+      
+      // If we're getting new carousel data and we're set to auto scroll
+      if (shouldAutoScroll) {
+        const timer = setTimeout(() => {
+          scrollToBottom();
+        }, 100); // slightly longer delay for carousels to render
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [carouselData, shouldAutoScroll]);
+
   useEffect(() => {
     if (messages.length === 0) {
       setShouldAutoScroll(true);
@@ -165,7 +181,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             scrollToBottom();
             setShouldAutoScroll(true);
           }}
-          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-2 shadow-sm transition-all duration-200 z-10"
+          className="fixed z-10 bg-gray-200 hover:bg-gray-300 rounded-full p-2 shadow-sm transition-all duration-200"
+          style={{
+            bottom: '70px', // Position above the button panel/input area
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
           aria-label="Scroll to bottom"
         >
           <ArrowDown size={20} className="text-gray-600" />
