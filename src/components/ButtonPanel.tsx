@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface Button {
   name: string;
@@ -18,29 +18,16 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   onButtonClick
 }) => {
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
-  const [loadingPhase, setLoadingPhase] = useState<'thinking' | 'streaming' | 'products'>('thinking');
-  const lastChangeTime = useRef<number>(Date.now());
-  const [currentText, setCurrentText] = useState<string>("Tenker...");
-  const [isTextChanging, setIsTextChanging] = useState(false);
   
-  // Define different loading messages for each phase
-  const loadingMessages = {
-    thinking: [
-      "Tenker...",
-      "Grubler...",
-      "Resonnerer..."
-    ],
-    streaming: [
-      "Laster inn spørsmål...",
-      "Fører samtalen videre...",
-      "Finner noe å snakke om..."
-    ],
-    products: [
-      "Finner produkter...",
-      "Laster inn produkter...",
-      "Presenterer produkter..."
-    ]
-  };
+  // Updated loading messages in Norwegian
+  const loadingMessages = [
+    "Tenker...",
+    "Resonnerer...",
+    "Grubler...",
+    "Henter informasjon...",
+    "Samler kunnskap...",
+    "Drøfter..."
+  ];
   
   // Log button state changes
   useEffect(() => {
@@ -49,70 +36,24 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     }
   }, [buttons]);
   
-  // Listen for loading phase change events
-  useEffect(() => {
-    const handleLoadingPhaseChange = (event: any) => {
-      if (event.detail && event.detail.phase) {
-        setLoadingPhase(event.detail.phase);
-        
-        // Set initial text for this phase
-        setCurrentText(loadingMessages[event.detail.phase][0]);
-        setLoadingTextIndex(0);
-        
-        // Reset the last change time to prevent immediate change
-        lastChangeTime.current = Date.now();
-      }
-    };
-    
-    // Add event listener for custom loading phase change events
-    window.addEventListener('loadingPhaseChange', handleLoadingPhaseChange);
-    
-    return () => {
-      window.removeEventListener('loadingPhaseChange', handleLoadingPhaseChange);
-    };
-  }, [loadingMessages]);
-  
-  // Rotate through loading messages every 2.5 seconds
+  // Rotate through loading messages every 1.5 seconds
   useEffect(() => {
     if (isLoading) {
       const interval = setInterval(() => {
-        const now = Date.now();
-        
-        // Only change if 2.5 seconds have passed since last change
-        if (now - lastChangeTime.current >= 2500) {
-          setIsTextChanging(true);
-          
-          // After animation out completes, change the text
-          setTimeout(() => {
-            const messages = loadingMessages[loadingPhase];
-            const newIndex = (loadingTextIndex + 1) % messages.length;
-            setLoadingTextIndex(newIndex);
-            setCurrentText(messages[newIndex]);
-            
-            // Then animate back in
-            setTimeout(() => {
-              setIsTextChanging(false);
-              lastChangeTime.current = Date.now();
-            }, 300);
-          }, 300);
-        }
-      }, 500); // Check more frequently than we change
+        setLoadingTextIndex(prev => (prev + 1) % loadingMessages.length);
+      }, 1500);
       
       return () => clearInterval(interval);
     }
-  }, [isLoading, loadingTextIndex, loadingPhase]);
+  }, [isLoading, loadingMessages]);
   
-  // Custom loader component with animation and text above the animation
+  // Custom loader component with updated animation and text positioned closer to animation
   const LoadingIndicator = () => (
     <div className="h-[100px] flex flex-col items-center justify-center">
-      <p 
-        className={`text-gray-500 mb-4 text-sm font-medium transition-all duration-300 ${
-          isTextChanging ? 'opacity-0 transform -translate-y-2' : 'opacity-100 transform translate-y-0'
-        }`}
-      >
-        {currentText}
-      </p>
       <div className="loader" aria-label="Loading" role="status"></div>
+      <p className="text-gray-500 -mt-4 text-sm font-medium">
+        {loadingMessages[loadingTextIndex]}
+      </p>
     </div>
   );
 
