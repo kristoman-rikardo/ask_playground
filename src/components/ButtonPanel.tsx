@@ -27,7 +27,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   // Custom loader component with updated animation
   const LoadingIndicator = () => (
     <div className="h-[120px] flex flex-col items-center justify-center">
-      <div className="loader"></div>
+      <div className="loader" aria-label="Loading" role="status"></div>
       <p className="text-gray-500 mt-4 text-sm font-light">Laster spørsmål...</p>
     </div>
   );

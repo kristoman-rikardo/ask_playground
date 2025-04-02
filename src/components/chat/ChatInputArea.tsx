@@ -46,8 +46,8 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 
-            rounded-2xl bg-gray-100/90 
-            border border-gray-200/50 
+            rounded-2xl bg-gray-50/90 
+            border border-gray-200 
             shadow-sm hover:shadow-md 
             focus:border-gray-300 focus:ring-2 focus:ring-gray-200/70 
             active:translate-y-[1px]
