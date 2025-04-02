@@ -22,7 +22,7 @@ const ChatInterface: React.FC = () => {
   // Track if user has started conversation
   const [conversationStarted, setConversationStarted] = useState(false);
   // Track the height of the messages container
-  const [messagesHeight, setMessagesHeight] = useState(300); // Start with a reasonable default height
+  const [messagesHeight, setMessagesHeight] = useState(0); // Start with 0 height (collapsed)
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const lastContentHeightRef = useRef<number>(300);
   const visibleContentHeightRef = useRef<number>(300);
@@ -73,9 +73,10 @@ const ChatInterface: React.FC = () => {
           ref={messagesContainerRef}
           className="flex-1 flex flex-col overflow-hidden overflow-y-auto transition-all duration-300"
           style={{ 
-            height: conversationStarted ? `${messagesHeight}px` : '300px',
-            minHeight: conversationStarted ? '300px' : '300px',
+            height: conversationStarted ? `${messagesHeight}px` : '0px', // Start with 0px height
+            minHeight: conversationStarted ? '300px' : '0px', // Start with 0px min-height
             maxHeight: '600px',
+            opacity: conversationStarted ? 1 : 0, // Hide content initially
           }}
         >
           <ChatMessages 
