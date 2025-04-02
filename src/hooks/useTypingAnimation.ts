@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { CheckpointStatus } from '@/components/typing/CircularCheckpoint';
 
@@ -24,7 +23,7 @@ export function useTypingAnimation({
   // Track last progress timestamp for smoother progress
   const lastProgressTime = useRef(Date.now());
   // Track progress speed (adaptive based on time elapsed)
-  const progressSpeed = useRef(1);
+  const progressSpeed = useRef(1.35); // Increased initial speed by 35%
   // Completion animation in progress
   const completionInProgress = useRef(false);
 
@@ -36,7 +35,7 @@ export function useTypingAnimation({
       animationActive.current = true;
       completionInProgress.current = false;
       lastProgressTime.current = Date.now();
-      progressSpeed.current = 1;
+      progressSpeed.current = 1.35; // Start with a faster initial speed
     } else {
       animationActive.current = false;
       completionInProgress.current = false;
@@ -46,11 +45,11 @@ export function useTypingAnimation({
   // Update progress based on currentStep
   useEffect(() => {
     if (currentStep >= 0 && currentStep < steps) {
-      // Calculate progress for this step
-      const baseProgress = (currentStep / steps) * 100;
+      // Calculate progress for this step - start with higher initial progress
+      const baseProgress = ((currentStep / steps) * 100);
       
-      // Always ensure progress is ahead of actual position (at least 10% ahead)
-      const aheadProgress = Math.min(baseProgress + 10, 95);
+      // Always ensure progress is ahead of actual position (at least 35% ahead)
+      const aheadProgress = Math.min(baseProgress + 35, 95);
       
       setCurrentProgress(aheadProgress);
       
@@ -63,10 +62,10 @@ export function useTypingAnimation({
       
       if (elapsed < 1000) {
         // Steps are coming in quickly - speed up
-        progressSpeed.current = Math.min(3.5, progressSpeed.current + 0.5);
+        progressSpeed.current = Math.min(4.0, progressSpeed.current + 0.7);
       } else if (elapsed > 5000) {
-        // Steps are coming in slowly - slow down
-        progressSpeed.current = Math.max(0.8, progressSpeed.current - 0.2);
+        // Steps are coming in slowly - slow down but keep minimum 1.35x speed
+        progressSpeed.current = Math.max(1.35, progressSpeed.current - 0.2);
       }
       
       lastProgressTime.current = now;
@@ -94,16 +93,16 @@ export function useTypingAnimation({
         const stepProgress = ((currentStep + 1) / steps) * 100;
         
         // Always aim a bit ahead of the current step
-        const targetProgress = Math.min(98, stepProgress + 15); 
+        const targetProgress = Math.min(98, stepProgress + 35); // Increased lead to 35%
         
         // Accelerate progress as we get closer to completion
-        const speedMultiplier = currentProgress > 80 ? 1.5 : 
-                               currentProgress > 60 ? 1.2 : 1;
+        const speedMultiplier = currentProgress > 80 ? 1.7 : 
+                               currentProgress > 60 ? 1.5 : 1.2; // Increased all multipliers
         
         // Increment by small amount each frame for smoother animation
         if (currentProgress < targetProgress && !textStreamingStarted) {
           setCurrentProgress(prev => 
-            Math.min(prev + (0.4 * progressSpeed.current * speedMultiplier), targetProgress)
+            Math.min(prev + (0.5 * progressSpeed.current * speedMultiplier), targetProgress)
           );
         }
       }

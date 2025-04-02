@@ -22,22 +22,15 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
   
-  // Normal loading messages in Norwegian
-  const normalLoadingMessages = [
-    "Finner et god svar...", 
-    "Resonnerer...", 
-    "Tenker..."
+  // Updated loading messages in Norwegian
+  const loadingMessages = [
+    "Tenker...",
+    "Resonnerer...",
+    "Grubler...",
+    "Henter informasjon...",
+    "Samler kunnskap...",
+    "Drøfter..."
   ];
-  
-  // Product search loading messages in Norwegian
-  const productLoadingMessages = [
-    "Leter etter produkter...",
-    "Presenterer produkter..."
-  ];
-  
-  // Determine which message set to use based on steps
-  const isLongLoading = steps > 3;
-  const loadingMessages = isLongLoading ? productLoadingMessages : normalLoadingMessages;
   
   // Rotate through loading messages
   useEffect(() => {
@@ -72,18 +65,41 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
         </span>
       </div>
       
-      <div className="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
-        <motion.div 
-          className="h-full bg-gray-400 rounded-full"
-          initial={{ width: '0%' }}
-          animate={{ 
-            width: textStreamingStarted ? '100%' : `${currentProgress}%` 
-          }}
-          transition={{ 
-            duration: textStreamingStarted ? 0.5 : 0.3,
-            ease: "easeInOut" 
-          }}
-        />
+      <div className="relative h-10 w-10">
+        <svg className="w-full h-full" viewBox="0 0 44 44">
+          <circle
+            cx="22"
+            cy="22"
+            r="20"
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="transparent"
+            className="text-gray-200"
+          />
+          <motion.circle
+            cx="22"
+            cy="22"
+            r="20"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeDasharray={2 * Math.PI * 20} // 2πr where r=20
+            strokeDashoffset={(2 * Math.PI * 20) * (1 - (currentProgress * 1.35) / 100)} // Multiply by 1.35 to start with 35% more progress
+            fill="transparent"
+            className="text-gray-500"
+            transform="rotate(-90, 22, 22)" // Start from the top (12 o'clock)
+            strokeLinecap="round"
+            initial={{ strokeDashoffset: 2 * Math.PI * 20 }}
+            animate={{ 
+              strokeDashoffset: textStreamingStarted 
+                ? 0 
+                : (2 * Math.PI * 20) * (1 - (currentProgress * 1.35) / 100)
+            }}
+            transition={{ 
+              duration: 0.5,
+              ease: "easeInOut" 
+            }}
+          />
+        </svg>
       </div>
       
       {!textStreamingStarted && visibleSteps > 1 && (
