@@ -54,12 +54,13 @@
            bg-[length:400%_100%] animate-shimmer;
   }
 
-  /* Animated dots for the thinking indicator */
+  /* Improved animated dots for the thinking indicator */
   .dots-animation {
     display: inline-block;
     min-width: 18px;
     text-align: left;
-    animation: fadeInOut 0.8s ease-in-out infinite;
+    animation: fadeInOut 1s ease-in-out infinite;
+    transition: all 300ms ease-in-out;
   }
   
   @keyframes fadeInOut {

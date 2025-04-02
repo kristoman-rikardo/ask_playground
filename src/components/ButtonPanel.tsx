@@ -37,8 +37,8 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   
   // Simplified loader component with thinking text
   const LoadingIndicator = () => (
-    <div className="h-[90px] flex flex-col items-center justify-center">
-      <div className="mb-2 text-sm text-gray-600 bg-white/80 px-3 py-1 rounded shadow-sm transition-opacity duration-300">
+    <div className="h-[70px] flex flex-col items-center justify-center transition-opacity duration-300">
+      <div className="mb-3 text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-md shadow-sm transition-all duration-300 animate-fade-in">
         <span className="font-medium">Thinking</span>
         <span className="dots-animation">{dotsText}</span>
       </div>

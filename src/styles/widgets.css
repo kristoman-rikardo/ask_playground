@@ -5,32 +5,22 @@
     @apply flex flex-col h-full;
   }
 
-  /* Simple continuous loader animation that doesn't restart */
+  /* Improved circular loader animation */
   .simple-loader {
-    width: 60px;
-    height: 60px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: conic-gradient(transparent, #888);
+    border: 3px solid rgba(140, 140, 140, 0.15);
+    border-top-color: #888;
     position: relative;
-    animation: simple-spin 2s linear infinite;
+    animation: smooth-spin 1.2s linear infinite;
   }
   
-  .simple-loader::before {
-    content: "";
-    position: absolute;
-    top: 10%;
-    left: 10%;
-    width: 80%;
-    height: 80%;
-    border-radius: 50%;
-    background-color: white;
-  }
-  
-  @keyframes simple-spin {
-    from {
+  @keyframes smooth-spin {
+    0% {
       transform: rotate(0deg);
     }
-    to {
+    100% {
       transform: rotate(360deg);
     }
   }
