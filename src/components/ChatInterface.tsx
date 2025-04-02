@@ -24,6 +24,7 @@ const ChatInterface: React.FC = () => {
   // Track the height of the messages container
   const [messagesHeight, setMessagesHeight] = useState(0);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const lastContentHeightRef = useRef<number>(0);
   
   // Mark conversation as started when user sends first message or when we have any messages
   useEffect(() => {
@@ -35,11 +36,23 @@ const ChatInterface: React.FC = () => {
   // Update the height when messages change
   useEffect(() => {
     if (messagesContainerRef.current && messages.length > 0) {
-      const height = messagesContainerRef.current.scrollHeight;
-      // Only update if the new height is greater than the current one
-      setMessagesHeight(prev => Math.max(prev, height));
+      // Get the current content height
+      const currentHeight = messagesContainerRef.current.scrollHeight;
+      
+      // Only update if the new content height is greater than the previous maximum
+      if (currentHeight > lastContentHeightRef.current) {
+        setMessagesHeight(currentHeight);
+        lastContentHeightRef.current = currentHeight;
+      } else if (lastContentHeightRef.current === 0) {
+        // First message sets the initial height
+        setMessagesHeight(currentHeight);
+        lastContentHeightRef.current = currentHeight;
+      }
+      
+      // Always ensure messages are visible by scrolling to bottom
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messages, isTyping, carouselData]);
   
   // Handler to start conversation and send message
   const handleSendMessage = (message: string) => {
@@ -55,10 +68,10 @@ const ChatInterface: React.FC = () => {
       <div className="flex flex-col h-full">
         <div 
           ref={messagesContainerRef}
-          className="flex-1 flex flex-col overflow-hidden transition-all duration-300"
+          className="flex-1 flex flex-col overflow-hidden overflow-y-auto transition-all duration-300"
           style={{ 
             height: conversationStarted ? `${messagesHeight}px` : '0px',
-            minHeight: conversationStarted ? '100px' : '0px',
+            minHeight: conversationStarted ? (messagesHeight > 0 ? `${messagesHeight}px` : '100px') : '0px',
             maxHeight: conversationStarted ? '600px' : '0px',
           }}
         >
