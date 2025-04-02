@@ -67,8 +67,14 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                      focus:outline-none focus:ring-2 focus:ring-gray-300/50"
             aria-label="Send message"
           >
-            <ArrowRight size={14} className="transform transition-transform duration-300" />
+            <ArrowRight size={14} className="transform transition-transform duration-300 -rotate-45" />
           </button>
+          
+          {!isButtonVisible && (
+            <div className="absolute top-8 left-1/2 -translate-x-1/2 whitespace-nowrap mt-2 text-sm text-gray-600">
+              Tenker<span className="dots-animation">...</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -23,9 +23,6 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
         <div className="square sq2"></div>
         <div className="square sq3"></div>
       </div>
-      <div className="mt-2 text-sm text-gray-600">
-        Tenker<span className="dots-animation">...</span>
-      </div>
     </div>
   );
 };
