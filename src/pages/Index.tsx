@@ -6,8 +6,8 @@ import WidgetResizer from '@/components/WidgetResizer';
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4 font-sans">
-      {/* Added large vertical padding to create more scrollable space */}
-      <div className="py-64 w-full">
+      {/* Reduced vertical padding for better widget height */}
+      <div className="py-24 w-full">
         <div className="w-full animate-scale-in transform transition-all">
           <WidgetResizer>
             <ChatInterface />

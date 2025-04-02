@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
 import { Message } from '@/types/chat';
@@ -28,11 +28,33 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
 
-  // Auto-scroll when messages change or typing state changes
+  // Auto-scroll when messages change or typing state changes, but only if user hasn't scrolled
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
+    if (!userHasScrolled) {
+      scrollToBottom();
+    }
+  }, [messages, isTyping, userHasScrolled]);
+
+  // Detect if user has manually scrolled
+  useEffect(() => {
+    const chatBox = chatBoxRef.current;
+    if (!chatBox) return;
+
+    const handleScroll = () => {
+      if (chatBox) {
+        // If user scrolls up by a significant amount, disable autoscroll
+        const isScrolledUp = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight > 50;
+        if (isScrolledUp && !userHasScrolled) {
+          setUserHasScrolled(true);
+        }
+      }
+    };
+
+    chatBox.addEventListener('scroll', handleScroll);
+    return () => chatBox.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -41,6 +63,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       });
     }
   };
+
+  // Reset scroll behavior for new conversation
+  useEffect(() => {
+    if (messages.length === 0) {
+      setUserHasScrolled(false);
+    }
+  }, [messages.length]);
 
   // Check if any message is currently streaming (partial)
   const hasPartialMessages = messages.some(m => m.isPartial);
@@ -57,7 +86,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   return (
-    <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4" style={{ minHeight: messages.length > 0 ? '0' : '0' }}>
+    <div 
+      ref={chatBoxRef} 
+      className="flex-1 overflow-y-auto p-4 space-y-4" 
+      style={{ minHeight: messages.length > 0 ? '0' : '0' }}
+    >
       {visibleMessages.length > 0 ? visibleMessages.map((message, index) => {
         const isLast = index === visibleMessages.length - 1;
         
