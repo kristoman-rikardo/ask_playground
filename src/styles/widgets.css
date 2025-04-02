@@ -4,4 +4,15 @@
   .widget-container {
     @apply flex flex-col h-full;
   }
+  
+  /* Simple loader styling */
+  .simple-loader {
+    @apply inline-block;
+    border: 3px solid rgba(136, 136, 136, 0.2);
+    border-left-color: #888;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: rotate 1s linear infinite;
+  }
 }
