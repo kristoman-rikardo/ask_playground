@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface Button {
   name: string;
@@ -17,18 +17,43 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
+  const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+  
+  // Updated loading messages in Norwegian
+  const loadingMessages = [
+    "Tenker...",
+    "Resonnerer...",
+    "Grubler...",
+    "Henter informasjon...",
+    "Samler kunnskap...",
+    "Drøfter..."
+  ];
+  
   // Log button state changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (buttons.length > 0) {
       console.log(`📱 ButtonPanel rendering ${buttons.length} buttons`);
     }
   }, [buttons]);
   
-  // Custom loader component with updated animation and text positioning
+  // Rotate through loading messages every 1.5 seconds
+  useEffect(() => {
+    if (isLoading) {
+      const interval = setInterval(() => {
+        setLoadingTextIndex(prev => (prev + 1) % loadingMessages.length);
+      }, 1500);
+      
+      return () => clearInterval(interval);
+    }
+  }, [isLoading, loadingMessages]);
+  
+  // Custom loader component with updated animation and text positioned closer to animation
   const LoadingIndicator = () => (
-    <div className="h-[120px] flex flex-col items-center justify-center">
+    <div className="h-[100px] flex flex-col items-center justify-center">
       <div className="loader" aria-label="Loading" role="status"></div>
-      <p className="text-gray-500 mt-1 text-sm font-light">Laster spørsmål...</p>
+      <p className="text-gray-500 -mt-4 text-sm font-medium">
+        {loadingMessages[loadingTextIndex]}
+      </p>
     </div>
   );
 
