@@ -57,14 +57,15 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         
         <div 
           className={`absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-300 transform 
-            ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-100'}`}
+            ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
         >
           <button 
             onClick={handleSend}
-            className="p-1.5 bg-gray-300 text-gray-600 rounded-full 
-                     transition-all duration-200 transform hover:scale-110 active:scale-90
-                     hover:bg-gray-300 active:shadow-sm
-                     focus:outline-none focus:ring-2 focus:ring-gray-300/50"
+            className={`p-1.5 bg-gray-300 text-gray-600 rounded-full 
+                     transition-all duration-300 transform 
+                     hover:bg-gray-300 active:shadow-sm send-button-ripple
+                     focus:outline-none focus:ring-2 focus:ring-gray-300/50
+                     ${isFocused ? 'scale-110' : 'scale-100'}`}
             aria-label="Send message"
           >
             <ArrowRight size={14} className="transform transition-transform duration-300 -rotate-45" />
