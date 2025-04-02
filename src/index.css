@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -103,11 +102,11 @@
 
 @layer components {
   .chat-message-user {
-    @apply bg-gray-200/80 text-gray-800 self-end animate-fade-in shadow-inner border-transparent;
+    @apply bg-gray-200/80 text-gray-800 self-end animate-fade-in border-transparent;
   }
 
   .chat-message-agent {
-    @apply bg-gray-100/80 text-gray-800 self-start animate-fade-in relative pr-4 shadow-inner border-transparent;
+    @apply bg-gray-100/80 text-gray-800 self-start animate-fade-in relative border-transparent;
   }
 
   .choice-button {
