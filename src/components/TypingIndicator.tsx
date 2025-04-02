@@ -16,15 +16,8 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     return null;
   }
 
-  return (
-    <div className="flex flex-col items-center">
-      <div className="typing-indicator">
-        <div className="square sq1"></div>
-        <div className="square sq2"></div>
-        <div className="square sq3"></div>
-      </div>
-    </div>
-  );
+  // Return empty div since we're moving the indicator elsewhere
+  return null;
 };
 
 export default TypingIndicator;

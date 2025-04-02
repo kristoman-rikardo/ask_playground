@@ -59,6 +59,12 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           className={`absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-300 transform 
             ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}
         >
+          {!isButtonVisible && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm text-gray-600">
+              Tenker<span className="dots-animation">...</span>
+            </div>
+          )}
+          
           <button 
             onClick={handleSend}
             className="p-1.5 bg-gray-300 text-gray-600 rounded-full 
@@ -69,12 +75,6 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           >
             <ArrowRight size={14} className="transform transition-transform duration-300 -rotate-45" />
           </button>
-          
-          {!isButtonVisible && (
-            <div className="absolute top-8 left-1/2 -translate-x-1/2 whitespace-nowrap mt-2 text-sm text-gray-600">
-              Tenker<span className="dots-animation">...</span>
-            </div>
-          )}
         </div>
       </div>
     </div>

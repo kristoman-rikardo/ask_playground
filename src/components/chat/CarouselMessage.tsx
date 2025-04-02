@@ -27,10 +27,10 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
 
   return (
     <div className={cn("w-full py-4", className)}>
-      <Carousel className="w-full max-w-md mx-auto" opts={{ align: 'start', containScroll: 'trimSnaps' }}>
+      <Carousel className="w-full mx-auto" opts={{ align: 'start', containScroll: 'trimSnaps' }}>
         <CarouselContent className="flex -ml-4">
           {cards.map((card) => (
-            <CarouselItem key={card.id || card.title} className="basis-full md:basis-1/2 lg:basis-1/3 pl-4">
+            <CarouselItem key={card.id || card.title} className="basis-full pl-4">
               <Card className="border rounded-xl overflow-hidden h-full flex flex-col">
                 {card.imageUrl && (
                   <div className="relative aspect-[16/9] w-full overflow-hidden">
