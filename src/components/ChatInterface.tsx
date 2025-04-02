@@ -15,7 +15,8 @@ const ChatInterface: React.FC = () => {
     handleButtonClick,
     stepsTotal,
     currentStepIndex,
-    textStreamingStarted
+    textStreamingStarted,
+    carouselData
   } = useChatSession();
 
   return (
@@ -31,6 +32,8 @@ const ChatInterface: React.FC = () => {
             stepsTotal={stepsTotal}
             currentStepIndex={currentStepIndex} 
             textStreamingStarted={textStreamingStarted}
+            carouselData={carouselData}
+            onButtonClick={handleButtonClick}
           />
         </div>
         

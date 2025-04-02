@@ -3,13 +3,17 @@ import React, { useRef, useEffect } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
 import { Message } from '@/types/chat';
+import CarouselMessage from './CarouselMessage';
+import { Button } from '@/types/chat';
 
 interface ChatMessagesProps {
   messages: Message[];
   isTyping: boolean;
   stepsTotal?: number;
   currentStepIndex?: number;
-  textStreamingStarted?: boolean; // Added the new prop
+  textStreamingStarted?: boolean;
+  carouselData?: any | null;
+  onButtonClick?: (button: Button) => void;
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
@@ -17,30 +21,16 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   isTyping,
   stepsTotal = 1,
   currentStepIndex = 0,
-  textStreamingStarted = false // Added default value
+  textStreamingStarted = false,
+  carouselData = null,
+  onButtonClick
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
-  // Log what we're rendering
-  console.log('Rendering ChatMessages:', {
-    messageCount: messages.length,
-    isTyping,
-    stepsTotal,
-    currentStepIndex,
-    textStreamingStarted, // Log the new prop
-    messages: messages.map(m => ({
-      id: m.id,
-      type: m.type,
-      contentLength: m.content?.length || 0,
-      isPartial: m.isPartial
-    }))
-  });
-
   // Auto-scroll when messages change or typing state changes
   useEffect(() => {
-    console.log('Messages or typing state changed, scrolling to bottom');
     scrollToBottom();
   }, [messages, isTyping]);
 
@@ -88,16 +78,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         </div>
       )}
       
-      {/* Only show typing indicator when isTyping is true and no messages are currently streaming */}
-      {isTyping && !hasPartialMessages && (
-        <div className="mt-2">
-          <TypingIndicator 
-            steps={stepsTotal}
-            currentStep={currentStepIndex}
-            isTyping={isTyping}
-            textStreamingStarted={textStreamingStarted} // Pass the prop to TypingIndicator
+      {/* Show carousel data if available */}
+      {carouselData && onButtonClick && (
+        <div className="w-full my-4">
+          <CarouselMessage 
+            cards={carouselData.cards} 
+            onButtonClick={onButtonClick} 
           />
         </div>
+      )}
+      
+      {/* Only show typing indicator when isTyping is true and no messages are currently streaming */}
+      {isTyping && !hasPartialMessages && (
+        <TypingIndicator 
+          isTyping={isTyping} 
+          textStreamingStarted={textStreamingStarted}
+        />
       )}
       
       <div ref={messagesEndRef} />

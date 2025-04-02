@@ -15,7 +15,8 @@ export function useTraceEventHandler(
   setButtons: React.Dispatch<React.SetStateAction<Button[]>>,
   setIsButtonsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setStepsTotal: React.Dispatch<React.SetStateAction<number>>,
-  setCurrentStepIndex: React.Dispatch<React.SetStateAction<number>>
+  setCurrentStepIndex: React.Dispatch<React.SetStateAction<number>>,
+  setCarouselData: React.Dispatch<React.SetStateAction<any | null>>
 ) {
   const receivedFirstTraceRef = useRef<boolean>(false);
   
@@ -64,7 +65,8 @@ export function useTraceEventHandler(
     setIsTyping,
     setButtons,
     setIsButtonsLoading,
-    processStreamCallback
+    processStreamCallback,
+    setCarouselData
   );
   
   // Cleanup all timeouts
@@ -86,6 +88,7 @@ export function useTraceEventHandler(
       receivedFirstTraceRef.current = false;
       stepProgressManager.resetProgressCircles();
       textTraceManager.resetTextTracking();
+      setCarouselData(null);
     }
     
     if (trace.type === 'speak' || 
@@ -141,6 +144,11 @@ export function useTraceEventHandler(
       case 'choice':
         console.log('🔴 BUTTON TRACE RECEIVED:', trace.payload?.buttons?.length || 0, 'buttons');
         textAndChoiceHandler.handleChoiceEvent(trace);
+        break;
+      
+      case 'carousel':
+        console.log('🟣 CAROUSEL TRACE RECEIVED:', trace.payload?.cards?.length || 0, 'cards');
+        textAndChoiceHandler.handleCarouselEvent(trace);
         break;
       
       case 'end':

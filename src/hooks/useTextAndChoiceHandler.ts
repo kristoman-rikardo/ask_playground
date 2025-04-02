@@ -1,3 +1,4 @@
+
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -8,7 +9,8 @@ export function useTextAndChoiceHandler(
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>,
   setButtons: React.Dispatch<React.SetStateAction<Button[]>>,
   setIsButtonsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  processStreamCallback: (content: string, msgId: string) => void
+  processStreamCallback: (content: string, msgId: string) => void,
+  setCarouselData?: React.Dispatch<React.SetStateAction<any | null>>
 ) {
   const typingIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -72,9 +74,21 @@ export function useTextAndChoiceHandler(
     }
   };
 
+  const handleCarouselEvent = (trace: any) => {
+    if (trace.payload && trace.payload.cards && setCarouselData) {
+      console.log('🔵 Processing carousel with', trace.payload.cards.length, 'cards');
+      setIsTyping(false);
+      setCarouselData({
+        layout: trace.payload.layout,
+        cards: trace.payload.cards
+      });
+    }
+  };
+
   return {
     handleTextOrSpeakEvent,
     handleChoiceEvent,
+    handleCarouselEvent,
     typingIndicatorTimeoutRef
   };
 }

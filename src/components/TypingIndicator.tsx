@@ -1,7 +1,7 @@
 
 import React from 'react';
-import CircularCheckpoint from './typing/CircularCheckpoint';
-import { useTypingAnimation } from '@/hooks/useTypingAnimation';
+import PulsatingLoader from './PulsatingLoader';
+import { motion } from 'framer-motion';
 
 export interface TypingIndicatorProps {
   steps?: number;
@@ -11,33 +11,22 @@ export interface TypingIndicatorProps {
 }
 
 const TypingIndicator: React.FC<TypingIndicatorProps> = ({ 
-  steps = 1,
-  currentStep = 0,
   isTyping = true,
   textStreamingStarted = false
 }) => {
   // If not typing, don't show anything
   if (!isTyping) return null;
   
-  // Use our extracted animation hook
-  const { currentProgress, visibleSteps, getCheckpointStatus } = useTypingAnimation({
-    isTyping,
-    steps,
-    currentStep,
-    textStreamingStarted
-  });
-  
   return (
-    <div className="flex items-center space-x-8 p-4 bg-gray-50 rounded-xl my-2">
-      {Array.from({ length: visibleSteps }).map((_, i) => (
-        <CircularCheckpoint 
-          key={i}
-          position={i}
-          progress={i === currentStep ? currentProgress : 0}
-          status={getCheckpointStatus(i)}
-        />
-      ))}
-    </div>
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{ duration: 0.3 }}
+      className="flex items-center justify-center py-4"
+    >
+      <PulsatingLoader />
+    </motion.div>
   );
 };
 

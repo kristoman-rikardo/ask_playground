@@ -15,6 +15,7 @@ export function useChatSession() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [stepsTotal, setStepsTotal] = useState(1);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [carouselData, setCarouselData] = useState<any | null>(null);
   
   // Initialize message streaming
   const [messages, setMessages] = useState<Message[]>([]);
@@ -32,7 +33,8 @@ export function useChatSession() {
     setButtons,
     setIsButtonsLoading,
     setStepsTotal,
-    setCurrentStepIndex
+    setCurrentStepIndex,
+    setCarouselData
   );
   
   // Initialize message interaction
@@ -79,6 +81,7 @@ export function useChatSession() {
     handleButtonClick: messageInteraction.handleButtonClick,
     stepsTotal,
     currentStepIndex,
-    textStreamingStarted: textStreamingStartedRef?.current
+    textStreamingStarted: textStreamingStartedRef?.current,
+    carouselData
   };
 }
