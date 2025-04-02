@@ -39,8 +39,8 @@ const ChatInterface: React.FC = () => {
       visibleContentHeightRef.current = currentHeight;
       
       const newHeight = Math.max(
-        300, 
-        Math.min(600, currentHeight)
+        250, // Reduced from 300 to minimize initial vertical space
+        Math.min(450, currentHeight) // Reduced from 600 to make the widget more compact
       );
       
       if (Math.abs(newHeight - lastContentHeightRef.current) > 20) {
@@ -66,8 +66,8 @@ const ChatInterface: React.FC = () => {
           className="flex-1 flex flex-col overflow-hidden overflow-y-auto transition-all duration-300"
           style={{ 
             height: conversationStarted ? `${messagesHeight}px` : '0px', 
-            minHeight: conversationStarted ? '300px' : '0px', 
-            maxHeight: '600px',
+            minHeight: conversationStarted ? '250px' : '0px', // Reduced from 300px
+            maxHeight: '450px', // Reduced from 600px
             opacity: conversationStarted ? 1 : 0, 
           }}
         >

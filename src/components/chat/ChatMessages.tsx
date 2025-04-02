@@ -181,12 +181,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             scrollToBottom();
             setShouldAutoScroll(true);
           }}
-          className="fixed z-10 bg-gray-200 hover:bg-gray-300 rounded-full p-2 shadow-sm transition-all duration-200"
-          style={{
-            bottom: '70px', // Position above the button panel/input area
-            left: '50%',
-            transform: 'translateX(-50%)'
-          }}
+          className="scroll-button-container bg-gray-200 hover:bg-gray-300 rounded-full p-2 shadow-sm transition-all duration-200"
           aria-label="Scroll to bottom"
         >
           <ArrowDown size={20} className="text-gray-600" />

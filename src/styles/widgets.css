@@ -1,5 +1,4 @@
 
-
 @layer components {
   /* Widget container */
   .widget-container {
@@ -34,4 +33,3 @@
     z-index: 50;
   }
 }
-
