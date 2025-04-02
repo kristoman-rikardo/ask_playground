@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface Button {
@@ -62,8 +61,10 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
           title={button.name} 
           className="choice-button whitespace-nowrap overflow-hidden text-ellipsis transition-all 
                    duration-300 text-base text-left rounded-2xl 
-                   px-4 py-2.5 border border-gray-100 shadow-sm hover:shadow-md
-                   hover:bg-gray-100 max-w-full bg-gray-50"
+                   px-4 py-2.5 border border-gray-200/50 
+                   shadow-md hover:shadow-lg bg-gray-100/70 
+                   hover:bg-gray-100/80 
+                   active:shadow-inner"
           style={{ maxWidth: '100%' }}
         >
           {button.name}

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { delay } from '@/lib/voiceflow';
@@ -88,7 +89,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   };
 
   return (
-    <div className="w-full bg-transparent border-t border-gray-100/50 p-4">
+    <div className="w-full bg-transparent border-t border-transparent p-4">
       <div className="flex items-center space-x-2 relative">
         <input 
           ref={inputRef} 
@@ -99,8 +100,12 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 rounded-2xl 
-            bg-gray-100/30 shadow-inner border-transparent ${isFocused 
+          className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 
+            rounded-2xl bg-gray-100/50 border-transparent 
+            shadow-[0_2px_5px_rgba(0,0,0,0.1),_inset_0_2px_4px_rgba(0,0,0,0.05)] 
+            hover:shadow-[0_4px_8px_rgba(0,0,0,0.15),_inset_0_2px_4px_rgba(0,0,0,0.1)] 
+            focus:shadow-[0_6px_12px_rgba(0,0,0,0.2),_inset_0_2px_6px_rgba(0,0,0,0.15)] 
+            ${isFocused 
               ? 'ring-1 ring-gray-300/50 shadow-lg' 
               : inputValue 
                 ? 'shadow-inner' 
@@ -109,16 +114,15 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
         />
         
-        {/* Animated circular send button with scale-in/out and ripple effect */}
         <div 
           className={`absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-300 transform 
             ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}
         >
           <button 
             onClick={handleSend}
-            className="p-1.5 bg-transparent text-gray-600 rounded-full 
+            className="p-1.5 bg-gray-100/30 text-gray-600 rounded-full 
                      transition-all duration-300 transform hover:scale-110 active:scale-95
-                     hover:bg-gray-100/50 focus:outline-none"
+                     shadow-md hover:shadow-lg focus:outline-none"
             aria-label="Send message"
           >
             <ArrowRight size={14} className="transform transition-transform duration-300" />
