@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface Button {
   name: string;
@@ -17,9 +17,31 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
-  // Simplified loader component with no changing text
+  const [dotsText, setDotsText] = useState('');
+  
+  // Dots animation effect
+  useEffect(() => {
+    if (isLoading) {
+      const dotsVariations = ['', '.', '..', '...'];
+      let index = 0;
+      const interval = setInterval(() => {
+        setDotsText(dotsVariations[index % dotsVariations.length]);
+        index++;
+      }, 400);
+      
+      return () => clearInterval(interval);
+    } else {
+      setDotsText('');
+    }
+  }, [isLoading]);
+  
+  // Simplified loader component with thinking text
   const LoadingIndicator = () => (
-    <div className="h-[90px] flex items-center justify-center">
+    <div className="h-[90px] flex flex-col items-center justify-center">
+      <div className="mb-2 text-sm text-gray-600 bg-white/80 px-3 py-1 rounded shadow-sm transition-opacity duration-300">
+        <span className="font-medium">Thinking</span>
+        <span className="dots-animation">{dotsText}</span>
+      </div>
       <div className="simple-loader" aria-label="Loading" role="status"></div>
     </div>
   );

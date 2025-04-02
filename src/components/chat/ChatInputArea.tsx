@@ -12,7 +12,6 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   const [inputValue, setInputValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
-  const [thinkingText, setThinkingText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   
   const placeholder = "Ask about the product...";
@@ -27,24 +26,6 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [inputValue]);
-
-  // Thinking text animation effect
-  React.useEffect(() => {
-    if (!isButtonVisible) {
-      const thinkingTexts = ['T', 'Th', 'Thi', 'Thin', 'Think', 'Thinki', 'Thinkin', 'Thinking', 'Thinking.', 'Thinking..', 'Thinking...'];
-      let index = 0;
-      const interval = setInterval(() => {
-        if (index < thinkingTexts.length) {
-          setThinkingText(thinkingTexts[index]);
-          index++;
-        } else {
-          clearInterval(interval);
-        }
-      }, 200);
-
-      return () => clearInterval(interval);
-    }
-  }, [isButtonVisible]);
 
   const handleSend = () => {
     if (!inputValue.trim()) return;
@@ -78,12 +59,6 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           className={`absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-300 transform 
             ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-100'}`}
         >
-          {!isButtonVisible && (
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm text-gray-600 bg-white/80 px-2 py-0.5 rounded shadow-sm">
-              {thinkingText}
-            </div>
-          )}
-          
           <button 
             onClick={handleSend}
             className="p-1.5 bg-gray-300 text-gray-600 rounded-full 
@@ -101,4 +76,3 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 };
 
 export default ChatInputArea;
-
