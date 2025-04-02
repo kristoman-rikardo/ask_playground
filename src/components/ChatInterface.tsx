@@ -88,13 +88,11 @@ const ChatInterface: React.FC = () => {
           onButtonClick={handleButtonClick} 
         />
         
-        {conversationStarted && (
-          <ChatInputArea onSendMessage={handleSendMessage} />
-        )}
+        {/* Always show input field regardless of conversation state */}
+        <ChatInputArea onSendMessage={handleSendMessage} />
       </div>
     </div>
   );
 };
 
 export default ChatInterface;
-

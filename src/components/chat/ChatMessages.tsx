@@ -115,24 +115,31 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       className="flex-1 overflow-y-auto p-4 pb-1 space-y-2 relative" 
       style={{ minHeight: messages.length > 0 ? '0' : '0', maxHeight: '100%' }}
     >
-      {visibleMessages.length > 0 ? visibleMessages.map((message, index) => {
-        const isLast = index === visibleMessages.length - 1;
-        
-        return (
-          <div 
-            key={message.id} 
-            id={`message-${message.id}`} 
-            ref={isLast ? lastMessageRef : null} 
-            className={`px-4 py-3 rounded-xl relative ${
-              message.type === 'user' 
-                ? 'chat-message-user ml-auto bg-gray-200/90 border-transparent inline-block max-w-[85%] w-auto self-end' 
-                : 'chat-message-agent mr-auto bg-gray-100/90 border-transparent max-w-[85%] self-start'
-            }`}
-          >
-            {processContent(message.content, message.isPartial, message.type)}
-          </div>
-        );
-      }) : null}
+      <div className="flex flex-col space-y-2 w-full">
+        {visibleMessages.length > 0 ? visibleMessages.map((message, index) => {
+          const isLast = index === visibleMessages.length - 1;
+          const isUser = message.type === 'user';
+          
+          return (
+            <div 
+              key={message.id} 
+              id={`message-${message.id}`}
+              ref={isLast ? lastMessageRef : null}
+              className={`flex ${isUser ? 'justify-end' : 'justify-start'} w-full`}
+            >
+              <div
+                className={`px-4 py-3 rounded-xl ${
+                  isUser 
+                    ? 'chat-message-user max-w-[85%] self-end'
+                    : 'chat-message-agent max-w-[85%] self-start'
+                }`}
+              >
+                {processContent(message.content, message.isPartial, message.type)}
+              </div>
+            </div>
+          );
+        }) : null}
+      </div>
       
       {carouselData && onButtonClick && (
         <div className="w-full mb-1">
@@ -173,4 +180,3 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 }
 
 export default ChatMessages;
-

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -102,18 +103,18 @@
 
 @layer components {
   .chat-message-user {
-    @apply bg-gray-200/80 text-gray-800 self-end animate-fade-in border-transparent;
+    @apply bg-gray-200/80 text-gray-800 ml-auto shadow-none border-transparent;
   }
 
   .chat-message-agent {
-    @apply bg-gray-100/80 text-gray-800 self-start animate-fade-in relative border-transparent;
+    @apply bg-gray-100/80 text-gray-800 mr-auto shadow-none border-transparent;
   }
 
   .choice-button {
-    @apply bg-gray-100/70 text-gray-800 hover:bg-gray-100/80 transition-all 
-           shadow-md hover:shadow-lg border-gray-200/50 rounded-xl px-4 py-2.5
+    @apply bg-gray-100/80 text-gray-800 hover:bg-gray-200/90 active:bg-gray-200/70 transition-all 
+           shadow-md hover:shadow-lg border-gray-200/30 rounded-xl px-4 py-2.5
            transform hover:scale-[1.02] active:scale-[0.98] 
-           duration-300 font-medium whitespace-nowrap overflow-hidden text-ellipsis;
+           duration-200 font-medium whitespace-nowrap overflow-hidden text-ellipsis;
     width: fit-content !important;
     display: inline-block !important;
   }
@@ -126,15 +127,16 @@
   /* Enhanced input field styling */
   .chat-input {
     @apply border-transparent rounded-lg px-4 py-3 w-full outline-none
-           transition-all duration-200 bg-gray-100/70 shadow-md font-light;
+           transition-all duration-200 bg-gray-100/90 
+           hover:bg-gray-100/95;
   }
   
   .chat-input:hover {
-    @apply shadow-lg bg-gray-100/80;
+    @apply shadow-sm bg-gray-100/95;
   }
   
   .chat-input:focus {
-    @apply ring-1 ring-gray-300/50 shadow-lg;
+    @apply ring-2 ring-gray-200/70 bg-white;
   }
   
   /* Widget container */
