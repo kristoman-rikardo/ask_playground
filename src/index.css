@@ -186,9 +186,9 @@
   
   /* Optimized loader animation for buttons */
   .loader {
-    width: 100px;
+    width: 150px;
     aspect-ratio: 1;
-    padding: 10px;
+    padding: 15px;
     box-sizing: border-box;
     display: grid;
     background: #fff;
@@ -202,16 +202,16 @@
   .loader:after {
     content: "";
     grid-area: 1/1;
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
     background: #888;
     border-radius: 25%;
-    animation: l7 2.5s infinite;
+    animation: l7 3.5s infinite;
     will-change: transform;
   }
 
   .loader:after {
-    animation-delay: -1.25s;
+    animation-delay: -1.75s;
   }
 
   @keyframes l7 {
