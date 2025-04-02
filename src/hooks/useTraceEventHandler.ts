@@ -45,20 +45,6 @@ export function useTraceEventHandler(
       traceDataHandler.handleUserMessage();
     }
     
-    if (trace.type === 'speak' || 
-        trace.type === 'text' || 
-        (trace.type === 'completion' && trace.payload?.state === 'start')) {
-      traceDataHandler.receivedFirstTraceRef.current = true;
-      
-      // Clear timeout when we receive actual trace data
-      traceDataHandler.stepProgressManager.clearProgressTimeouts();
-    }
-    
-    // Check for special block ID - support multiple block IDs
-    if (trace.type === 'block' && trace.payload?.blockID) {
-      traceDataHandler.handleSpecialBlock(trace.payload.blockID);
-    }
-    
     // Handle steps data if available
     if (!traceDataHandler.stepProgressManager.handleStepsFromPayload(trace.payload)) {
       // Set up progress timeouts if no steps data

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { CheckpointStatus } from '@/components/typing/CircularCheckpoint';
 
@@ -20,10 +21,6 @@ export function useTypingAnimation({
   const [visibleSteps, setVisibleSteps] = useState(1);
   // Track animation state
   const animationActive = useRef(false);
-  // Track last progress timestamp for smoother progress
-  const lastProgressTime = useRef(Date.now());
-  // Track progress speed (adaptive based on time elapsed)
-  const progressSpeed = useRef(1.35); // Increased initial speed by 35%
   // Completion animation in progress
   const completionInProgress = useRef(false);
 
@@ -34,8 +31,6 @@ export function useTypingAnimation({
       setVisibleSteps(Math.max(1, steps));
       animationActive.current = true;
       completionInProgress.current = false;
-      lastProgressTime.current = Date.now();
-      progressSpeed.current = 1.35; // Start with a faster initial speed
     } else {
       animationActive.current = false;
       completionInProgress.current = false;
@@ -45,77 +40,14 @@ export function useTypingAnimation({
   // Update progress based on currentStep
   useEffect(() => {
     if (currentStep >= 0 && currentStep < steps) {
-      // Calculate progress for this step - start with higher initial progress
+      // Calculate progress for this step
       const baseProgress = ((currentStep / steps) * 100);
-      
-      // Always ensure progress is ahead of actual position (at least 35% ahead)
-      const aheadProgress = Math.min(baseProgress + 35, 95);
-      
-      setCurrentProgress(aheadProgress);
+      setCurrentProgress(Math.min(baseProgress + 35, 95));
       
       // Update visible steps if needed
       setVisibleSteps(Math.max(currentStep + 1, visibleSteps));
-      
-      // Adjust progress speed based on how quickly steps are advancing
-      const now = Date.now();
-      const elapsed = now - lastProgressTime.current;
-      
-      if (elapsed < 1000) {
-        // Steps are coming in quickly - speed up
-        progressSpeed.current = Math.min(4.0, progressSpeed.current + 0.7);
-      } else if (elapsed > 5000) {
-        // Steps are coming in slowly - slow down but keep minimum 1.35x speed
-        progressSpeed.current = Math.max(1.35, progressSpeed.current - 0.2);
-      }
-      
-      lastProgressTime.current = now;
     }
   }, [currentStep, steps, visibleSteps]);
-
-  // Auto-advance progress for better user experience
-  useEffect(() => {
-    if (!isTyping || textStreamingStarted) return;
-    
-    let animationFrame: number;
-    let lastTimestamp: number;
-    
-    const animate = (timestamp: number) => {
-      if (!animationActive.current) return;
-      
-      if (!lastTimestamp) lastTimestamp = timestamp;
-      const elapsed = timestamp - lastTimestamp;
-      
-      // Only update every 40ms for smoother animation
-      if (elapsed > 40) {
-        lastTimestamp = timestamp;
-        
-        // Calculate the target progress for smooth animation
-        const stepProgress = ((currentStep + 1) / steps) * 100;
-        
-        // Always aim a bit ahead of the current step
-        const targetProgress = Math.min(98, stepProgress + 35); // Increased lead to 35%
-        
-        // Accelerate progress as we get closer to completion
-        const speedMultiplier = currentProgress > 80 ? 1.7 : 
-                               currentProgress > 60 ? 1.5 : 1.2; // Increased all multipliers
-        
-        // Increment by small amount each frame for smoother animation
-        if (currentProgress < targetProgress && !textStreamingStarted) {
-          setCurrentProgress(prev => 
-            Math.min(prev + (0.5 * progressSpeed.current * speedMultiplier), targetProgress)
-          );
-        }
-      }
-      
-      animationFrame = requestAnimationFrame(animate);
-    };
-    
-    animationFrame = requestAnimationFrame(animate);
-    
-    return () => {
-      cancelAnimationFrame(animationFrame);
-    };
-  }, [isTyping, currentProgress, currentStep, steps, textStreamingStarted]);
 
   // Handle transition to text streaming
   useEffect(() => {
