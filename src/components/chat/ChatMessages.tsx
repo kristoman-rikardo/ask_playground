@@ -29,15 +29,34 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  
+  // Check if user is near bottom of chat
+  const isNearBottom = () => {
+    const chatBox = chatBoxRef.current;
+    if (!chatBox) return true;
+    
+    const threshold = 50; // pixels from bottom to consider "near bottom"
+    const scrollBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight;
+    return scrollBottom <= threshold;
+  };
 
-  // Auto-scroll when messages change or typing state changes, but only if user hasn't scrolled
+  // Scroll to bottom function
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: 'smooth'
+      });
+    }
+  };
+  
+  // Auto-scroll when messages change or typing state changes, but only if we should auto-scroll
   useEffect(() => {
-    if (!userHasScrolled) {
+    if (shouldAutoScroll) {
       scrollToBottom();
     }
-  }, [messages, isTyping, userHasScrolled]);
+  }, [messages, isTyping, shouldAutoScroll]);
 
   // Detect if user has manually scrolled
   useEffect(() => {
@@ -47,46 +66,28 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     const handleScroll = () => {
       if (chatBox) {
         // Check if user is not at the bottom
-        const isNotAtBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight > 50;
+        const nearBottom = isNearBottom();
+        setShowScrollButton(!nearBottom);
         
-        // If user scrolls up by a significant amount, disable autoscroll
-        if (isNotAtBottom && !userHasScrolled) {
-          setUserHasScrolled(true);
+        // If user scrolls to bottom, re-enable auto-scroll
+        if (nearBottom && !shouldAutoScroll) {
+          setShouldAutoScroll(true);
+        } 
+        // If user scrolls up, disable auto-scroll
+        else if (!nearBottom && shouldAutoScroll) {
+          setShouldAutoScroll(false);
         }
-        
-        // Show/hide scroll button based on scroll position
-        setShowScrollButton(isNotAtBottom);
       }
     };
 
     chatBox.addEventListener('scroll', handleScroll);
     return () => chatBox.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Also check for scroll events outside of the chat component
-  useEffect(() => {
-    const handleWindowScroll = () => {
-      if (!userHasScrolled) {
-        setUserHasScrolled(true);
-      }
-    };
-
-    window.addEventListener('scroll', handleWindowScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleWindowScroll);
-  }, [userHasScrolled]);
-
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth'
-      });
-    }
-  };
+  }, [shouldAutoScroll]);
 
   // Reset scroll behavior for new conversation
   useEffect(() => {
     if (messages.length === 0) {
-      setUserHasScrolled(false);
+      setShouldAutoScroll(true);
       setShowScrollButton(false);
     }
   }, [messages.length]);
@@ -150,10 +151,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         </div>
       )}
       
-      {/* Scroll to bottom button - now centered */}
+      {/* Scroll to bottom button - centered */}
       {showScrollButton && (
         <button 
-          onClick={scrollToBottom}
+          onClick={() => {
+            scrollToBottom();
+            setShouldAutoScroll(true);
+          }}
           className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-100 hover:bg-gray-200 rounded-full p-2 shadow-md transition-all duration-200 z-10"
           aria-label="Scroll to bottom"
         >

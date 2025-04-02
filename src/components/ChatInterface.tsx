@@ -52,9 +52,6 @@ const ChatInterface: React.FC = () => {
         setMessagesHeight(currentHeight);
         lastContentHeightRef.current = currentHeight;
       }
-      
-      // Always ensure messages are visible by scrolling to bottom
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [messages, isTyping, carouselData]);
   
