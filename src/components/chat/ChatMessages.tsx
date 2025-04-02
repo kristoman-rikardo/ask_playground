@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { parseMarkdown } from '@/lib/voiceflow';
 import TypingIndicator from '../TypingIndicator';
@@ -33,35 +32,29 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   
-  // Check if user is near bottom of chat - improved threshold for better detection
   const isNearBottom = () => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return true;
     
-    const threshold = 80; // Increased threshold for better "near bottom" detection
+    const threshold = 80;
     const scrollBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight;
     return scrollBottom <= threshold;
   };
 
-  // Improved smooth scroll to bottom function with centered focus
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
-      // Calculate position to scroll to - centered in viewport
       const container = chatBoxRef.current;
       
       if (container) {
-        // Center the newest message in the viewport
         messagesEndRef.current.scrollIntoView({
           behavior: 'smooth',
-          block: 'center' // Center in the viewport instead of at the end
+          block: 'center'
         });
       }
     }
   };
   
-  // Auto-scroll when messages change or typing state changes, but only if we should auto-scroll
   useEffect(() => {
-    // Add small delay to ensure DOM is fully updated before scrolling
     if (shouldAutoScroll) {
       const timer = setTimeout(() => {
         scrollToBottom();
@@ -70,22 +63,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   }, [messages, isTyping, carouselData, shouldAutoScroll]);
 
-  // Detect if user has manually scrolled - improved detection logic
   useEffect(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return;
 
     const handleScroll = () => {
       if (chatBox) {
-        // Check if user is not at the bottom
         const nearBottom = isNearBottom();
         setShowScrollButton(!nearBottom);
         
-        // If user scrolls to bottom, re-enable auto-scroll
         if (nearBottom) {
           setShouldAutoScroll(true);
         } 
-        // If user scrolls up, disable auto-scroll
         else if (!nearBottom && shouldAutoScroll) {
           setShouldAutoScroll(false);
         }
@@ -96,7 +85,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     return () => chatBox.removeEventListener('scroll', handleScroll);
   }, [shouldAutoScroll]);
 
-  // Reset scroll behavior for new conversation
   useEffect(() => {
     if (messages.length === 0) {
       setShouldAutoScroll(true);
@@ -104,31 +92,26 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   }, [messages.length]);
 
-  // Added effect to handle new messages specifically
   useEffect(() => {
     if (messages.length > 0 && shouldAutoScroll) {
       scrollToBottom();
     }
   }, [messages.length]);
 
-  // Check if any message is currently streaming (partial)
   const hasPartialMessages = messages.some(m => m.isPartial);
   
-  // Get only the most recent messages for display
   const visibleMessages = messages;
 
-  // Process content to ensure we handle HTML content properly
   const processContent = (content: string, isPartial: boolean | undefined, messageType: 'user' | 'agent') => {
     if (!content) return <div className="h-5 w-20 bg-gray-200/50 rounded animate-pulse"></div>;
     
-    // Display content directly for both user and agent messages
     return <div dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }} />;
   };
 
   return (
     <div 
       ref={chatBoxRef} 
-      className="flex-1 overflow-y-auto p-4 pb-2 space-y-4 relative" 
+      className="flex-1 overflow-y-auto p-4 pb-1 space-y-2 relative" 
       style={{ minHeight: messages.length > 0 ? '0' : '0', maxHeight: '100%' }}
     >
       {visibleMessages.length > 0 ? visibleMessages.map((message, index) => {
@@ -150,9 +133,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         );
       }) : null}
       
-      {/* Show carousel data if available */}
       {carouselData && onButtonClick && (
-        <div className="w-full mb-2">
+        <div className="w-full mb-1">
           <CarouselMessage 
             cards={carouselData.cards} 
             onButtonClick={onButtonClick} 
@@ -160,9 +142,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         </div>
       )}
       
-      {/* Only show typing indicator when isTyping is true and no messages are currently streaming */}
       {isTyping && !hasPartialMessages && (
-        <div className="px-4 py-3 rounded-xl max-w-[85%] mr-auto mb-2">
+        <div className="px-4 py-3 rounded-xl max-w-[85%] mr-auto mb-1">
           <TypingIndicator 
             isTyping={isTyping} 
             textStreamingStarted={textStreamingStarted}
@@ -170,7 +151,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         </div>
       )}
       
-      {/* Scroll to bottom button - centered */}
       {showScrollButton && (
         <button 
           onClick={() => {

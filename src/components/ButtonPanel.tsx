@@ -54,7 +54,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   // Button list component
   const ButtonList = () => (
-    <div className="flex flex-wrap gap-1.5 p-1.5 pb-3 content-start">
+    <div className="flex flex-wrap gap-1.5 p-1 content-start">
       {buttons.map((button, index) => (
         <button 
           key={`button-${index}-${button.name.substring(0, 10)}`} 
@@ -75,7 +75,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   
   return (
     <div className="w-full bg-transparent border-t border-transparent p-0 relative">
-      {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[10px]"></div>}
+      {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[5px]"></div>}
     </div>
   );
 };
