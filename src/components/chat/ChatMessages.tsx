@@ -54,7 +54,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   };
 
   return (
-    <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]">
+    <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-4" style={{ minHeight: messages.length > 0 ? '100px' : '0' }}>
       {messages.length > 0 ? messages.map((message, index) => {
         const isLast = index === messages.length - 1;
         
@@ -72,11 +72,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             {processContent(message.content, message.isPartial, message.type)}
           </div>
         );
-      }) : (
-        <div className="flex items-center justify-center h-full">
-          {/* Empty state */}
-        </div>
-      )}
+      }) : null}
       
       {/* Show carousel data if available */}
       {carouselData && onButtonClick && (

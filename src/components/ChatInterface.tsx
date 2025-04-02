@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useChatSession } from '@/hooks/useChatSession';
 import ChatMessages from './chat/ChatMessages';
 import ChatInputArea from './chat/ChatInputArea';
@@ -21,6 +21,9 @@ const ChatInterface: React.FC = () => {
   
   // Track if user has started conversation
   const [conversationStarted, setConversationStarted] = useState(false);
+  // Track the height of the messages container
+  const [messagesHeight, setMessagesHeight] = useState(0);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   // Mark conversation as started when user sends first message or when we have any messages
   useEffect(() => {
@@ -28,6 +31,15 @@ const ChatInterface: React.FC = () => {
       setConversationStarted(true);
     }
   }, [messages, conversationStarted]);
+  
+  // Update the height when messages change
+  useEffect(() => {
+    if (messagesContainerRef.current && messages.length > 0) {
+      const height = messagesContainerRef.current.scrollHeight;
+      // Only update if the new height is greater than the current one
+      setMessagesHeight(prev => Math.max(prev, height));
+    }
+  }, [messages, isTyping]);
   
   // Handler to start conversation and send message
   const handleSendMessage = (message: string) => {
@@ -41,7 +53,15 @@ const ChatInterface: React.FC = () => {
       style={{ height: '100%' }}
     >
       <div className="flex flex-col h-full">
-        <div className="flex-1 flex flex-col overflow-hidden min-h-[200px]">
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 flex flex-col overflow-hidden transition-all duration-300"
+          style={{ 
+            height: conversationStarted ? `${messagesHeight}px` : '0px',
+            minHeight: conversationStarted ? '100px' : '0px',
+            maxHeight: conversationStarted ? '600px' : '0px',
+          }}
+        >
           <ChatMessages 
             messages={messages} 
             isTyping={isTyping}
