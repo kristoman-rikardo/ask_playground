@@ -90,10 +90,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       
       {/* Only show typing indicator when isTyping is true and no messages are currently streaming */}
       {isTyping && !hasPartialMessages && (
-        <TypingIndicator 
-          isTyping={isTyping} 
-          textStreamingStarted={textStreamingStarted}
-        />
+        <div className="px-4 py-3 rounded-xl max-w-[85%] mr-auto">
+          <TypingIndicator 
+            isTyping={isTyping} 
+            textStreamingStarted={textStreamingStarted}
+          />
+        </div>
       )}
       
       <div ref={messagesEndRef} />

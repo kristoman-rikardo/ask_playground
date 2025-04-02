@@ -23,7 +23,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
       transition={{ duration: 0.3 }}
-      className="flex items-center justify-center py-4"
+      className="flex items-start justify-start px-4 py-3"
     >
       <PulsatingLoader />
     </motion.div>

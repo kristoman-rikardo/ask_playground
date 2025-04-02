@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChatSession } from '@/hooks/useChatSession';
 import ChatMessages from './chat/ChatMessages';
 import ChatInputArea from './chat/ChatInputArea';
@@ -18,6 +18,22 @@ const ChatInterface: React.FC = () => {
     textStreamingStarted,
     carouselData
   } = useChatSession();
+  
+  // Track if user has started conversation
+  const [conversationStarted, setConversationStarted] = useState(false);
+  
+  // Mark conversation as started when user sends first message or when we have any messages
+  useEffect(() => {
+    if (messages.length > 0 && !conversationStarted) {
+      setConversationStarted(true);
+    }
+  }, [messages, conversationStarted]);
+  
+  // Handler to start conversation and send message
+  const handleSendMessage = (message: string) => {
+    setConversationStarted(true);
+    sendUserMessage(message);
+  };
 
   return (
     <div 
@@ -43,7 +59,24 @@ const ChatInterface: React.FC = () => {
           onButtonClick={handleButtonClick} 
         />
         
-        <ChatInputArea onSendMessage={sendUserMessage} />
+        {/* Only show input area after conversation has started */}
+        {conversationStarted && (
+          <ChatInputArea onSendMessage={handleSendMessage} />
+        )}
+        
+        {/* Show initial prompt if conversation hasn't started */}
+        {!conversationStarted && (
+          <div className="w-full bg-transparent border-t border-gray-100 p-4">
+            <button
+              onClick={() => handleSendMessage("Hei, kan du hjelpe meg?")}
+              className="w-full px-4 py-2 font-light font-sans transition-all duration-300 rounded-2xl
+                bg-transparent border border-gray-300 text-gray-500 hover:bg-gray-50 hover:border-gray-400/50 text-left"
+              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 300 }}
+            >
+              Spør om produktet...
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
