@@ -1,4 +1,3 @@
-
 import { StreamingProcessState, processContentStream } from '@/utils/streamingProcessUtils';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
 
@@ -61,8 +60,7 @@ export const createCompletionHandlers = (
     if (!partialMessageIdRef.current) {
       const msgId = `completion-${Date.now()}`;
       
-      // Hide typing indicator and start streaming immediately
-      setIsTyping(false);
+      // Keep typing indicator visible during streaming
       partialMessageIdRef.current = msgId;
       currentCompletionContentRef.current = '';
       messageSourceTracker.current[msgId] = 'completion';
@@ -84,9 +82,8 @@ export const createCompletionHandlers = (
       // If we're already streaming a message
       const msgId = partialMessageIdRef.current;
       
-      // If first content and still showing typing indicator, create message and hide indicator
-      if (setIsTyping && wordTrackerRef.current.getCurrentProcessedText() === '') {
-        setIsTyping(false);
+      // If first content and still showing typing indicator, create message
+      if (wordTrackerRef.current.getCurrentProcessedText() === '') {
         addAgentMessage('', true, msgId);
       }
       
@@ -155,6 +152,9 @@ export const createCompletionHandlers = (
       streamingState.isStreaming = false;
       streamingState.waitingForMoreContent = false;
       currentCompletionContentRef.current = '';
+      
+      // Keep typing indicator visible for a consistent experience
+      setIsTyping(false);
     }
   };
 

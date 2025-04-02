@@ -57,10 +57,10 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         
         <div 
           className={`absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-300 transform 
-            ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`}
+            ${isButtonVisible ? 'opacity-100 scale-100' : 'opacity-100'}`}
         >
           {!isButtonVisible && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm text-gray-600">
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-sm text-gray-600 bg-white/80 px-2 py-0.5 rounded shadow-sm">
               Tenker<span className="dots-animation">...</span>
             </div>
           )}

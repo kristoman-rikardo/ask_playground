@@ -53,4 +53,20 @@
     @apply bg-gradient-to-r from-faq-agent via-faq-light to-faq-agent 
            bg-[length:400%_100%] animate-shimmer;
   }
+
+  /* Animated dots for the thinking indicator */
+  .dots-animation {
+    display: inline-block;
+  }
+  
+  .dots-animation::after {
+    content: '';
+    animation: dots 1.5s infinite steps(4);
+  }
+  
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40%, 60% { content: '..'; }
+    80%, 100% { content: '...'; }
+  }
 }
