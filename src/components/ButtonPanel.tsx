@@ -54,7 +54,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   // Button list component
   const ButtonList = () => (
-    <div className="flex flex-wrap gap-1.5 p-1.5 content-start">
+    <div className="flex flex-wrap gap-1.5 p-1.5 pb-3 content-start">
       {buttons.map((button, index) => (
         <button 
           key={`button-${index}-${button.name.substring(0, 10)}`} 

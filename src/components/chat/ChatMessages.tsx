@@ -43,13 +43,19 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     return scrollBottom <= threshold;
   };
 
-  // Improved smooth scroll to bottom function
+  // Improved smooth scroll to bottom function with centered focus
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end'
-      });
+      // Calculate position to scroll to - centered in viewport
+      const container = chatBoxRef.current;
+      
+      if (container) {
+        // Center the newest message in the viewport
+        messagesEndRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center' // Center in the viewport instead of at the end
+        });
+      }
     }
   };
   
@@ -122,7 +128,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   return (
     <div 
       ref={chatBoxRef} 
-      className="flex-1 overflow-y-auto p-4 space-y-4 relative" 
+      className="flex-1 overflow-y-auto p-4 pb-2 space-y-4 relative" 
       style={{ minHeight: messages.length > 0 ? '0' : '0', maxHeight: '100%' }}
     >
       {visibleMessages.length > 0 ? visibleMessages.map((message, index) => {
@@ -146,7 +152,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       
       {/* Show carousel data if available */}
       {carouselData && onButtonClick && (
-        <div className="w-full my-4">
+        <div className="w-full mb-2">
           <CarouselMessage 
             cards={carouselData.cards} 
             onButtonClick={onButtonClick} 
@@ -156,7 +162,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       
       {/* Only show typing indicator when isTyping is true and no messages are currently streaming */}
       {isTyping && !hasPartialMessages && (
-        <div className="px-4 py-3 rounded-xl max-w-[85%] mr-auto">
+        <div className="px-4 py-3 rounded-xl max-w-[85%] mr-auto mb-2">
           <TypingIndicator 
             isTyping={isTyping} 
             textStreamingStarted={textStreamingStarted}
