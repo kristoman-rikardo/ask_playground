@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface Button {
   name: string;
@@ -17,43 +17,10 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick
 }) => {
-  const [loadingTextIndex, setLoadingTextIndex] = useState(0);
-  
-  // Updated loading messages in Norwegian
-  const loadingMessages = [
-    "Tenker...",
-    "Resonnerer...",
-    "Grubler...",
-    "Henter informasjon...",
-    "Samler kunnskap...",
-    "Drøfter..."
-  ];
-  
-  // Log button state changes
-  useEffect(() => {
-    if (buttons.length > 0) {
-      console.log(`📱 ButtonPanel rendering ${buttons.length} buttons`);
-    }
-  }, [buttons]);
-  
-  // Rotate through loading messages every 1.5 seconds
-  useEffect(() => {
-    if (isLoading) {
-      const interval = setInterval(() => {
-        setLoadingTextIndex(prev => (prev + 1) % loadingMessages.length);
-      }, 1500);
-      
-      return () => clearInterval(interval);
-    }
-  }, [isLoading, loadingMessages]);
-  
-  // Custom loader component with updated animation and text positioned closer to animation
+  // Simplified loader component
   const LoadingIndicator = () => (
-    <div className="h-[100px] flex flex-col items-center justify-center">
+    <div className="h-[90px] flex items-center justify-center">
       <div className="loader" aria-label="Loading" role="status"></div>
-      <p className="text-gray-500 -mt-4 text-sm font-medium">
-        {loadingMessages[loadingTextIndex]}
-      </p>
     </div>
   );
 
@@ -77,7 +44,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </svg>
   );
 
-  // Updated ButtonList with improved padding and spacing
+  // Button List component
   const ButtonList = () => (
     <div className="flex flex-wrap gap-2 px-4 py-2 content-start">
       {buttons.map((button, index) => (
@@ -100,7 +67,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   );
   
   return (
-    <div className="w-full bg-transparent p-0 relative">
+    <div className="w-full bg-transparent p-0 relative mt-6 mb-2">
       {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[5px]"></div>}
     </div>
   );

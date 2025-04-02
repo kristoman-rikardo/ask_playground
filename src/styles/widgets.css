@@ -1,0 +1,7 @@
+
+@layer components {
+  /* Widget container */
+  .widget-container {
+    @apply flex flex-col h-full;
+  }
+}

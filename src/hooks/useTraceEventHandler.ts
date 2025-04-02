@@ -9,6 +9,14 @@ import { useStepProgressManager } from './useStepProgressManager';
 import { useTextTraceManager } from './useTextTraceManager';
 import { logTraceEvent } from '@/utils/traceLogger';
 
+// Custom event for loading phase changes
+export const createLoadingPhaseEvent = (phase: 'thinking' | 'streaming' | 'products') => {
+  const event = new CustomEvent('loadingPhaseChange', {
+    detail: { phase }
+  });
+  window.dispatchEvent(event);
+};
+
 export function useTraceEventHandler(
   streaming: MessageStreamingHook,
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>,
@@ -35,6 +43,9 @@ export function useTraceEventHandler(
     
     // Clear timeout references when we start processing text
     stepProgressManager.clearProgressTimeouts();
+    
+    // Signal that we're now in streaming phase
+    createLoadingPhaseEvent('streaming');
     
     processContentStream(
       content, 
@@ -89,6 +100,13 @@ export function useTraceEventHandler(
       stepProgressManager.resetProgressCircles();
       textTraceManager.resetTextTracking();
       setCarouselData(null);
+      
+      // Begin in thinking phase
+      createLoadingPhaseEvent('thinking');
+      
+      // Always start with buttons cleared and loading indicator showing after user input
+      setButtons([]);
+      setIsButtonsLoading(true);
     }
     
     if (trace.type === 'speak' || 
@@ -104,6 +122,11 @@ export function useTraceEventHandler(
     if (trace.type === 'block' && trace.payload?.blockID) {
       // Mark that we received a block, which indicates a transition
       stepProgressManager.handleSpecialBlockId(trace.payload.blockID);
+      
+      // Check if it contains "long" in the blockID to switch to products phase
+      if (trace.payload.blockID.toString().includes('long')) {
+        createLoadingPhaseEvent('products');
+      }
     }
     
     // Handle steps data if available
@@ -129,8 +152,11 @@ export function useTraceEventHandler(
             textTraceManager.textStreamingStartedRef.current = true;
             textAndChoiceHandler.handleTextOrSpeakEvent(trace);
             stepProgressManager.receivedFirstTextRef.current = true;
-          }, 500); // Additional 500ms delay for smooth transition after progress completion
-        }, 600); // 600ms delay to show completed loading before text starts
+            
+            // Now in streaming phase
+            createLoadingPhaseEvent('streaming');
+          }, 300); // Reduced delay for smoother transition
+        }, 300); // Reduced delay to show completed loading before text starts
         break;
       
       case 'completion':
@@ -141,6 +167,11 @@ export function useTraceEventHandler(
           // Always reset progress circles for new messages
           stepProgressManager.resetProgressCircles();
           receivedFirstTraceRef.current = true;
+          // Start in thinking phase
+          createLoadingPhaseEvent('thinking');
+          // Ensure buttons are cleared and loading indicator is shown
+          setButtons([]);
+          setIsButtonsLoading(true);
         }
         completionHandler.handleCompletionEvent(trace.payload);
         break;
@@ -153,6 +184,8 @@ export function useTraceEventHandler(
       case 'carousel':
         console.log('🟣 CAROUSEL TRACE RECEIVED:', trace.payload?.cards?.length || 0, 'cards');
         textAndChoiceHandler.handleCarouselEvent(trace);
+        // Switch to streaming phase when carousel is displayed
+        createLoadingPhaseEvent('streaming');
         break;
       
       case 'end':
