@@ -12,8 +12,15 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   isTyping = true,
   textStreamingStarted = false,
 }) => {
-  // Returning null to effectively remove the typing indicator
-  return null;
+  if (!isTyping || textStreamingStarted) return null;
+
+  return (
+    <div className="typing-indicator">
+      <div className="square sq1"></div>
+      <div className="square sq2"></div>
+      <div className="square sq3"></div>
+    </div>
+  );
 };
 
 export default TypingIndicator;
