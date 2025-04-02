@@ -26,7 +26,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   
   // Custom loader component with updated animation
   const LoadingIndicator = () => (
-    <div className="h-[120px] flex flex-col items-center justify-center">
+    <div className="h-[80px] flex flex-col items-center justify-center">
       <div className="loader"></div>
       <p className="text-gray-500 mt-2 text-sm font-light">Laster spørsmål...</p>
     </div>
@@ -54,7 +54,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   // Button list component
   const ButtonList = () => (
-    <div className="h-auto min-h-[120px] flex flex-wrap gap-1.5 p-3 content-start">
+    <div className="flex flex-wrap gap-1.5 p-1.5 content-start">
       {buttons.map((button, index) => (
         <button 
           key={`button-${index}-${button.name.substring(0, 10)}`} 
@@ -74,8 +74,8 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   );
   
   return (
-    <div className="w-full bg-transparent border-t border-transparent p-2 relative">
-      {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[120px]"></div>}
+    <div className="w-full bg-transparent border-t border-transparent p-0 relative">
+      {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[10px]"></div>}
     </div>
   );
 };
