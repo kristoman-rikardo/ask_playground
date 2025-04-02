@@ -30,12 +30,12 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     "Drøfter..."
   ];
   
-  // Rotate through loading messages
+  // Rotate through loading messages more frequently (1.5 seconds instead of 2.5)
   useEffect(() => {
     if (!textStreamingStarted) {
       const interval = setInterval(() => {
         setLoadingTextIndex(prev => (prev + 1) % loadingMessages.length);
-      }, 2500);
+      }, 1500);
       
       return () => clearInterval(interval);
     }
@@ -47,12 +47,12 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col items-start space-y-2"
+      className="flex flex-col items-start space-y-1"
     >
-      <div className="flex space-x-2 px-1">
-        <div className="w-3 h-3 rounded-full bg-gray-500 animate-typing-dot-1"></div>
-        <div className="w-3 h-3 rounded-full bg-gray-500 animate-typing-dot-2"></div>
-        <div className="w-3 h-3 rounded-full bg-gray-500 animate-typing-dot-3"></div>
+      <div className="typing-indicator">
+        <div className="square sq1"></div>
+        <div className="square sq2"></div>
+        <div className="square sq3"></div>
       </div>
       
       <AnimatePresence mode="wait">
@@ -62,7 +62,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -5 }}
           transition={{ duration: 0.3 }}
-          className="text-sm text-gray-600 font-medium ml-2 mt-1"
+          className="text-sm text-gray-600 font-medium ml-2"
         >
           {loadingMessages[loadingTextIndex]}
         </motion.span>
