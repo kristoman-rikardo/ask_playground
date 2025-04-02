@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface PulsatingLoaderProps {
   className?: string;
@@ -10,13 +11,31 @@ const PulsatingLoader: React.FC<PulsatingLoaderProps> = ({ className }) => {
   return (
     <div className={cn("flex items-center justify-center", className)}>
       <div className="relative">
-        {/* Outer pulsating circle */}
-        <div className="absolute top-0 left-0 w-full h-full animate-ping rounded-full bg-black opacity-20" />
-        {/* Middle pulsating circle with slower animation */}
-        <div className="absolute top-0 left-0 w-full h-full animate-pulse rounded-full bg-black opacity-15" 
-          style={{ animationDuration: '2s' }} />
-        {/* Inner stable circle */}
-        <div className="w-3 h-3 rounded-full bg-black opacity-60" />
+        <motion.div
+          animate={{
+            scale: [1, 1.5, 1],
+            opacity: [0.6, 0.2, 0.6]
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-blue-400 opacity-20"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.25, 1],
+            opacity: [0.8, 0.4, 0.8]
+          }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-blue-500 opacity-30"
+        />
+        <div className="w-3 h-3 rounded-full bg-blue-600 opacity-70" />
       </div>
     </div>
   );
