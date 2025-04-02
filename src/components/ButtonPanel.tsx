@@ -52,17 +52,17 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </svg>
   );
 
-  // Button list component
+  // Updated ButtonList with improved padding and spacing
   const ButtonList = () => (
-    <div className="flex flex-wrap gap-1.5 p-1 content-start">
+    <div className="flex flex-wrap gap-2 px-4 py-2 content-start">
       {buttons.map((button, index) => (
         <button 
           key={`button-${index}-${button.name.substring(0, 10)}`} 
           onClick={() => onButtonClick(button)} 
           title={button.name} 
           className="choice-button whitespace-nowrap overflow-hidden text-ellipsis transition-all 
-                   duration-300 text-base text-left rounded-2xl my-0 mx-[2px] 
-                   px-[15px] py-[8px] border border-gray-100 shadow-sm hover:shadow-md
+                   duration-300 text-base text-left rounded-2xl 
+                   px-4 py-2.5 border border-gray-100 shadow-sm hover:shadow-md
                    hover:bg-gray-100 max-w-full bg-gray-50"
           style={{ maxWidth: '100%' }}
         >
