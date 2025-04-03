@@ -4,9 +4,9 @@ import ChatInterface from '@/components/ChatInterface';
 
 const Index = () => {
   return (
-    <div className="h-full w-full bg-transparent overflow-hidden flex flex-col font-sans">
-      <div className="h-full w-full mx-auto">
-        <div className="h-full w-full">
+    <div className="min-h-screen bg-transparent overflow-hidden flex flex-col p-4 font-sans">
+      <div className="w-full max-w-4xl mx-auto mt-8">
+        <div className="w-full">
           <ChatInterface />
         </div>
       </div>
