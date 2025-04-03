@@ -6,7 +6,7 @@
 
 (function() {
   // Configuration
-  const CHAT_APP_URL = "https://sleek-faq-buddy.lovable.app/"; // Updated URL to the actual deployed app
+  const CHAT_APP_URL = "https://your-deployed-app-url.com"; // Replace with your deployed app URL
   const TARGET_SELECTOR = ".accordion-item"; // The class of elements to place the widget above
   const WIDGET_MAX_HEIGHT = "800px";
   
@@ -66,14 +66,11 @@
   
   // Initialize chat widget above the first matching element
   function initChatWidget() {
-    console.log("Initializing chat widget...");
     const targetElements = document.querySelectorAll(TARGET_SELECTOR);
     if (!targetElements.length) {
       console.warn("No target elements found for chat widget");
       return;
     }
-    
-    console.log("Found target elements:", targetElements.length);
     
     // Use the first matching element as our target
     const targetElement = targetElements[0];
@@ -107,7 +104,6 @@
       
       // Dynamically set minimum height based on buttons loading
       if (event.data && event.data.type === "BUTTONS_LOADING_HEIGHT") {
-        console.log("Received button height:", event.data.height);
         container.style.minHeight = `${event.data.height}px`;
       }
     });
@@ -125,3 +121,4 @@
     window.addEventListener("load", initChatWidget);
   }
 })();
+
