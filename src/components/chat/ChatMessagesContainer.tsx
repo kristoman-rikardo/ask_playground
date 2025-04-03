@@ -38,14 +38,10 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     if (messagesEndRef.current) {
-      const container = chatBoxRef.current;
-      
-      if (container) {
-        messagesEndRef.current.scrollIntoView({
-          behavior,
-          block: 'end'
-        });
-      }
+      messagesEndRef.current.scrollIntoView({
+        behavior,
+        block: 'end'
+      });
     }
   };
   
@@ -129,7 +125,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     <div 
       ref={chatBoxRef} 
       className="flex-1 overflow-y-auto p-4 pb-1 space-y-2 relative scroll-smooth" 
-      style={{ minHeight: messages.length > 0 ? '0' : '0', maxHeight: '100%' }}
+      style={{ overflowY: 'auto', minHeight: '0' }}
     >
       <div className="flex flex-col space-y-2 w-full">
         {messages.length > 0 ? messages.map((message, index) => {
