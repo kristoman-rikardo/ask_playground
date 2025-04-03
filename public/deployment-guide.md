@@ -61,7 +61,7 @@ Ensure your deployed chat application allows requests from the domains where you
 2. Replace the `CHAT_APP_URL` value with your deployed application URL:
 
 ```javascript
-const CHAT_APP_URL = "https://your-chat-app.vercel.app"; // Replace with your actual URL
+const CHAT_APP_URL = "https://sleek-faq-buddy.lovable.app"; // Replace with your actual URL
 ```
 
 ## Step 4: Add the Script to Your Website
@@ -69,7 +69,7 @@ const CHAT_APP_URL = "https://your-chat-app.vercel.app"; // Replace with your ac
 Add the following script tag to the websites where you want to embed the chat widget:
 
 ```html
-<script src="https://your-chat-app.vercel.app/injection-script.js"></script>
+<script src="https://sleek-faq-buddy.lovable.app/injection-script.js"></script>
 ```
 
 Or host the injection script separately and reference it:
@@ -103,3 +103,4 @@ If you encounter issues:
 2. Verify CORS headers are properly set
 3. Test the message passing between the parent page and iframe
 4. Ensure your Voiceflow API key and project ID are correctly configured
+5. Try adding '?debug=true' to your URL to enable additional console logging

@@ -6,7 +6,7 @@
 
 (function() {
   // Configuration
-  const CHAT_APP_URL = "https://your-deployed-app-url.com"; // Replace with your deployed app URL
+  const CHAT_APP_URL = "https://sleek-faq-buddy.lovable.app"; // Updated URL to your actual deployed app
   const CHAT_CONTAINER_ID = "chat-widget-container";
   
   // Create container for the chat widget
@@ -29,11 +29,16 @@
   // Create the iframe that will contain the chat widget
   function createChatIframe() {
     const iframe = document.createElement("iframe");
-    iframe.src = CHAT_APP_URL;
+    
+    // Add timestamp to URL to prevent caching issues
+    const timestamp = new Date().getTime();
+    iframe.src = `${CHAT_APP_URL}?t=${timestamp}`;
+    
     iframe.width = "100%";
     iframe.height = "100%";
     iframe.style.border = "none";
     iframe.style.borderRadius = "12px";
+    iframe.allow = "microphone; camera; geolocation"; // Add permissions if needed
     return iframe;
   }
   
@@ -44,6 +49,7 @@
       const mainContent = document.querySelector("main") || 
                          document.querySelector("article") || 
                          document.querySelector(".content") || 
+                         document.querySelector(".accordion-item") || // Added accordion-item
                          document.body;
       
       // Get all text content
@@ -51,6 +57,9 @@
       
       // Clean up the content - remove excessive whitespace
       content = content.replace(/\s+/g, ' ').trim();
+      
+      // Log the first part of the content for debugging
+      console.log("Scraped content (first 100 chars):", content.substring(0, 100));
       
       return content;
     } catch (error) {
@@ -61,6 +70,8 @@
   
   // Initialize chat widget
   function initChatWidget() {
+    console.log("Initializing chat widget...");
+    
     // Create container and iframe
     const container = createChatContainer();
     const iframe = createChatIframe();
@@ -69,10 +80,31 @@
     
     // Get page content
     const pageContent = scrapePageContent();
-    console.log("Scraped page content:", pageContent.substring(0, 100) + "...");
+    
+    // Setup event handler for when iframe is loaded
+    iframe.onload = function() {
+      console.log("Iframe loaded, preparing to send content...");
+      setTimeout(() => {
+        console.log("Sending IFRAME_READY message to iframe...");
+        iframe.contentWindow.postMessage({
+          type: "IFRAME_READY_TRIGGER"
+        }, "*");
+      }, 1000); // Give the iframe some time to initialize
+    };
     
     // When iframe is ready, send the page content
     window.addEventListener("message", function(event) {
+      // Check origin for security
+      if (event.origin !== CHAT_APP_URL && !event.origin.includes('lovable.app')) {
+        // Only log if it's not from lovable domains to reduce console spam
+        if (!event.origin.includes('lovable') && !event.origin.includes('localhost')) {
+          console.log("Received message from unexpected origin:", event.origin);
+        }
+        return;
+      }
+      
+      console.log("Received message from iframe:", event.data?.type);
+      
       if (event.data && event.data.type === "IFRAME_READY") {
         console.log("Iframe is ready, sending page content...");
         iframe.contentWindow.postMessage({
@@ -90,8 +122,13 @@
   
   // Start the widget when page is fully loaded
   if (document.readyState === "complete") {
+    console.log("Document already complete, initializing widget now");
     initChatWidget();
   } else {
-    window.addEventListener("load", initChatWidget);
+    console.log("Setting up load listener for widget initialization");
+    window.addEventListener("load", function() {
+      console.log("Document loaded, initializing widget now");
+      initChatWidget();
+    });
   }
 })();
