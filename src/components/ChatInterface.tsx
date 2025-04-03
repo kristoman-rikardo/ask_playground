@@ -38,9 +38,15 @@ const ChatInterface: React.FC = () => {
       
       visibleContentHeightRef.current = currentHeight;
       
+      // Calculate available height (viewport height minus input and padding)
+      const viewportHeight = window.innerHeight;
+      const inputHeight = 70; // Approximate height of input area
+      const paddingSpace = 80; // Space for margins, padding, etc.
+      const maxAvailableHeight = viewportHeight - inputHeight - paddingSpace;
+      
       const newHeight = Math.max(
-        250, // Reduced from 300 to minimize initial vertical space
-        Math.min(450, currentHeight) // Reduced from 600 to make the widget more compact
+        250,
+        Math.min(maxAvailableHeight, currentHeight)
       );
       
       if (Math.abs(newHeight - lastContentHeightRef.current) > 20) {
@@ -57,17 +63,17 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div 
-      className="w-full mx-auto bg-transparent shadow-none rounded-2xl overflow-hidden transition-all font-sans"
-      style={{ height: 'auto' }}
+      className="w-full mx-auto bg-transparent shadow-none rounded-2xl overflow-hidden transition-all font-sans flex flex-col"
+      style={{ height: '100%', maxHeight: '100vh' }}
     >
-      <div className="flex flex-col h-full">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <div 
           ref={messagesContainerRef}
-          className="flex-1 flex flex-col overflow-hidden overflow-y-auto transition-all duration-300"
+          className="flex-1 flex flex-col overflow-hidden transition-all duration-300"
           style={{ 
             height: conversationStarted ? `${messagesHeight}px` : '0px', 
-            minHeight: conversationStarted ? '250px' : '0px', // Reduced from 300px
-            maxHeight: '450px', // Reduced from 600px
+            minHeight: conversationStarted ? '250px' : '0px',
+            maxHeight: '70vh',
             opacity: conversationStarted ? 1 : 0, 
           }}
         >
@@ -88,8 +94,9 @@ const ChatInterface: React.FC = () => {
           onButtonClick={handleButtonClick} 
         />
         
-        {/* Always show input field regardless of conversation state */}
-        <ChatInputArea onSendMessage={handleSendMessage} />
+        <div className="mt-auto">
+          <ChatInputArea onSendMessage={handleSendMessage} />
+        </div>
       </div>
     </div>
   );

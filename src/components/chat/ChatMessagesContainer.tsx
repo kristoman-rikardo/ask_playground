@@ -31,24 +31,25 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     const chatBox = chatBoxRef.current;
     if (!chatBox) return true;
     
-    const threshold = 80;
+    const threshold = 100; // Increased threshold to detect "near bottom" state
     const scrollBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight;
     return scrollBottom <= threshold;
   };
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     if (messagesEndRef.current) {
       const container = chatBoxRef.current;
       
       if (container) {
         messagesEndRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
+          behavior,
+          block: 'end'
         });
       }
     }
   };
   
+  // Auto-scroll when messages change or when streaming
   useEffect(() => {
     if (shouldAutoScroll) {
       const timer = setTimeout(() => {
@@ -58,6 +59,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     }
   }, [messages, isTyping, carouselData, shouldAutoScroll]);
 
+  // Listen for scroll events to show/hide scroll button
   useEffect(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return;
@@ -80,22 +82,22 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     return () => chatBox.removeEventListener('scroll', handleScroll);
   }, [shouldAutoScroll]);
 
-  // Check for carousel data specifically and update scroll button visibility
+  // Handle carousel updates specially
   useEffect(() => {
     if (carouselData && chatBoxRef.current) {
       const nearBottom = isNearBottom();
       setShowScrollButton(!nearBottom);
       
-      // If we're getting new carousel data and we're set to auto scroll
       if (shouldAutoScroll) {
         const timer = setTimeout(() => {
           scrollToBottom();
-        }, 100); // slightly longer delay for carousels to render
+        }, 100);
         return () => clearTimeout(timer);
       }
     }
   }, [carouselData, shouldAutoScroll]);
 
+  // Reset auto-scroll when messages are cleared
   useEffect(() => {
     if (messages.length === 0) {
       setShouldAutoScroll(true);
@@ -103,18 +105,30 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     }
   }, [messages.length]);
 
+  // Always scroll when new messages arrive
   useEffect(() => {
-    if (messages.length > 0 && shouldAutoScroll) {
-      scrollToBottom();
+    if (messages.length > 0) {
+      if (shouldAutoScroll) {
+        scrollToBottom();
+      } else {
+        setShowScrollButton(true);
+      }
     }
   }, [messages.length]);
 
-  const hasPartialMessages = messages.some(m => m.isPartial);
+  // Focus on streaming message
+  useEffect(() => {
+    const hasPartialMessages = messages.some(m => m.isPartial);
+    
+    if (hasPartialMessages && shouldAutoScroll) {
+      scrollToBottom('auto');
+    }
+  }, [messages]);
 
   return (
     <div 
       ref={chatBoxRef} 
-      className="flex-1 overflow-y-auto p-4 pb-1 space-y-2 relative" 
+      className="flex-1 overflow-y-auto p-4 pb-1 space-y-2 relative scroll-smooth" 
       style={{ minHeight: messages.length > 0 ? '0' : '0', maxHeight: '100%' }}
     >
       <div className="flex flex-col space-y-2 w-full">
@@ -147,7 +161,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
       
       <AgentTypingIndicator 
         isTyping={isTyping} 
-        hasPartialMessages={hasPartialMessages}
+        hasPartialMessages={messages.some(m => m.isPartial)}
         textStreamingStarted={textStreamingStarted}
       />
       
