@@ -1,4 +1,3 @@
-
 /**
  * Chat Widget Injection Script
  * This script places a chat widget above accordion items on FAQ pages.
@@ -8,6 +7,7 @@
   // Configuration
   const CHAT_APP_URL = "https://your-deployed-app-url.com"; // Replace with your deployed app URL
   const TARGET_SELECTOR = ".accordion-item"; // The class of elements to place the widget above
+  const WIDGET_MIN_HEIGHT = "400px";
   const WIDGET_MAX_HEIGHT = "800px";
   
   // Create container for the chat widget that sits above the target element
@@ -16,6 +16,7 @@
     container.id = "chat-widget-container";
     container.style.width = `${targetElement.offsetWidth}px`;
     container.style.maxHeight = WIDGET_MAX_HEIGHT;
+    container.style.minHeight = WIDGET_MIN_HEIGHT;
     container.style.marginBottom = "20px";
     container.style.zIndex = "1000";
     container.style.borderRadius = "12px";
@@ -41,6 +42,7 @@
   // Scrape content from the specific target element
   function scrapeContent(targetElement) {
     try {
+      // Get text content from the accordion item
       let content = targetElement.innerText || "";
       
       // If there's no content or it's too short, get content from parent elements
@@ -101,11 +103,6 @@
           content: content
         }, "*");
       }
-      
-      // Dynamically set minimum height based on buttons loading
-      if (event.data && event.data.type === "BUTTONS_LOADING_HEIGHT") {
-        container.style.minHeight = `${event.data.height}px`;
-      }
     });
     
     return {
@@ -121,4 +118,3 @@
     window.addEventListener("load", initChatWidget);
   }
 })();
-
