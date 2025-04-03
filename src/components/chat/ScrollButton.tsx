@@ -13,18 +13,16 @@ const ScrollButton: React.FC<ScrollButtonProps> = ({ onClick, visible }) => {
   return (
     <button 
       onClick={onClick}
-      className="scroll-button-container bg-white hover:bg-gray-100 rounded-full p-2 shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 border border-gray-200"
+      className="fixed z-50 bg-primary/80 text-white rounded-full p-2 shadow-lg hover:bg-primary/90 transition-all duration-200 flex items-center justify-center"
       style={{
-        position: "absolute",
         bottom: "20px",
         right: "20px",
-        zIndex: 50,
-        display: visible ? "flex" : "none"
+        width: "40px",
+        height: "40px"
       }}
       aria-label="Scroll to bottom"
     >
-      <span className="text-xs text-gray-700 font-medium hidden sm:inline">New messages</span>
-      <ArrowDown size={16} className="text-gray-700" />
+      <ArrowDown size={20} />
     </button>
   );
 };
