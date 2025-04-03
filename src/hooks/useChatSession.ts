@@ -48,7 +48,7 @@ export function useChatSession() {
   );
 
   useEffect(() => {
-    // Only start the chat session once when the component mounts
+    // Start the chat session automatically when the component mounts
     if (!sessionStarted) {
       startChatSession();
       setSessionStarted(true);
@@ -60,8 +60,15 @@ export function useChatSession() {
     setIsTyping(true);
     setIsButtonsLoading(true);
     receivedFirstTraceRef.current = false;
+    
+    // Basic variables for the conversation
+    const variables = {
+      pageSlug: 'faq-page',
+      productName: 'faq'
+    };
+    
     try {
-      await vfSendLaunch({ pageSlug: 'faq-page', productName: 'faq' }, handleTraceEvent);
+      await vfSendLaunch(variables, handleTraceEvent);
     } catch (error) {
       console.error('Error starting chat session:', error);
       streaming.addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
@@ -85,3 +92,4 @@ export function useChatSession() {
     carouselData
   };
 }
+

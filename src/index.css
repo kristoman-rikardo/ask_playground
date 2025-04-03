@@ -8,3 +8,14 @@
 
 /* Import animations */
 @import './styles/animations.css';
+
+/* Prevent body scrolling for iframe */
+body {
+  overflow: hidden;
+}
+
+/* Ensure root is full height and doesn't scroll */
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
