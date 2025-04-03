@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useChatSession } from '@/hooks/useChatSession';
 import ChatMessages from './chat/ChatMessages';
@@ -68,6 +67,16 @@ const ChatInterface: React.FC = () => {
     setConversationStarted(true);
     sendUserMessage(message);
   };
+
+  useEffect(() => {
+    const buttonsLoadingHeight = document.querySelector('.button-loading-container')?.clientHeight || 70;
+    
+    // Send message to parent window about buttons loading height
+    window.parent.postMessage({
+      type: 'BUTTONS_LOADING_HEIGHT',
+      height: buttonsLoadingHeight
+    }, '*');
+  }, [isButtonsLoading]);
 
   return (
     <div 

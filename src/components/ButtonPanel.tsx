@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface Button {
   name: string;
@@ -47,7 +46,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   
   // Simplified loader component with thinking text
   const LoadingIndicator = () => (
-    <div className="h-[70px] flex flex-col items-center justify-center transition-opacity duration-300">
+    <div className="button-loading-container h-[70px] flex flex-col items-center justify-center transition-opacity duration-300">
       <ThinkingIndicator />
       <div className="simple-loader" aria-label="Loading" role="status"></div>
     </div>
