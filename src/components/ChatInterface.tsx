@@ -25,6 +25,7 @@ const ChatInterface: React.FC = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const lastContentHeightRef = useRef<number>(300);
   const visibleContentHeightRef = useRef<number>(300);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (messages.length > 0 && !conversationStarted) {
@@ -32,15 +33,28 @@ const ChatInterface: React.FC = () => {
     }
   }, [messages, conversationStarted]);
   
+  // Calculate available height for messages area, ensuring input and buttons are always visible
   useEffect(() => {
-    if (messagesContainerRef.current && messages.length > 0) {
-      const currentHeight = messagesContainerRef.current.scrollHeight;
+    if (chatContainerRef.current && messagesContainerRef.current) {
+      const totalHeight = chatContainerRef.current.clientHeight;
+      // Reserve 130px for input (60px) and buttons (70px)
+      const reservedHeight = 130;
+      const availableHeight = totalHeight - reservedHeight;
       
-      visibleContentHeightRef.current = currentHeight;
+      // Set a minimum height for messages area
+      const minMessageHeight = 200;
+      const maxMessageHeight = 600; // Adjusted to ensure total stays under 800px with reserved space
       
+      // Calculate desired message height based on content
+      let contentHeight = messagesContainerRef.current.scrollHeight;
+      if (messages.length === 0) {
+        contentHeight = minMessageHeight;
+      }
+      
+      // Set the messages area height
       const newHeight = Math.max(
-        250, // Reduced from 300 to minimize initial vertical space
-        Math.min(450, currentHeight) // Reduced from 600 to make the widget more compact
+        minMessageHeight, 
+        Math.min(maxMessageHeight, Math.min(availableHeight, contentHeight))
       );
       
       if (Math.abs(newHeight - lastContentHeightRef.current) > 20) {
@@ -57,18 +71,24 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div 
-      className="w-full mx-auto bg-transparent shadow-none rounded-2xl overflow-hidden transition-all font-sans"
-      style={{ height: 'auto' }}
+      ref={chatContainerRef}
+      className="w-full mx-auto bg-transparent shadow-none rounded-2xl overflow-hidden transition-all font-sans flex flex-col"
+      style={{ 
+        height: '100%', 
+        maxHeight: '800px',
+        minHeight: '400px'
+      }}
     >
       <div className="flex flex-col h-full">
         <div 
           ref={messagesContainerRef}
           className="flex-1 flex flex-col overflow-hidden overflow-y-auto transition-all duration-300"
           style={{ 
-            height: conversationStarted ? `${messagesHeight}px` : '0px', 
-            minHeight: conversationStarted ? '250px' : '0px', // Reduced from 300px
-            maxHeight: '450px', // Reduced from 600px
-            opacity: conversationStarted ? 1 : 0, 
+            height: conversationStarted ? `${messagesHeight}px` : '0px',
+            minHeight: conversationStarted ? '200px' : '0px',
+            opacity: conversationStarted ? 1 : 0,
+            flexShrink: 1,
+            flexGrow: 1
           }}
         >
           <ChatMessages 
@@ -82,14 +102,19 @@ const ChatInterface: React.FC = () => {
           />
         </div>
         
-        <ButtonPanel 
-          buttons={buttons} 
-          isLoading={isButtonsLoading} 
-          onButtonClick={handleButtonClick} 
-        />
+        {/* Button panel with fixed height */}
+        <div className="flex-shrink-0" style={{ minHeight: '70px' }}>
+          <ButtonPanel 
+            buttons={buttons} 
+            isLoading={isButtonsLoading} 
+            onButtonClick={handleButtonClick} 
+          />
+        </div>
         
-        {/* Always show input field regardless of conversation state */}
-        <ChatInputArea onSendMessage={handleSendMessage} />
+        {/* Input area with fixed height */}
+        <div className="flex-shrink-0" style={{ minHeight: '60px' }}>
+          <ChatInputArea onSendMessage={handleSendMessage} />
+        </div>
       </div>
     </div>
   );

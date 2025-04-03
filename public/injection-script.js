@@ -1,28 +1,29 @@
-
 /**
  * Chat Widget Injection Script
- * This script scrapes the current page's content and injects the chat widget iframe.
+ * This script places a chat widget above accordion items on FAQ pages.
  */
 
 (function() {
   // Configuration
   const CHAT_APP_URL = "https://your-deployed-app-url.com"; // Replace with your deployed app URL
-  const CHAT_CONTAINER_ID = "chat-widget-container";
+  const TARGET_SELECTOR = ".accordion-item"; // The class of elements to place the widget above
+  const WIDGET_MIN_HEIGHT = "400px";
+  const WIDGET_MAX_HEIGHT = "800px";
   
-  // Create container for the chat widget
-  function createChatContainer() {
+  // Create container for the chat widget that sits above the target element
+  function createChatContainer(targetElement) {
     const container = document.createElement("div");
-    container.id = CHAT_CONTAINER_ID;
-    container.style.position = "fixed";
-    container.style.bottom = "20px";
-    container.style.right = "20px";
-    container.style.width = "400px";
-    container.style.height = "600px";
-    container.style.maxHeight = "80vh";
-    container.style.zIndex = "9999";
+    container.id = "chat-widget-container";
+    container.style.width = `${targetElement.offsetWidth}px`;
+    container.style.maxHeight = WIDGET_MAX_HEIGHT;
+    container.style.minHeight = WIDGET_MIN_HEIGHT;
+    container.style.marginBottom = "20px";
+    container.style.zIndex = "1000";
     container.style.borderRadius = "12px";
     container.style.overflow = "hidden";
     container.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.15)";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
     return container;
   }
   
@@ -30,54 +31,76 @@
   function createChatIframe() {
     const iframe = document.createElement("iframe");
     iframe.src = CHAT_APP_URL;
-    iframe.width = "100%";
-    iframe.height = "100%";
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
     iframe.style.border = "none";
     iframe.style.borderRadius = "12px";
+    iframe.style.flexGrow = "1";
     return iframe;
   }
   
-  // Scrape page content
-  function scrapePageContent() {
+  // Scrape content from the specific target element
+  function scrapeContent(targetElement) {
     try {
-      // Get main content - exclude navigation, footers, ads, etc.
-      const mainContent = document.querySelector("main") || 
-                         document.querySelector("article") || 
-                         document.querySelector(".content") || 
-                         document.body;
+      // Get text content from the accordion item
+      let content = targetElement.innerText || "";
       
-      // Get all text content
-      let content = mainContent.innerText;
+      // If there's no content or it's too short, get content from parent elements
+      if (!content || content.length < 50) {
+        const parentSection = targetElement.closest('section') || 
+                             targetElement.closest('article') || 
+                             targetElement.closest('.content-section');
+        
+        if (parentSection) {
+          content = parentSection.innerText || content;
+        }
+      }
       
       // Clean up the content - remove excessive whitespace
       content = content.replace(/\s+/g, ' ').trim();
       
-      return content;
+      return content || "FAQ content";
     } catch (error) {
-      console.error("Error scraping page content:", error);
-      return "Could not scrape page content.";
+      console.error("Error scraping content:", error);
+      return "Could not scrape content.";
     }
   }
   
-  // Initialize chat widget
+  // Initialize chat widget above the first matching element
   function initChatWidget() {
+    const targetElements = document.querySelectorAll(TARGET_SELECTOR);
+    if (!targetElements.length) {
+      console.warn("No target elements found for chat widget");
+      return;
+    }
+    
+    // Use the first matching element as our target
+    const targetElement = targetElements[0];
+    
     // Create container and iframe
-    const container = createChatContainer();
+    const container = createChatContainer(targetElement);
     const iframe = createChatIframe();
     container.appendChild(iframe);
-    document.body.appendChild(container);
     
-    // Get page content
-    const pageContent = scrapePageContent();
-    console.log("Scraped page content:", pageContent.substring(0, 100) + "...");
+    // Insert before the target element (placing it above)
+    targetElement.parentNode.insertBefore(container, targetElement);
     
-    // When iframe is ready, send the page content
+    // Handle window resize to keep container width matching target element
+    window.addEventListener("resize", function() {
+      container.style.width = `${targetElement.offsetWidth}px`;
+    });
+    
+    // Get content from the target element
+    const content = scrapeContent(targetElement);
+    console.log("Scraped content:", content.substring(0, 100) + "...");
+    
+    // Wait for iframe to be ready, then send content
     window.addEventListener("message", function(event) {
       if (event.data && event.data.type === "IFRAME_READY") {
-        console.log("Iframe is ready, sending page content...");
+        console.log("Iframe is ready, sending content...");
         iframe.contentWindow.postMessage({
           type: "PAGE_CONTENT",
-          content: pageContent
+          content: content
         }, "*");
       }
     });
