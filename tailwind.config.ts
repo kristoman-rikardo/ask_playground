@@ -19,7 +19,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Poppins', 'sans-serif'],
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				poppins: ['Poppins', 'sans-serif'],
 			},
 			screens: {
 				'xs': '475px',
@@ -104,6 +105,19 @@ export default {
 						height: '0'
 					}
 				},
+				'circular-progress': {
+					'0%': {
+						strokeDashoffset: '62.83',
+						opacity: '0.5'
+					},
+					'50%': {
+						opacity: '1'
+					},
+					'100%': {
+						strokeDashoffset: '0',
+						opacity: '0.5'
+					}
+				},
 				'fade-in': {
 					'0%': {
 						opacity: '0',
@@ -159,6 +173,7 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
+				'circular-progress': 'circular-progress 1.5s ease-in-out infinite',
 				'fade-in': 'fade-in 0.3s ease-out',
 				'fade-out': 'fade-out 0.3s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',

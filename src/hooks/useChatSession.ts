@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { vfSendLaunch } from '@/lib/voiceflow';
 import { Message, Button } from '@/types/chat';
@@ -79,6 +78,32 @@ export function useChatSession() {
     }
   };
 
+  const resetSession = useCallback(() => {
+    // Clear messages
+    setMessages([]);
+    
+    // Reset UI states
+    setButtons([]);
+    setIsTyping(false);
+    setIsButtonsLoading(false);
+    setStepsTotal(1);
+    setCurrentStepIndex(0);
+    setCarouselData(null);
+    
+    // Reset trackers
+    resetMessageSourceTracker();
+    receivedFirstTraceRef.current = false;
+    textStreamingStartedRef.current = false;
+    
+    // Clear any pending timeouts or effects
+    streaming.clearAllTimeouts();
+    
+    // Start a new session after a brief delay to ensure cleanup is complete
+    setTimeout(() => {
+      startChatSession();
+    }, 100);
+  }, [resetMessageSourceTracker, textStreamingStartedRef, streaming]);
+
   return {
     messages,
     isTyping,
@@ -89,7 +114,8 @@ export function useChatSession() {
     stepsTotal,
     currentStepIndex,
     textStreamingStarted: textStreamingStartedRef?.current,
-    carouselData
+    carouselData,
+    resetSession
   };
 }
 

@@ -1,21 +1,20 @@
-
 @layer components {
   /* Widget container */
   .widget-container {
     @apply flex flex-col h-full;
   }
 
-  /* Improved circular loader animation - completely separate from thinking dots */
+  /* Improved circular loader animation - more refined */
   .simple-loader {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    border: 3px solid rgba(140, 140, 140, 0.15);
-    border-top-color: #888;
-    animation: smooth-spin 1.2s linear infinite;
+    border: 3px solid transparent;
+    border-top-color: #666; /* Darker gray for better visibility */
+    animation: refined-spin 1s linear infinite;
   }
   
-  @keyframes smooth-spin {
+  @keyframes refined-spin {
     0% {
       transform: rotate(0deg);
     }

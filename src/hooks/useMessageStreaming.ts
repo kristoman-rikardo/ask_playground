@@ -1,4 +1,3 @@
-
 import { useRef } from 'react';
 import { Message } from '@/types/chat';
 // Import from the re-exporting file, so no changes needed in imports
@@ -6,6 +5,9 @@ import { StreamingWordTracker } from '@/utils/streamingUtils';
 
 // Flag to ensure we schedule only one update per animation frame
 let updateScheduled = false;
+
+// Store timeouts for cleanup
+const timeoutRefs: NodeJS.Timeout[] = [];
 
 export interface MessageStreamingHook {
   currentCompletionContentRef: React.MutableRefObject<string>;
@@ -15,6 +17,7 @@ export interface MessageStreamingHook {
   updatePartialMessage: (messageId: string, text: string, isPartial?: boolean) => void;
   addAgentMessage: (text: string, isPartial?: boolean, existingId?: string) => void;
   scheduleUpdate: (msgId: string) => void;
+  clearAllTimeouts: () => void;
 }
 
 export function useMessageStreaming(
@@ -24,6 +27,17 @@ export function useMessageStreaming(
   const currentCompletionContentRef = useRef<string>('');
   const messageSourceTracker = useRef<Record<string, string>>({});
   const wordTrackerRef = useRef<StreamingWordTracker>(new StreamingWordTracker());
+
+  // Clear all timeouts for cleanup
+  const clearAllTimeouts = () => {
+    timeoutRefs.forEach(timeout => clearTimeout(timeout));
+    timeoutRefs.length = 0; // Clear the array
+    updateScheduled = false;
+    
+    // Reset streaming trackers
+    currentCompletionContentRef.current = '';
+    wordTrackerRef.current = new StreamingWordTracker();
+  };
 
   // Throttles updates using requestAnimationFrame for smooth UI rendering
   const scheduleUpdate = (msgId: string) => {
@@ -88,6 +102,7 @@ export function useMessageStreaming(
     wordTrackerRef,
     updatePartialMessage,
     addAgentMessage,
-    scheduleUpdate
+    scheduleUpdate,
+    clearAllTimeouts
   };
 }

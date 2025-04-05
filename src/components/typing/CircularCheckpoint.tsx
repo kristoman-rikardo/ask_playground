@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -49,9 +48,13 @@ const CircularCheckpoint: React.FC<CircularCheckpointProps> = ({ status, positio
               strokeDasharray={2 * Math.PI * 10} // 2πr where r=10
               strokeDashoffset={(2 * Math.PI * 10) * (1 - progress / 100)} // Calculate dashoffset based on progress
               fill="transparent"
-              className="text-black"
+              className="text-black animate-circular-progress"
               transform="rotate(-90, 12, 12)" // Start from the top (12 o'clock)
               strokeLinecap="round"
+              style={{
+                transition: 'stroke-dashoffset 0.3s ease-out',
+                willChange: 'stroke-dashoffset'
+              }}
             />
           </svg>
         )}

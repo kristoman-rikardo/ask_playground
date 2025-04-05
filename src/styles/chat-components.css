@@ -1,18 +1,17 @@
-
 @layer components {
   .chat-message-user {
-    @apply bg-gray-200 text-gray-800 ml-auto shadow-sm rounded-xl border-transparent;
+    @apply bg-gray-100 text-gray-800 ml-auto shadow-sm rounded-xl border-transparent font-sans;
   }
 
   .chat-message-agent {
-    @apply bg-gray-100 text-gray-800 mr-auto shadow-sm rounded-xl border-transparent;
+    @apply bg-gray-50 text-gray-800 mr-auto shadow-sm rounded-xl border-transparent font-sans;
   }
 
   .choice-button {
-    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 active:bg-gray-200 transition-all 
-           shadow-sm hover:shadow-md border-gray-200/30 rounded-xl px-4 py-2.5
+    @apply bg-gray-100 text-gray-800 hover:bg-gray-200 active:bg-gray-100 transition-all 
+           shadow-sm hover:shadow-md border-gray-200/30 rounded-xl px-3 py-2
            transform hover:scale-[1.02] active:scale-[0.98] 
-           duration-200 font-medium whitespace-nowrap overflow-hidden text-ellipsis;
+           duration-200 font-normal whitespace-nowrap overflow-hidden text-ellipsis font-sans;
     width: fit-content !important;
     display: inline-block !important;
   }
@@ -21,7 +20,7 @@
   .chat-input {
     @apply border-transparent rounded-lg px-4 py-3 w-full outline-none
            transition-all duration-200 bg-gray-100
-           hover:bg-gray-100/95;
+           hover:bg-gray-100/95 font-sans;
   }
   
   .chat-input:hover {
@@ -29,6 +28,6 @@
   }
   
   .chat-input:focus {
-    @apply ring-2 ring-gray-200/70 bg-white;
+    @apply ring-2 ring-gray-400 bg-white border-black;
   }
 }

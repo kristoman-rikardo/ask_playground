@@ -1,4 +1,3 @@
-
 /* Import base styles with CSS variables */
 @import './styles/base.css';
 
@@ -12,6 +11,7 @@
 /* Prevent body scrolling for iframe */
 body {
   overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 /* Ensure root is full height and doesn't scroll */
@@ -20,6 +20,7 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 /* Slim scrollbar styles - updated to be even slimmer */

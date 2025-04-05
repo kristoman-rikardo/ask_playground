@@ -1,8 +1,6 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { Message, Button } from '@/types/chat';
 import MessageItem from './MessageItem';
-import ScrollButton from './ScrollButton';
 import CarouselMessage from './CarouselMessage';
 import AgentTypingIndicator from './AgentTypingIndicator';
 
@@ -25,15 +23,29 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showTopIndicator, setShowTopIndicator] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  
+  // Keep track of previous message count to detect new messages
+  const prevMessagesLengthRef = useRef(messages.length);
+  // Keep track of whether message content is being updated (streaming)
+  const isStreamingContentRef = useRef(false);
   
   const isNearBottom = () => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return true;
     
-    const threshold = 100; // Increased threshold to detect "near bottom" state
+    const threshold = 40;
     const scrollBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight;
     return scrollBottom <= threshold;
+  };
+
+  const isNearTop = () => {
+    const chatBox = chatBoxRef.current;
+    if (!chatBox) return false;
+    
+    // Når scrollTop er > 0, betyr det at noe innhold er scrollet ut av synsfeltet på toppen
+    return chatBox.scrollTop <= 1;
   };
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -42,20 +54,54 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
         behavior,
         block: 'end'
       });
+      
+      // Double-check that we're really at the bottom after a short delay
+      setTimeout(() => {
+        if (messagesEndRef.current && chatBoxRef.current) {
+          const chatBox = chatBoxRef.current;
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      }, 50);
+    }
+  };
+
+  const scrollToTop = () => {
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     }
   };
   
+  // Check if message content is being streamed
+  useEffect(() => {
+    // Check last message for partial flag
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      isStreamingContentRef.current = lastMessage.isPartial || false;
+    } else {
+      isStreamingContentRef.current = false;
+    }
+  }, [messages]);
+  
   // Auto-scroll when messages change or when streaming
   useEffect(() => {
-    if (shouldAutoScroll) {
+    // If there's a new message or we're near the bottom, scroll down
+    const hasNewMessage = messages.length > prevMessagesLengthRef.current;
+    
+    if (shouldAutoScroll || hasNewMessage) {
       const timer = setTimeout(() => {
-        scrollToBottom();
+        scrollToBottom(hasNewMessage ? 'smooth' : 'auto');
       }, 10);
       return () => clearTimeout(timer);
     }
+    
+    // Update previous message count
+    prevMessagesLengthRef.current = messages.length;
   }, [messages, isTyping, carouselData, shouldAutoScroll]);
 
-  // Listen for scroll events to show/hide scroll button
+  // Listen for scroll events to show/hide scroll buttons
   useEffect(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return;
@@ -63,7 +109,11 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     const handleScroll = () => {
       if (chatBox) {
         const nearBottom = isNearBottom();
+        // Vi vil vise topplinja når vi har scrollet ned i det hele tatt
+        const hasScrolledDown = chatBox.scrollTop > 5; // Økt terskel litt
+        
         setShowScrollButton(!nearBottom);
+        setShowTopIndicator(hasScrolledDown);
         
         if (nearBottom) {
           setShouldAutoScroll(true);
@@ -75,6 +125,10 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     };
 
     chatBox.addEventListener('scroll', handleScroll);
+    
+    // Kjør handleScroll umiddelbart for å sette riktig initial tilstand
+    handleScroll();
+    
     return () => chatBox.removeEventListener('scroll', handleScroll);
   }, [shouldAutoScroll]);
 
@@ -98,17 +152,18 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     if (messages.length === 0) {
       setShouldAutoScroll(true);
       setShowScrollButton(false);
+      setShowTopIndicator(false);
     }
   }, [messages.length]);
 
   // Always scroll when new messages arrive
   useEffect(() => {
-    if (messages.length > 0) {
-      if (shouldAutoScroll) {
-        scrollToBottom();
-      } else {
-        setShowScrollButton(true);
-      }
+    const hasNewMessage = messages.length > prevMessagesLengthRef.current;
+    
+    if (hasNewMessage) {
+      // Always scroll for new messages, regardless of current position
+      setTimeout(() => scrollToBottom('smooth'), 10);
+      prevMessagesLengthRef.current = messages.length;
     }
   }, [messages.length]);
 
@@ -116,18 +171,53 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
   useEffect(() => {
     const hasPartialMessages = messages.some(m => m.isPartial);
     
-    if (hasPartialMessages && shouldAutoScroll) {
+    if (hasPartialMessages && (shouldAutoScroll || isNearBottom())) {
       scrollToBottom('auto');
     }
   }, [messages]);
 
+  // Top indicator component
+  const TopScrollIndicator = () => (
+    <div 
+      className={`w-full flex items-center justify-center transition-all duration-300 ${showTopIndicator ? 'opacity-100' : 'opacity-0'}`}
+      style={{
+        position: 'sticky',
+        top: 0,
+        left: 0,
+        right: 0,
+        pointerEvents: 'none',
+        zIndex: 999,
+        backgroundColor: 'white',
+        height: '2px',
+        marginBottom: '2px'
+      }}
+    >
+      <div className="w-[90%] h-[2px] bg-gray-300" style={{ borderRadius: '10px' }}></div>
+    </div>
+  );
+
+  // Forbedret streaming-animasjon for jevn opplevelse
+  useEffect(() => {
+    if (isStreamingContentRef.current) {
+      // Bruk en jevn frekvens for smoother scrolling under streaming
+      const interval = setInterval(() => {
+        if (shouldAutoScroll || isNearBottom()) {
+          scrollToBottom('auto');
+        }
+      }, 80); // Jevn frekvens gir bedre opplevelse
+      return () => clearInterval(interval);
+    }
+  }, [messages, shouldAutoScroll]);
+
   return (
     <div 
       ref={chatBoxRef} 
-      className="flex-1 overflow-y-auto p-4 pb-1 space-y-2 relative scroll-smooth" 
-      style={{ overflowY: 'auto', minHeight: '0' }}
+      className="flex-1 overflow-y-auto relative scroll-smooth custom-scrollbar" 
+      style={{ overflowY: 'auto', minHeight: '0', fontFamily: "'Inter', system-ui, sans-serif" }}
     >
-      <div className="flex flex-col space-y-2 w-full">
+      <div className="flex flex-col space-y-2 w-full px-4 pt-2 pb-0 font-sans">
+        <TopScrollIndicator />
+        
         {messages.length > 0 ? messages.map((message, index) => {
           const isLast = index === messages.length - 1;
           const isUser = message.type === 'user';
@@ -144,32 +234,25 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
             />
           );
         }) : null}
+
+        {/* Karusell uten bakgrunn, direkte i meldingsstrømmen */}
+        {carouselData && onButtonClick && (
+          <div className="w-full mb-2 px-0">
+            <CarouselMessage 
+              cards={carouselData.cards} 
+              onButtonClick={onButtonClick} 
+            />
+          </div>
+        )}
+        
+        <AgentTypingIndicator 
+          isTyping={isTyping} 
+          hasPartialMessages={messages.some(m => m.isPartial)}
+          textStreamingStarted={textStreamingStarted}
+        />
       </div>
       
-      {carouselData && onButtonClick && (
-        <div className="w-full mb-1">
-          <CarouselMessage 
-            cards={carouselData.cards} 
-            onButtonClick={onButtonClick} 
-          />
-        </div>
-      )}
-      
-      <AgentTypingIndicator 
-        isTyping={isTyping} 
-        hasPartialMessages={messages.some(m => m.isPartial)}
-        textStreamingStarted={textStreamingStarted}
-      />
-      
-      <ScrollButton
-        visible={showScrollButton}
-        onClick={() => {
-          scrollToBottom();
-          setShouldAutoScroll(true);
-        }}
-      />
-      
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} className="h-1" />
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 interface Button {
@@ -10,12 +9,16 @@ interface ButtonPanelProps {
   buttons: Button[];
   isLoading: boolean;
   onButtonClick: (button: Button) => void;
+  className?: string;
+  isMinimized?: boolean;
 }
 
 const ButtonPanel: React.FC<ButtonPanelProps> = ({
   buttons,
   isLoading,
-  onButtonClick
+  onButtonClick,
+  className = '',
+  isMinimized = false
 }) => {
   // Sparkle SVG icon for buttons
   const SparkleIcon = () => (
@@ -53,20 +56,25 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
     </div>
   );
 
+  // Handle button click with scrolling
+  const handleButtonClick = (button: Button) => {
+    onButtonClick(button);
+  };
+
   // Button List component
   const ButtonList = () => (
     <div className="flex flex-wrap gap-2 px-4 py-2 content-start">
       {buttons.map((button, index) => (
         <button 
           key={`button-${index}-${button.name.substring(0, 10)}`} 
-          onClick={() => onButtonClick(button)} 
+          onClick={() => handleButtonClick(button)} 
           title={button.name} 
           className="choice-button whitespace-normal break-words transition-all 
                    duration-300 text-base text-left rounded-2xl 
-                   px-4 py-2.5 border border-gray-200/50 
-                   shadow-sm hover:shadow-md bg-gray-200 
-                   hover:bg-gray-300"
-          style={{ maxWidth: '100%' }}
+                   px-3 py-2 border border-gray-200/50 
+                   shadow-sm hover:shadow-md bg-gray-100 
+                   hover:bg-gray-200 font-sans"
+          style={{ maxWidth: '100%', fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 400 }}
         >
           {button.name}
           <SparkleIcon />
@@ -76,8 +84,8 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   );
   
   return (
-    <div className="w-full bg-transparent p-0 relative mt-6 mb-2">
-      {isLoading ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : <div className="h-[5px]"></div>}
+    <div className={`w-full bg-transparent p-0 relative font-sans ${className}`} style={{ fontFamily: "'Inter', system-ui, sans-serif", marginTop: '8px' }}>
+      {isLoading && !isMinimized ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : null}
     </div>
   );
 };
