@@ -176,21 +176,21 @@ const ChatInterface: React.FC = () => {
   return (
     <>
       {/* Kontrollknapper - vises kun når chatten har vært i bruk */}
-      {conversationStarted && (
+      {conversationStarted && !isMinimized && !isFullyMinimized && (
         <div className="fixed top-4 right-4 z-50 flex space-x-2">
           <button
             onClick={handleRestartClick}
             className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
             aria-label="Restart chat"
           >
-            <X size={16} className="text-gray-600" />
+            <X size={16} style={{ color: "#28483f" }} />
           </button>
           <button
             onClick={toggleMinimize}
             className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
             aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
           >
-            <ChevronDown size={16} className={`text-gray-600 ${isMinimized ? "rotate-180" : ""}`} />
+            <ChevronDown size={16} style={{ color: "#28483f" }} className={isMinimized ? "rotate-180" : ""} />
           </button>
         </div>
       )}
@@ -262,7 +262,7 @@ const ChatInterface: React.FC = () => {
                 href="https://askask.no" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="font-light"
+                className="font-normal"
                 style={{ color: "#28483F" }}
               >
                 Ask
