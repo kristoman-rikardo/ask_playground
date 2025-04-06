@@ -174,92 +174,113 @@ const ChatInterface: React.FC = () => {
   };
 
   return (
-    <div 
-      className="w-full mx-auto bg-transparent shadow-none overflow-hidden transition-all font-sans flex flex-col"
-      style={{ height: '100%', maxHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif" }}
-    >
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Control buttons - only visible when not minimized */}
-        <div className="absolute top-2 right-2 z-50 flex space-x-2" style={{ 
-          opacity: isMinimized ? 0 : 1,
-          transition: 'opacity 0.2s ease',
-          pointerEvents: isMinimized ? 'none' : 'auto'
-        }}>
+    <>
+      {/* Kontrollknapper - vises kun når chatten har vært i bruk */}
+      {conversationStarted && (
+        <div className="fixed top-4 right-4 z-50 flex space-x-2">
           <button
             onClick={handleRestartClick}
             className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
             aria-label="Restart chat"
           >
-            <X size={16} />
+            <X size={16} className="text-gray-600" />
           </button>
           <button
             onClick={toggleMinimize}
             className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
             aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
           >
-            <ChevronDown size={16} />
+            <ChevronDown size={16} className={`text-gray-600 ${isMinimized ? "rotate-180" : ""}`} />
           </button>
         </div>
-
-        <div 
-          ref={messagesContainerRef}
-          className="flex-1 overflow-hidden transition-all duration-300 flex flex-col font-sans relative"
-          style={{ 
-            opacity: conversationStarted && !isMinimized ? 1 : 0,
-            flexGrow: isMinimized ? 0 : 1,
-            height: isMinimized ? '0px' : 'auto',
-            minHeight: conversationStarted && !isMinimized ? '200px' : '0px',
-            maxHeight: isMinimized ? '0px' : 'calc(100vh - 120px)',
-            fontFamily: "'Inter', system-ui, sans-serif"
-          }}
-        >
-          <ChatMessages 
-            messages={messages} 
-            isTyping={isTyping}
-            stepsTotal={stepsTotal}
-            currentStepIndex={currentStepIndex} 
-            textStreamingStarted={textStreamingStarted}
-            carouselData={carouselData}
-            onButtonClick={handleButtonClick}
-          />
-        </div>
-        
-        {/* Scroll down indicator - only visible when not minimized */}
-        {!isMinimized && (
-          <ScrollDownIndicator
-            visible={showScrollButton}
-            onClick={scrollToBottom}
-          />
-        )}
-        
-        {/* Bottom container that stays together when minimized */}
-        <div className={`mt-auto sticky bottom-0 bg-transparent transition-all duration-300 ${isMinimized ? 'rounded-2xl' : ''}`}>
-          {/* ButtonPanel - always visible */}
-          <ButtonPanel 
-            buttons={buttons} 
-            isLoading={isButtonsLoading} 
-            onButtonClick={handleButtonClick} 
-            className={isMinimized ? 'mb-0 pb-0' : ''}
-            isMinimized={isMinimized || isFullyMinimized}
-          />
+      )}
+      
+      <div 
+        className="w-full mx-auto bg-transparent shadow-none overflow-hidden transition-all font-sans flex flex-col"
+        style={{ 
+          height: isFullyMinimized ? 'auto' : '100%', 
+          maxHeight: isFullyMinimized ? 'auto' : '100vh', 
+          fontFamily: "'Inter', system-ui, sans-serif"
+        }}
+      >
+        <div className={`flex-1 flex flex-col overflow-hidden relative ${isFullyMinimized ? 'h-0 m-0 p-0' : ''}`}>
+          <div 
+            ref={messagesContainerRef}
+            className="flex-1 overflow-hidden transition-all duration-300 flex flex-col font-sans relative"
+            style={{ 
+              display: isMinimized ? 'none' : 'flex',
+              height: isMinimized ? '0' : 'auto',
+              minHeight: conversationStarted && !isMinimized ? '200px' : '0',
+              maxHeight: isMinimized ? '0' : 'calc(100vh - 120px)',
+              overflow: 'hidden',
+              fontFamily: "'Inter', system-ui, sans-serif"
+            }}
+          >
+            <ChatMessages 
+              messages={messages} 
+              isTyping={isTyping}
+              stepsTotal={stepsTotal}
+              currentStepIndex={currentStepIndex} 
+              textStreamingStarted={textStreamingStarted}
+              carouselData={carouselData}
+              onButtonClick={handleButtonClick}
+            />
+          </div>
           
-          <ChatInputArea 
-            onSendMessage={handleSendMessage} 
-            onInputFocus={handleInputFocus}
-            isMinimized={isMinimized || isFullyMinimized}
-            onMaximize={expandChat}
-          />
+          {/* Scroll down indicator - only visible when not minimized */}
+          {!isMinimized && (
+            <ScrollDownIndicator
+              visible={showScrollButton}
+              onClick={scrollToBottom}
+            />
+          )}
+          
+          {/* Bottom container that stays together when minimized */}
+          <div className={`${isMinimized ? 'mt-0' : 'mt-auto'} sticky bottom-0 bg-transparent transition-all duration-300 ${isMinimized ? 'rounded-2xl' : ''}`}>
+            {/* ButtonPanel - visible in minimized but not fully minimized state */}
+            {(!isFullyMinimized) && (
+              <ButtonPanel 
+                buttons={buttons} 
+                isLoading={isButtonsLoading} 
+                onButtonClick={handleButtonClick} 
+                className={isMinimized ? 'mb-0 pb-0' : ''}
+                isMinimized={isMinimized}
+                onMaximize={expandChat}
+              />
+            )}
+            
+            <ChatInputArea 
+              onSendMessage={handleSendMessage} 
+              onInputFocus={handleInputFocus}
+              isMinimized={isMinimized || isFullyMinimized}
+              onMaximize={expandChat}
+            />
+            
+            {/* Disclaimer under innskrivingsfeltet - alltid synlig */}
+            <div className="w-full text-center text-xs text-gray-400 pt-0 mt-0 mb-1 font-light">
+              <a 
+                href="https://askask.no" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-light"
+                style={{ color: "#28483F" }}
+              >
+                Ask
+              </a>
+              <span> is powered by AI. For reference only.</span>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Rating Dialog */}
-      <RatingDialog
-        open={isRatingDialogOpen}
-        onOpenChange={setIsRatingDialogOpen}
-        onSubmit={handleRatingSubmit}
-        onCancel={handleRatingCancel}
-      />
-    </div>
+        {/* Rating Dialog */}
+        <RatingDialog 
+          open={isRatingDialogOpen} 
+          onOpenChange={setIsRatingDialogOpen}
+          onSubmit={handleRatingSubmit}
+          onCancel={handleRatingCancel}
+        />
+      </div>
+    </>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface Button {
   name: string;
@@ -11,6 +11,13 @@ interface ButtonPanelProps {
   onButtonClick: (button: Button) => void;
   className?: string;
   isMinimized?: boolean;
+  onMaximize?: () => void;
+}
+
+interface ButtonRow {
+  yPosition: number;
+  buttons: Button[];
+  totalWidth: number;
 }
 
 const ButtonPanel: React.FC<ButtonPanelProps> = ({
@@ -18,12 +25,20 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   isLoading,
   onButtonClick,
   className = '',
-  isMinimized = false
+  isMinimized = false,
+  onMaximize
 }) => {
+  const [sortedButtons, setSortedButtons] = useState<Button[]>([]);
+  const [isVisible, setIsVisible] = useState(false);
+  const buttonContainerRef = useRef<HTMLDivElement>(null);
+  const prevButtonsRef = useRef<string>("");
+  const sortingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Sparkle SVG icon for buttons
   const SparkleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-      fill="currentColor" className="size-5 inline-block ml-1 text-gray-400">
+      fill="currentColor" className="size-5 inline-block ml-1" 
+      style={{ color: "#28483F", filter: "drop-shadow(0 0 3px rgba(200, 200, 200, 0.7))" }}>
       <path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785
               l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238
               1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192
@@ -58,13 +73,155 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
 
   // Handle button click with scrolling
   const handleButtonClick = (button: Button) => {
+    // Åpne chatten hvis den er minimert
+    if (isMinimized && onMaximize) {
+      onMaximize();
+    }
     onButtonClick(button);
   };
 
+  // Sorter knappene basert på linjehøyde (Y-posisjon) og linjebredde
+  const sortButtonsByRowWidth = () => {
+    if (!buttonContainerRef.current || buttons.length === 0) return;
+    
+    // Vent til neste animasjonsframe for å sikre at DOM-målinger er klare
+    requestAnimationFrame(() => {
+      // Finn alle knapper i containeren
+      const buttonElements = buttonContainerRef.current?.querySelectorAll('button.choice-button');
+      if (!buttonElements || buttonElements.length === 0) {
+        // Prøv igjen etter en kort delay hvis knappene ikke er rendret ennå
+        setTimeout(sortButtonsByRowWidth, 50);
+        return;
+      }
+      
+      // Samle informasjon om hver knapp
+      const buttonInfos: {button: Button, element: Element, rect: DOMRect}[] = [];
+      
+      buttonElements.forEach((element, index) => {
+        if (index < buttons.length) {
+          const rect = element.getBoundingClientRect();
+          buttonInfos.push({
+            button: buttons[index],
+            element,
+            rect
+          });
+        }
+      });
+      
+      // Grupper knapper etter Y-posisjon (samme linje)
+      const rows: ButtonRow[] = [];
+      
+      buttonInfos.forEach(({ button, rect }) => {
+        const yPos = Math.round(rect.y); // Avrund for å håndtere små forskjeller
+        
+        // Finn eksisterende rad eller lag ny
+        let row = rows.find(r => Math.abs(r.yPosition - yPos) < 3);
+        
+        if (row) {
+          row.buttons.push(button);
+          row.totalWidth += rect.width;
+        } else {
+          rows.push({
+            yPosition: yPos,
+            buttons: [button],
+            totalWidth: rect.width
+          });
+        }
+      });
+      
+      // Sorter rader etter bredde (bredeste nederst)
+      rows.sort((a, b) => a.totalWidth - b.totalWidth);
+      
+      // Flat ut til sortert knappeliste
+      const newSortedButtons = rows.flatMap(row => row.buttons);
+      
+      // Oppdater sorterte knapper
+      setSortedButtons(newSortedButtons);
+      
+      // Vis knappene etter sortering
+      setTimeout(() => {
+        setIsVisible(true);
+      }, 50);
+    });
+  };
+  
+  // Kjør sortering når knappene endres
+  useEffect(() => {
+    // Generere en unik streng for knappene for å sjekke om de faktisk har endret seg
+    const buttonsKey = buttons.map(b => b.name).join('|');
+    
+    // Sjekk om knappene faktisk har endret seg
+    if (buttonsKey !== prevButtonsRef.current) {
+      prevButtonsRef.current = buttonsKey;
+      
+      // Når nye knapper ankommer
+      if (buttons.length > 0) {
+        // Skjul knapper under måling og sortering
+        setIsVisible(false);
+        
+        // Rydd opp tidligere timeout
+        if (sortingTimeoutRef.current) {
+          clearTimeout(sortingTimeoutRef.current);
+        }
+        
+        // Bruk en delay for å sikre at DOM har tid til å rendre knappene
+        sortingTimeoutRef.current = setTimeout(() => {
+          sortButtonsByRowWidth();
+        }, 50);
+      } else {
+        // Tilbakestill tilstand når det ikke er knapper
+        setSortedButtons([]);
+        setIsVisible(false);
+      }
+    }
+    
+    // Cleanup function
+    return () => {
+      if (sortingTimeoutRef.current) {
+        clearTimeout(sortingTimeoutRef.current);
+      }
+    };
+  }, [buttons]);
+  
+  // Håndter vindusendringer
+  useEffect(() => {
+    const handleResize = () => {
+      if (buttons.length > 0) {
+        // Skjul knapper under måling og sortering
+        setIsVisible(false);
+        
+        // Rydd opp tidligere timeout
+        if (sortingTimeoutRef.current) {
+          clearTimeout(sortingTimeoutRef.current);
+        }
+        
+        // Forsinkelse for å unngå for mange kall under resize
+        sortingTimeoutRef.current = setTimeout(() => {
+          sortButtonsByRowWidth();
+        }, 100);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (sortingTimeoutRef.current) {
+        clearTimeout(sortingTimeoutRef.current);
+      }
+    };
+  }, [buttons]);
+  
   // Button List component
   const ButtonList = () => (
-    <div className="flex flex-wrap gap-2 px-4 py-2 content-start">
-      {buttons.map((button, index) => (
+    <div 
+      ref={buttonContainerRef}
+      className="flex flex-wrap gap-2 px-4 py-2 content-start"
+      style={{ 
+        opacity: isVisible ? 1 : 0,
+        transition: 'opacity 0.2s ease-in-out',
+      }}
+    >
+      {(sortedButtons.length > 0 ? sortedButtons : buttons).map((button, index) => (
         <button 
           key={`button-${index}-${button.name.substring(0, 10)}`} 
           onClick={() => handleButtonClick(button)} 

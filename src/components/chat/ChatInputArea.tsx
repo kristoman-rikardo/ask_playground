@@ -93,7 +93,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             rounded-2xl bg-gray-50/90 
             border border-gray-200 
             shadow-sm hover:shadow-md 
-            focus:border-black focus:ring-2 focus:ring-gray-400 
+            focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#28483F] 
             active:translate-y-[1px]
             ${isFocused ? 'bg-white' : ''}
             ${isMinimized ? 'cursor-pointer' : ''}`} 
@@ -119,14 +119,15 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           ) : (
             <button 
               onClick={handleSend}
-              className={`p-1.5 bg-gray-300 text-gray-600 rounded-full 
+              className={`p-1.5 rounded-full 
                        transition-all duration-300 transform 
-                       hover:bg-gray-300 active:shadow-sm send-button-ripple
+                       hover:bg-opacity-80 active:shadow-sm send-button-ripple
                        focus:outline-none focus:ring-2 focus:ring-gray-400
                        ${isFocused ? 'scale-110' : 'scale-100'}`}
               aria-label="Send message"
+              style={{ backgroundColor: "#28483F" }}
             >
-              <ArrowRight size={14} className="transform transition-transform duration-300 -rotate-45" />
+              <ArrowRight size={14} className="transform transition-transform duration-300 -rotate-45 text-white" />
             </button>
           )}
         </div>
