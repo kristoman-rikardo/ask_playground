@@ -33,21 +33,28 @@ export default defineConfig(({ mode }) => ({
         chatWidget: path.resolve(__dirname, 'src/chatWidget.ts'),
       },
       output: {
-        // Konfigurer output filnavn
         entryFileNames: (chunkInfo) => {
-          // Beholde distinkte filnavn for hver inngangs-fil
           if (chunkInfo.name === 'injectionScript') {
             return 'assets/injectionScript.js';
           }
           if (chunkInfo.name === 'chatWidget') {
             return 'assets/chatWidget.js';
           }
-          return 'assets/[name]-[hash].js';
+          if (chunkInfo.name === 'main') {
+            return 'assets/main.js';
+          }
+          return 'assets/[name].js';
         },
-        // Konfigurer chunk filnavn
-        chunkFileNames: 'assets/[name]-[hash].js',
-        // Konfigurer asset filnavn
-        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name === 'chatWidget.css') {
+            return 'assets/chatWidget.css';
+          }
+          if (assetInfo.name === 'main.css') {
+            return 'assets/main.css';
+          }
+          return 'assets/[name][extname]';
+        }
       },
     },
     // Minifiser ikke i utviklingsmodus
