@@ -20,7 +20,7 @@ declare global {
     chatStylesUrl: 'https://ask1proto-21.vercel.app/assets/main.css',
     position: 'bottom-right', // 'bottom-right', 'bottom-left', 'top-right', 'top-left'
     initialDelay: 500, // ms før chatten lastes
-    apiEndpoint: 'https://ask1proto-21.vercel.app', // API endepunkt for meldinger
+    apiEndpoint: 'https://general-runtime.voiceflow.com', // API endepunkt for meldinger
   };
 
   // Opprett container for chat widget
