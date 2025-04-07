@@ -111,7 +111,7 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
                     aria-label={`Rate as ${option.label}`}
                   >
                     <Icon 
-                      size={38} 
+                      size={27} 
                       className={`transition-all stroke-2 ${
                         (hoveredRating === option.value || rating === option.value) 
                           ? option.color

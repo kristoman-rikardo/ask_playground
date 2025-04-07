@@ -1,0 +1,47 @@
+# Netlify konfigurasjonsfil
+# Docs: https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  # Katalogen med produksjonsbygget
+  publish = "dist"
+  # Bygg-kommando
+  command = "npm run build"
+
+# Omdirigering for SPA (Single Page Application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Cache-kontroll for bedre ytelse
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# CORS-innstillinger for å tillate injeksjon på eksterne nettsteder
+[[headers]]
+  for = "/injectionScript.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET"
+    Access-Control-Allow-Headers = "X-Requested-With, Content-Type, Accept"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/chatWidget.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET"
+    Access-Control-Allow-Headers = "X-Requested-With, Content-Type, Accept"
+    Cache-Control = "public, max-age=3600" 
