@@ -2,9 +2,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
 // Check for environment variables and provide fallbacks
-const RUNTIME_API_KEY = import.meta.env.VITE_VOICEFLOW_API_KEY || 'VF.DM.67d466872e0fa2e87529d165.jvSM4GSGdSCXVn2z';
+const RUNTIME_API_KEY = import.meta.env.VITE_VOICEFLOW_API_KEY || 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv';
 const RUNTIME_ENDPOINT = 'https://general-runtime.voiceflow.com';
-const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID || '67d1ad605c5916e15e7ceb94';
+const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID || '67f291952280faa3b19ddfcb';
 
 // Generate a user session ID
 const USER_ID = 'user_' + uuidv4();
