@@ -1,4 +1,12 @@
 hmmm
+
+
+AI made this guide but it doesn't work....
+
+Plz help
+
+
+
 # Chat Widget Deployment Guide
 
 This guide explains how to deploy and integrate the chat widget into any website.
