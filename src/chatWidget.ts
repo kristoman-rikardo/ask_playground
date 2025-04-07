@@ -6,7 +6,7 @@
 // Importér nødvendige avhengigheter
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import { App } from './App';
 
 // Definér typer
 interface ChatWidgetConfig {

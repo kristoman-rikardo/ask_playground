@@ -16,8 +16,8 @@ declare global {
   // Konfigurasjon som kan tilpasses
   const config = {
     containerId: 'chat-widget-container',
-    chatScriptUrl: 'https://askask1.vercel.app/assets/App.js',
-    chatStylesUrl: 'https://askask1.vercel.app/assets/main.css',
+    chatScriptUrl: 'https://askask12.vercel.app/assets/App.js',
+    chatStylesUrl: 'https://askask12.vercel.app/assets/main.css',
     position: 'bottom-right', // 'bottom-right', 'bottom-left', 'top-right', 'top-left'
     initialDelay: 500, // ms før chatten lastes
     apiEndpoint: 'https://general-runtime.voiceflow.com'
