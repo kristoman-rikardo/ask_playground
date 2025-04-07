@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => ({
         chatWidget: path.resolve(__dirname, 'src/chatWidget.ts'),
       },
       output: {
+        format: 'es',
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.name === 'injectionScript') {
             return 'assets/injectionScript.js';
