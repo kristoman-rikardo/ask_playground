@@ -16,8 +16,8 @@ declare global {
   // Konfigurasjon som kan tilpasses
   const config = {
     containerId: 'chat-widget-container',
-    chatScriptUrl: 'https://ask1proto-21.vercel.app/assets/chatWidget.js',
-    chatStylesUrl: 'https://ask1proto-21.vercel.app/assets/chatWidget.css',
+    chatScriptUrl: 'https://ask1proto-21.vercel.app/assets/App.js',
+    chatStylesUrl: 'https://ask1proto-21.vercel.app/assets/main.css',
     position: 'bottom-right', // 'bottom-right', 'bottom-left', 'top-right', 'top-left'
     initialDelay: 500, // ms før chatten lastes
     apiEndpoint: 'https://ask1proto-21.vercel.app', // API endepunkt for meldinger
