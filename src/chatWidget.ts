@@ -20,7 +20,7 @@ interface ChatWidgetConfig {
 
 // Klasse for ChatWidget
 class ChatWidget {
-  private config: ChatWidgetConfig;s
+  private config: ChatWidgetConfig;
   private container: HTMLElement | null = null;
 
   constructor() {
