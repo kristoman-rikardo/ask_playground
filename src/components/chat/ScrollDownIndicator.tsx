@@ -51,7 +51,7 @@ const ScrollDownIndicator: React.FC<ScrollDownIndicatorProps> = ({ onClick, visi
         >
           <ChevronDown 
             size={12} 
-            className="text-gray-800"
+            className="text-[#28483f]"
           />
         </button>
       </div>

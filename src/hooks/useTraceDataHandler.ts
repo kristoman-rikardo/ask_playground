@@ -1,4 +1,3 @@
-
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -73,7 +72,6 @@ export function useTraceDataHandler(
   const handleUserMessage = () => {
     receivedFirstTraceRef.current = false;
     textTraceManager.resetTextTracking();
-    setCarouselData(null);
     
     // Begin in thinking phase
     loadingPhaseManager.switchToThinkingPhase();

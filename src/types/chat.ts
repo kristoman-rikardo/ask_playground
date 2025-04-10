@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   type: 'user' | 'agent';
@@ -8,5 +7,19 @@ export interface Message {
 
 export interface Button {
   name: string;
-  request: any;
+  request: {
+    type?: string;
+    payload?: {
+      actions?: Array<{
+        type: string;
+        payload?: {
+          url?: string;
+          [key: string]: any;
+        };
+        [key: string]: any;
+      }>;
+      [key: string]: any;
+    };
+    [key: string]: any;
+  };
 }

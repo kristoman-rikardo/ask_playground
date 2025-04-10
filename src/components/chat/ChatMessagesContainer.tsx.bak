@@ -99,7 +99,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     
     // Update previous message count
     prevMessagesLengthRef.current = messages.length;
-  }, [messages, isTyping, shouldAutoScroll]);
+  }, [messages, isTyping, carouselData, shouldAutoScroll]);
 
   // Listen for scroll events to show/hide scroll buttons
   useEffect(() => {
@@ -218,36 +218,10 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
       <div className="flex flex-col space-y-2 w-full px-4 pt-2 pb-0 font-sans">
         <TopScrollIndicator />
         
-        {messages.map((message, index) => {
+        {messages.length > 0 ? messages.map((message, index) => {
           const isLast = index === messages.length - 1;
           const isUser = message.type === 'user';
           
-          // Check if this is a carousel message
-          const isCarouselMessage = carouselData && carouselData.messageId === message.id;
-          
-          if (isCarouselMessage) {
-            // Render the carousel in this message's place
-            return (
-              <div 
-                key={message.id}
-                id={`message-${message.id}`}
-                ref={isLast ? lastMessageRef : null}
-                className="flex justify-start w-full relative group my-5"
-              >
-                <div
-                  className="max-w-[100%] self-start px-1 cursor-pointer"
-                  style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                >
-                  <CarouselMessage 
-                    cards={carouselData.cards} 
-                    onButtonClick={onButtonClick} 
-                  />
-                </div>
-              </div>
-            );
-          }
-          
-          // Otherwise render a regular message
           return (
             <MessageItem
               key={message.id}
@@ -259,7 +233,17 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
               lastMessageRef={lastMessageRef}
             />
           );
-        })}
+        }) : null}
+
+        {/* Karusell uten bakgrunn, direkte i meldingsstrømmen */}
+        {carouselData && onButtonClick && (
+          <div className="w-full mb-2 px-0">
+            <CarouselMessage 
+              cards={carouselData.cards} 
+              onButtonClick={onButtonClick} 
+            />
+          </div>
+        )}
         
         <AgentTypingIndicator 
           isTyping={isTyping} 

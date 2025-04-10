@@ -10,14 +10,14 @@
 
 /* Prevent body scrolling for iframe */
 body {
-  overflow: hidden;
+  /* Only apply overflow: hidden when running in standalone mode, not when embedded */
   font-family: 'Inter', system-ui, sans-serif;
 }
 
 /* Ensure root is full height and doesn't scroll */
 #root {
   height: 100vh;
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   font-family: 'Inter', system-ui, sans-serif;

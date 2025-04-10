@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, MemoryRouter } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import IframeReceiver from "./components/IframeReceiver";
+// import IframeReceiver from "./components/IframeReceiver";
 
 const queryClient = new QueryClient();
 
@@ -21,16 +21,14 @@ export const App = ({ apiEndpoint, onClose, onMaximize }: AppProps) => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <IframeReceiver>
-          <Toaster />
-          <Sonner />
-          <MemoryRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </MemoryRouter>
-        </IframeReceiver>
+        <Toaster />
+        <Sonner />
+        <MemoryRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </MemoryRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
@@ -39,17 +37,15 @@ export const App = ({ apiEndpoint, onClose, onMaximize }: AppProps) => {
 // export const App = () => (
 //   <QueryClientProvider client={queryClient}>
 //     <TooltipProvider>
-//       <IframeReceiver>
-//         <Toaster />
-//         <Sonner />
-//         <BrowserRouter>
-//           <Routes>
-//             <Route path="/" element={<Index />} />
-//             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-//             <Route path="*" element={<NotFound />} />
-//           </Routes>
-//         </BrowserRouter>
-//       </IframeReceiver>
+//       <Toaster />
+//       <Sonner />
+//       <BrowserRouter>
+//         <Routes>
+//           <Route path="/" element={<Index />} />
+//           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+//           <Route path="*" element={<NotFound />} />
+//         </Routes>
+//       </BrowserRouter>
 //     </TooltipProvider>
 //   </QueryClientProvider>
 // );

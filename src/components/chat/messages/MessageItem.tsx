@@ -25,7 +25,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   const [isActionsVisible, setIsActionsVisible] = useState(false);
   
   const processContent = useCallback((content: string) => {
-    if (!content) return <div className="h-5 w-20 bg-gray-200/50 rounded animate-pulse"></div>;
+    if (!content) return null;
     return <div dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }} />;
   }, []);
 

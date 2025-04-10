@@ -1,4 +1,3 @@
-
 import { useRef } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -78,10 +77,26 @@ export function useTextAndChoiceHandler(
     if (trace.payload && trace.payload.cards && setCarouselData) {
       console.log('🔵 Processing carousel with', trace.payload.cards.length, 'cards');
       setIsTyping(false);
+      
+      // Create a special message ID for this carousel
+      const carouselMsgId = `carousel-${Date.now()}`;
+      messageSourceTracker.current[carouselMsgId] = 'carousel';
+      
+      // Important: Add an actual message to the chat for the carousel
+      // This ensures it appears in the normal message flow
+      // We use empty content because the carousel UI will replace it
+      addAgentMessage('', false, carouselMsgId);
+      
+      // Set carousel data with a reference to the message we just created
+      // This links the carousel to its message in the chat flow
       setCarouselData({
         layout: trace.payload.layout,
-        cards: trace.payload.cards
+        cards: trace.payload.cards,
+        messageId: carouselMsgId,
+        timestamp: Date.now()
       });
+      
+      console.log('✅ Added carousel message to chat with ID:', carouselMsgId);
     }
   };
 

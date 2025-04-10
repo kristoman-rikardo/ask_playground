@@ -29,12 +29,12 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
   const [showTopIndicator, setShowTopIndicator] = useState(false);
   const wasMinimizedRef = useRef(isMinimized);
   
-  // Bruk IntersectionObserver for å detektere når bunnen er synlig
+  // Use IntersectionObserver to detect when bottom is visible
   const { ref: bottomRef, inView: isBottomVisible } = useInView({
     threshold: 0.1,
   });
   
-  // Memoized hjelpefunksjoner
+  // Memoized helper functions
   const isNearBottom = useCallback(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return true;
@@ -55,7 +55,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
     }
   }, []);
 
-  // Håndter når chatten åpnes/lukkes
+  // Handle chat opening/closing
   useEffect(() => {
     if (wasMinimizedRef.current && !isMinimized) {
       requestAnimationFrame(() => {
@@ -65,7 +65,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
     wasMinimizedRef.current = isMinimized;
   }, [isMinimized, scrollToBottom]);
 
-  // Håndter scroll-events
+  // Handle scroll events
   useEffect(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return;
@@ -86,7 +86,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
     return () => chatBox.removeEventListener('scroll', handleScroll);
   }, [shouldAutoScroll, isNearBottom]);
 
-  // Håndter auto-scroll
+  // Handle auto-scroll
   useEffect(() => {
     const hasNewMessage = messages.length > 0;
     const isStreaming = messages.some(m => m.isPartial);
@@ -96,9 +96,9 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
         scrollToBottom(hasNewMessage ? 'smooth' : 'auto');
       });
     }
-  }, [messages, isTyping, carouselData, shouldAutoScroll, scrollToBottom]);
+  }, [messages, isTyping, shouldAutoScroll, scrollToBottom]);
 
-  // Reset auto-scroll når meldinger nullstilles
+  // Reset auto-scroll when messages are reset
   useEffect(() => {
     if (messages.length === 0) {
       setShouldAutoScroll(true);
@@ -106,7 +106,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
     }
   }, [messages.length]);
 
-  // TopScrollIndicator komponent
+  // Top scroll indicator component
   const TopScrollIndicator = memo(() => (
     <div 
       className={`w-full flex items-center justify-center transition-all duration-300 ${showTopIndicator ? 'opacity-100' : 'opacity-0'}`}
@@ -128,6 +128,9 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
 
   TopScrollIndicator.displayName = 'TopScrollIndicator';
 
+  // Determine if the carousel is attached to a message in the current message list
+  const carouselAttachedToMessage = carouselData && messages.some(msg => msg.id === carouselData.messageId);
+
   return (
     <div 
       ref={chatBoxRef} 
@@ -146,6 +149,32 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
           const isLast = index === messages.length - 1;
           const isUser = message.type === 'user';
           
+          // Check if this is the message that should display the carousel
+          const shouldShowCarousel = carouselData && carouselData.messageId === message.id;
+          
+          if (shouldShowCarousel) {
+            // This message should show a carousel instead of regular content
+            return (
+              <div 
+                key={message.id} 
+                id={`message-${message.id}`}
+                ref={isLast ? lastMessageRef : null}
+                className="flex justify-start w-full relative group"
+              >
+                <div
+                  className="max-w-[100%] self-start px-2 cursor-pointer"
+                  style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                >
+                  <CarouselMessage 
+                    cards={carouselData.cards} 
+                    onButtonClick={onButtonClick} 
+                  />
+                </div>
+              </div>
+            );
+          }
+          
+          // Otherwise, render as a normal message
           return (
             <MessageItem
               key={message.id}
@@ -158,15 +187,6 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
             />
           );
         })}
-
-        {carouselData && onButtonClick && (
-          <div className="w-full mb-2 px-0">
-            <CarouselMessage 
-              cards={carouselData.cards} 
-              onButtonClick={onButtonClick} 
-            />
-          </div>
-        )}
         
         <AgentTypingIndicator 
           isTyping={isTyping} 

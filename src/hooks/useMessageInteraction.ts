@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { vfSendMessage, vfSendAction } from '@/lib/voiceflow';
 import { Button, Message } from '@/types/chat';
@@ -37,6 +36,9 @@ export function useMessageInteraction(
     setButtons([]);
     setIsTyping(true);
     setIsButtonsLoading(true);
+    
+    // Don't reset message tracking here - that would cause carousels to be lost
+    // Instead, only reset the message source tracking to preserve carousel data in the messages
     resetMessageSourceTracker();
 
     try {
@@ -57,6 +59,9 @@ export function useMessageInteraction(
     setButtons([]);
     setIsTyping(true);
     setIsButtonsLoading(true);
+    
+    // Don't reset message tracking here - that would cause carousels to be lost
+    // Instead, only reset the message source tracking to preserve carousel data in the messages
     resetMessageSourceTracker();
 
     try {

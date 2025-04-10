@@ -135,6 +135,22 @@ const ChatInterface: React.FC = () => {
     }
   }, [isTyping, showScrollButton]);
 
+  // Ensure carouselData persists through message changes
+  useEffect(() => {
+    // When messages change, don't automatically reset carousel data
+    // This allows carousels to stay in the chat history
+    if (messages.length > 0 && carouselData) {
+      // Check if the carousel message still exists in the message list
+      const carouselMessageExists = messages.some(msg => msg.id === carouselData.messageId);
+      
+      // If the carousel message has been removed (chat reset), then clear the carousel data
+      if (!carouselMessageExists) {
+        console.log('Carousel message no longer exists, resetting carousel data');
+        // Don't need to do anything here as the carousel message is gone
+      }
+    }
+  }, [messages, carouselData]);
+
   // Add custom scrollbar style
   useEffect(() => {
     const styleElement = document.createElement('style');
@@ -175,34 +191,41 @@ const ChatInterface: React.FC = () => {
 
   return (
     <>
-      {/* Kontrollknapper - vises kun når chatten har vært i bruk */}
-      {conversationStarted && !isMinimized && !isFullyMinimized && (
-        <div className="fixed top-4 right-4 z-50 flex space-x-2">
-          <button
-            onClick={handleRestartClick}
-            className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
-            aria-label="Restart chat"
-          >
-            <X size={16} style={{ color: "#28483f" }} />
-          </button>
-          <button
-            onClick={toggleMinimize}
-            className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
-            aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
-          >
-            <ChevronDown size={16} style={{ color: "#28483f" }} className={isMinimized ? "rotate-180" : ""} />
-          </button>
-        </div>
-      )}
-      
       <div 
-        className="w-full mx-auto bg-transparent shadow-none overflow-hidden transition-all font-sans flex flex-col"
+        className="w-full mx-auto bg-transparent shadow-none overflow-hidden transition-all font-sans flex flex-col relative"
         style={{ 
           height: isFullyMinimized ? 'auto' : '100%', 
           maxHeight: isFullyMinimized ? 'auto' : '100vh', 
           fontFamily: "'Inter', system-ui, sans-serif"
         }}
       >
+        {/* Control buttons - only shown when chat has been used */}
+        {conversationStarted && !isMinimized && !isFullyMinimized && (
+          <div 
+            className="absolute z-50 flex space-x-2" 
+            style={{ 
+              top: '-10px', 
+              right: '10px',
+              transform: 'translateY(-100%)'
+            }}
+          >
+            <button
+              onClick={handleRestartClick}
+              className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
+              aria-label="Restart chat"
+            >
+              <X size={16} className="text-[#28483f]" />
+            </button>
+            <button
+              onClick={toggleMinimize}
+              className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
+              aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
+            >
+              <ChevronDown size={16} className={`text-[#28483f] ${isMinimized ? "rotate-180" : ""}`} />
+            </button>
+          </div>
+        )}
+        
         <div className={`flex-1 flex flex-col overflow-hidden relative ${isFullyMinimized ? 'h-0 m-0 p-0' : ''}`}>
           <div 
             ref={messagesContainerRef}

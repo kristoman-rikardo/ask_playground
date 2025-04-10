@@ -4,7 +4,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button as UIButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 
 interface CarouselCard {
   id: string;
@@ -77,13 +77,50 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
   
   // Calculate card width based on container width and slides per view
   const cardWidth = containerWidth > 0 
-    ? Math.floor((containerWidth - (slidesPerView * 7)) / slidesPerView) - 3
-    : slidesPerView === 1 ? 126 : 112;
+    ? Math.floor((containerWidth - (slidesPerView * 20)) / slidesPerView) - 8 // Increased spacing between cards
+    : slidesPerView === 1 ? 170 : 150;
+    
+  // Helper function to check if button is a Buy Now / external link button
+  const isExternalLinkButton = (button: Button) => {
+    return (
+      button.name === "Buy Now" || 
+      (button.request?.type === "action" && 
+       button.request.payload?.actions?.some(action => action.type === "open_url"))
+    );
+  };
+  
+  // Helper function to extract URL from button data
+  const getButtonUrl = (button: Button) => {
+    if (button.request?.type === "action") {
+      const openUrlAction = button.request.payload?.actions?.find(action => action.type === "open_url");
+      if (openUrlAction && openUrlAction.payload?.url) {
+        return openUrlAction.payload.url;
+      }
+    }
+    return null;
+  };
+  
+  // Function to handle button clicks
+  const handleButtonClick = (button: Button, event: React.MouseEvent) => {
+    // Check if this is an external link button
+    if (isExternalLinkButton(button)) {
+      const url = getButtonUrl(button);
+      if (url) {
+        // Open the URL in a new tab
+        window.open(url, '_blank');
+        // Focus on the newly opened tab
+        window.focus();
+      }
+    }
+    
+    // Always call the original onButtonClick for analytics or other processing
+    onButtonClick(button);
+  };
 
   return (
     <div 
       ref={containerRef}
-      className={cn("w-full max-w-full", className)}
+      className={cn("w-full max-w-full mt-2 mb-3 pl-2", className)}
     >
       <Carousel 
         className="w-full mx-auto" 
@@ -94,11 +131,11 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
           loop: false,
         }}
       >
-        <CarouselContent className={cards.length === 1 ? "flex justify-start" : "flex"}>
-          {cards.map((card) => (
+        <CarouselContent className={`${cards.length === 1 ? "flex justify-start" : "flex"} gap-3 pl-1`}>
+          {cards.map((card, index) => (
             <CarouselItem 
               key={card.id || card.title} 
-              className={`px-1 ${
+              className={`px-2 ${
                 cards.length === 1 && slidesPerView > 1 
                   ? 'basis-1/2' 
                   : slidesPerView === 1 
@@ -106,22 +143,23 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
                     : slidesPerView === 2 
                       ? 'basis-1/2' 
                       : 'basis-1/3'
-              }`}
+              } ${index === 0 ? 'ml-1' : ''}`}
             >
               <Card 
-                className="border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col shadow-sm hover:shadow-md transition-shadow font-sans" 
+                className="border border-gray-200 rounded-lg overflow-hidden h-full flex flex-col shadow-sm hover:shadow-md transition-shadow font-sans" 
                 style={{ 
                   width: cardWidth > 0 ? cardWidth : undefined,
                   maxWidth: '100%',
                   margin: cards.length === 1 ? '0' : '0 auto',
-                  fontFamily: "'Inter', system-ui, sans-serif"
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  backgroundColor: '#fafafa'
                 }}
               >
                 {card.imageUrl && (
                   <div 
                     className="relative w-full overflow-hidden" 
                     style={{ 
-                      paddingTop: '110%',
+                      paddingTop: '70%', // Reduced height for better fit
                       position: 'relative' 
                     }}
                   >
@@ -133,32 +171,82 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
                     />
                   </div>
                 )}
-                <CardHeader className="p-1 pb-0.5 flex-none">
+                <CardHeader className="p-2 pb-1 flex-none">
                   <CardTitle 
-                    className="font-medium truncate text-xs"
+                    className="font-medium truncate text-sm"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
                     {card.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-1 pt-0 flex-grow">
+                <CardContent className="p-2 pt-0 flex-grow">
                   <CardDescription 
-                    className="line-clamp-2 text-2xs"
+                    className="line-clamp-2 text-xs"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
                     {card.description.text}
                   </CardDescription>
                 </CardContent>
                 {card.buttons && card.buttons.length > 0 && (
-                  <CardFooter className="p-1 pt-0 flex flex-wrap gap-1 flex-none">
-                    {card.buttons.map((button, idx) => (
-                      <CarouselButton
-                        key={idx}
-                        button={button}
-                        onClick={onButtonClick}
-                        slidesPerView={slidesPerView}
-                      />
-                    ))}
+                  <CardFooter className="p-2 pt-1 flex flex-wrap gap-2 flex-none justify-center">
+                    {card.buttons.map((button, idx) => {
+                      const isBuyNowButton = isExternalLinkButton(button);
+                      
+                      return (
+                        <UIButton
+                          key={idx}
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => handleButtonClick(button, e)}
+                          className="rounded-md transition-all duration-200 w-full text-xs h-9 px-4 py-2"
+                          style={{ 
+                            fontFamily: "'Inter', system-ui, sans-serif",
+                            fontWeight: 500,
+                            boxShadow: '1px 1px 3px rgba(0,0,0,0.12)',
+                            backgroundColor: isBuyNowButton ? '#28483F10' : '#f0f0f0',
+                            border: '1px solid #e0e0e0',
+                            transform: 'translateY(0)',
+                            transition: 'all 0.2s ease',
+                            position: 'relative',
+                            zIndex: 1
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = isBuyNowButton ? '#28483F20' : '#e8e8e8';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '2px 2px 4px rgba(0,0,0,0.18)';
+                            e.currentTarget.style.zIndex = '5';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = isBuyNowButton ? '#28483F10' : '#f0f0f0';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '1px 1px 3px rgba(0,0,0,0.12)';
+                            e.currentTarget.style.zIndex = '1';
+                          }}
+                        >
+                          <span 
+                            style={{ 
+                              fontSize: '0.85rem',
+                              fontFamily: "'Inter', system-ui, sans-serif",
+                              fontWeight: 500,
+                              lineHeight: 1.2,
+                              color: isBuyNowButton ? '#28483F' : 'inherit',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            {button.name}
+                            {isBuyNowButton && (
+                              <ExternalLink 
+                                size={14} 
+                                style={{ color: '#28483F', strokeWidth: 2 }} 
+                              />
+                            )}
+                          </span>
+                        </UIButton>
+                      );
+                    })}
                   </CardFooter>
                 )}
               </Card>
@@ -170,16 +258,16 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
             <CarouselPrevious 
               variant="outline" 
               size="sm"
-              className="left-0 shadow-sm border border-gray-200 bg-white/80 backdrop-blur-sm h-5 w-5 rounded-full"
+              className="left-3 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full"
             >
-              <ChevronLeft className="h-2.5 w-2.5 text-gray-500" />
+              <ChevronLeft className="h-3.5 w-3.5 text-gray-600" />
             </CarouselPrevious>
             <CarouselNext 
               variant="outline"
               size="sm" 
-              className="right-0 shadow-sm border border-gray-200 bg-white/80 backdrop-blur-sm h-5 w-5 rounded-full"
+              className="right-3 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full"
             >
-              <ChevronRight className="h-2.5 w-2.5 text-gray-500" />
+              <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
             </CarouselNext>
           </>
         )}
@@ -188,56 +276,6 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
   );
 });
 
-interface CarouselButtonProps {
-  button: Button;
-  onClick: (button: Button) => void;
-  slidesPerView: number;
-}
-
-const CarouselButton = memo(({ button, onClick, slidesPerView }: CarouselButtonProps) => (
-  <UIButton
-    variant="secondary"
-    size="sm"
-    onClick={() => onClick(button)}
-    className={`rounded-md transition-all duration-200 ${
-      slidesPerView === 1 
-        ? 'text-xs h-8 px-4 py-1.5' 
-        : 'text-2xs h-7 px-3 py-1'
-    }`}
-    style={{ 
-      fontFamily: "'Inter', system-ui, sans-serif",
-      fontWeight: 500,
-      boxShadow: '1px 1px 3px rgba(0,0,0,0.12)',
-      backgroundColor: '#f0f0f0',
-      border: '1px solid #e0e0e0',
-      transform: 'translateY(0)',
-      transition: 'all 0.2s ease',
-      position: 'relative',
-      zIndex: 1
-    }}
-    onMouseOver={(e) => {
-      e.currentTarget.style.backgroundColor = '#e8e8e8';
-      e.currentTarget.style.transform = 'translateY(-1px)';
-      e.currentTarget.style.boxShadow = '2px -1px 4px rgba(0,0,0,0.18)';
-      e.currentTarget.style.zIndex = '5';
-    }}
-    onMouseOut={(e) => {
-      e.currentTarget.style.backgroundColor = '#f0f0f0';
-      e.currentTarget.style.transform = 'translateY(0)';
-      e.currentTarget.style.boxShadow = '1px 1px 3px rgba(0,0,0,0.12)';
-      e.currentTarget.style.zIndex = '1';
-    }}
-  >
-    <span style={{ 
-      fontSize: slidesPerView === 1 ? '0.8rem' : '0.7rem',
-      fontFamily: "'Inter', system-ui, sans-serif" 
-    }}>
-      {button.name}
-    </span>
-  </UIButton>
-));
-
-CarouselButton.displayName = 'CarouselButton';
 CarouselMessage.displayName = 'CarouselMessage';
 
 export default CarouselMessage; 
