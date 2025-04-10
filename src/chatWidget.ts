@@ -1,3 +1,4 @@
+import './index.css'
 /**
  * Chat Widget
  * Dette er hoved-scriptet for chat-widgeten som injiseres på eksterne nettsider.
@@ -7,22 +8,27 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { App } from './App';
+import { createRoot } from 'react-dom/client';
 
 // Definér typer
 interface ChatWidgetConfig {
   containerId: string;
   apiEndpoint: string;
+  apiKey: string;
+  projectID: string;
 }
 
 // Klasse for ChatWidget
 class ChatWidget {
-  private config: ChatWidgetConfig;
+  private config: ChatWidgetConfig;s
   private container: HTMLElement | null = null;
 
   constructor() {
     this.config = {
       containerId: 'chat-widget-container',
-      apiEndpoint: '',
+      apiEndpoint: 'https://general-runtime.voiceflow.com',
+      apiKey: '',
+      projectID: '',
     };
   }
 
@@ -30,6 +36,14 @@ class ChatWidget {
    * Initialiserer chat-widgeten med tilpasset konfigurasjon
    */
   public init(userConfig: Partial<ChatWidgetConfig>) {
+
+    const { apiKey, projectID } = this.config;
+
+    if (!apiKey || !projectID) {
+      console.error(`[ChatWidget] Api key was not found.`);
+      return;
+    }
+
     // Kombiner brukerens konfigurasjon med standardverdier
     this.config = { ...this.config, ...userConfig };
     
@@ -50,14 +64,14 @@ class ChatWidget {
    */
   private render() {
     if (!this.container) return;
-    
-    ReactDOM.render(
+    const root = createRoot(this.container);
+    root.render(
       React.createElement(App, { 
         apiEndpoint: this.config.apiEndpoint,
         onClose: () => this.minimizeChat(),
         onMaximize: () => this.maximizeChat() 
       }),
-      this.container
+      // this.container
     );
   }
 

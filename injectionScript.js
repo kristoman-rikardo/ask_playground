@@ -9,7 +9,7 @@
     apiEndpoint: 'https://general-runtime.voiceflow.com'
   };
 
-  // Opprett container for chat widget
+  // Opprett containerfor chat widget
   function createContainer() {
     const container = document.createElement('div');
     container.id = config.containerId;
