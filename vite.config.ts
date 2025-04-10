@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   preview: {
-    allowedHosts: ['askproto.hupptech.com']
+    allowedHosts: []
   },
   plugins: [
     react(),
