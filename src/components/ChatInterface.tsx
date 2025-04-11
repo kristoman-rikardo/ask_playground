@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useChatSession } from '@/hooks/useChatSession';
 import ChatMessages from './chat/ChatMessages';
 import ChatInputArea from './chat/ChatInputArea';
@@ -6,6 +6,7 @@ import ButtonPanel from './ButtonPanel';
 import ScrollDownIndicator from './chat/ScrollDownIndicator';
 import { ChevronDown, Maximize2, X } from 'lucide-react';
 import RatingDialog from './RatingDialog';
+import { ChatContext } from '@/App';
 
 // Custom styles for scrollbar
 const scrollbarStyles = `
@@ -33,6 +34,8 @@ const ChatInterface: React.FC = () => {
     carouselData,
     resetSession
   } = useChatSession();
+  
+  const { isEmbedded, disableGlobalAutoScroll } = useContext(ChatContext);
   
   // Track if user has started conversation
   const [conversationStarted, setConversationStarted] = useState(false);
@@ -106,7 +109,7 @@ const ChatInterface: React.FC = () => {
       
       // Special handling for carousels
       if (carouselData) {
-        // Add extra scroll attempts for carousels with longer delays
+        // Add extra scroll attempt for carousels with longer delays
         // This ensures the carousel is fully rendered and visible
         setTimeout(() => {
           if (chatBoxElement) {
@@ -143,13 +146,17 @@ const ChatInterface: React.FC = () => {
 
   // Auto-scroll during typing for better view of streamed messages
   useEffect(() => {
-    if (isTyping && !showScrollButton) {
+    // Only auto-scroll if:
+    // 1. Text is typing AND
+    // 2. The user is near the bottom of the chat already AND
+    // 3. Either we're not in embedded mode OR global auto-scroll is not disabled
+    if (isTyping && !showScrollButton && (!isEmbedded || !disableGlobalAutoScroll)) {
       const interval = setInterval(() => {
         scrollToBottom('auto');
       }, 300);
       return () => clearInterval(interval);
     }
-  }, [isTyping, showScrollButton]);
+  }, [isTyping, showScrollButton, isEmbedded, disableGlobalAutoScroll]);
 
   // Ensure carouselData persists through message changes
   useEffect(() => {
@@ -169,7 +176,7 @@ const ChatInterface: React.FC = () => {
   
   // Special handling for carousel data changes to ensure they're fully visible
   useEffect(() => {
-    if (carouselData) {
+    if (carouselData && (!isEmbedded || !disableGlobalAutoScroll)) {
       // Use multiple scroll attempts with increasing delays
       // This ensures the carousel is properly rendered and visible
       const scrollDelays = [100, 300, 600, 1000];
@@ -177,7 +184,7 @@ const ChatInterface: React.FC = () => {
         setTimeout(() => scrollToBottom('auto'), delay);
       });
     }
-  }, [carouselData]);
+  }, [carouselData, isEmbedded, disableGlobalAutoScroll]);
 
   // Add custom scrollbar style
   useEffect(() => {

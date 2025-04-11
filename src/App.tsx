@@ -19,12 +19,15 @@ export interface ChatContextType {
       payload: Record<string, any>;
     }
   };
+  isEmbedded?: boolean;
+  disableGlobalAutoScroll?: boolean;
 }
 
 export const ChatContext = createContext<ChatContextType>({
   apiEndpoint: '',
   apiKey: '',
   projectID: '',
+  isEmbedded: false,
 });
 
 const queryClient = new QueryClient();
@@ -42,6 +45,7 @@ interface AppProps {
   onClose?: () => void;
   onMaximize?: () => void;
   isEmbedded?: boolean;
+  disableGlobalAutoScroll?: boolean;
 }
 
 export const App = ({ 
@@ -51,13 +55,21 @@ export const App = ({
   launchConfig,
   onClose, 
   onMaximize, 
-  isEmbedded = false 
+  isEmbedded = false,
+  disableGlobalAutoScroll = false
 }: AppProps) => {
   const queryClient = new QueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ChatContext.Provider value={{ apiEndpoint, apiKey, projectID, launchConfig }}>
+      <ChatContext.Provider value={{ 
+        apiEndpoint, 
+        apiKey, 
+        projectID, 
+        launchConfig, 
+        isEmbedded,
+        disableGlobalAutoScroll
+      }}>
         <TooltipProvider>
           <Toaster />
           <Sonner />

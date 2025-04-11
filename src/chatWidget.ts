@@ -22,6 +22,7 @@ interface ChatWidgetConfig {
       payload: Record<string, any>;
     }
   };
+  disableAutoScroll?: boolean;
 }
 
 // Klasse for ChatWidget
@@ -36,6 +37,7 @@ class ChatWidget {
       apiEndpoint: 'https://general-runtime.voiceflow.com',
       apiKey: '',
       projectID: '',
+      disableAutoScroll: true,
     };
   }
 
@@ -83,7 +85,8 @@ class ChatWidget {
         launchConfig: this.launchConfig,
         onClose: () => this.minimizeChat(),
         onMaximize: () => this.maximizeChat(),
-        isEmbedded: true
+        isEmbedded: true,
+        disableGlobalAutoScroll: this.config.disableAutoScroll
       }),
       // this.container
     );

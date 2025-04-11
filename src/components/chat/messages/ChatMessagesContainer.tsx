@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect, useCallback, memo } from 'react';
+import React, { useRef, useState, useEffect, useCallback, memo, useContext } from 'react';
 import { Message, Button } from '@/types/chat';
 import MessageItem from './MessageItem';
 import CarouselMessage from '../carousel/CarouselMessage';
 import AgentTypingIndicator from '../indicators/AgentTypingIndicator';
 import { useInView } from 'react-intersection-observer';
+import { ChatContext } from '@/App';
 
 interface ChatMessagesContainerProps {
   messages: Message[];
@@ -22,6 +23,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
   onButtonClick,
   isMinimized = false
 }) => {
+  const { isEmbedded, disableGlobalAutoScroll } = useContext(ChatContext);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -46,14 +48,20 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior,
-        block: 'end'
-      });
+      if (isEmbedded && disableGlobalAutoScroll) {
+        if (chatBoxRef.current) {
+          chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+        }
+      } else {
+        messagesEndRef.current.scrollIntoView({
+          behavior,
+          block: 'end'
+        });
+      }
       setShowTopIndicator(false);
       setShouldAutoScroll(true);
     }
-  }, []);
+  }, [isEmbedded, disableGlobalAutoScroll]);
 
   // Handle chat opening/closing
   useEffect(() => {
