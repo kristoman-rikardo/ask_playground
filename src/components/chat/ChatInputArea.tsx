@@ -80,7 +80,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       <div className="flex items-center space-x-2 relative">
         <input 
           ref={inputRef} 
-          type="text" 
+          type="text" id="ask-widget-input-field" 
           value={inputValue} 
           onChange={e => setInputValue(e.target.value)} 
           onKeyPress={e => !isMinimized && e.key === 'Enter' && handleSend()} 
@@ -89,14 +89,14 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           onBlur={() => setIsFocused(false)}
           onClick={handleInputClick}
           readOnly={isMinimized}
-          className={`flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 
+          className={`ask-widget-input flex-1 px-4 py-2 pr-10 font-light font-sans transition-all duration-300 
             rounded-2xl bg-gray-50/90 
             border border-gray-200 
             shadow-sm hover:shadow-md 
             focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#28483F] 
             active:translate-y-[1px]
-            ${isFocused ? 'bg-white' : ''}
-            ${isMinimized ? 'cursor-pointer' : ''}`} 
+            ${isFocused ? 'ask-widget-input-focused bg-white' : ''}
+            ${isMinimized ? 'ask-widget-input-minimized cursor-pointer' : ''}`} 
           style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 300 }}
         />
         
@@ -121,7 +121,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
               onClick={handleSend}
               className={`p-1.5 rounded-full 
                        transition-all duration-300 transform 
-                       hover:bg-opacity-80 active:shadow-sm send-button-ripple
+                       hover:bg-opacity-80 active:shadow-sm ask-widget-send-ripple
                        focus:outline-none focus:ring-2 focus:ring-gray-400
                        ${isFocused ? 'scale-110' : 'scale-100'}`}
               aria-label="Send message"

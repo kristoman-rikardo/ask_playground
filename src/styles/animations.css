@@ -44,7 +44,7 @@
     }
   }
   
-  .send-button-ripple:active {
+  .ask-widget-send-ripple:active {
     animation: ripple 0.6s linear;
   }
   
