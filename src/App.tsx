@@ -13,9 +13,10 @@ interface AppProps {
   apiEndpoint: string;
   onClose?: () => void;
   onMaximize?: () => void;
+  isEmbedded?: boolean;
 }
 
-export const App = ({ apiEndpoint, onClose, onMaximize }: AppProps) => {
+export const App = ({ apiEndpoint, onClose, onMaximize, isEmbedded = false }: AppProps) => {
   const queryClient = new QueryClient();
 
   return (
@@ -25,7 +26,7 @@ export const App = ({ apiEndpoint, onClose, onMaximize }: AppProps) => {
         <Sonner />
         <MemoryRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Index isEmbedded={isEmbedded} />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </MemoryRouter>
