@@ -227,33 +227,6 @@ const ChatInterface: React.FC = () => {
           fontFamily: "'Inter', system-ui, sans-serif"
         }}
       >
-        {/* Control buttons - only shown when chat has been used */}
-        {conversationStarted && !isMinimized && !isFullyMinimized && (
-          <div 
-            className="absolute z-50 flex space-x-2" 
-            style={{ 
-              top: '-10px', 
-              right: '10px',
-              transform: 'translateY(-100%)'
-            }}
-          >
-            <button
-              onClick={handleRestartClick}
-              className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
-              aria-label="Restart chat"
-            >
-              <X size={16} className="text-[#28483f]" />
-            </button>
-            <button
-              onClick={toggleMinimize}
-              className="bg-gray-100 hover:bg-gray-200 transition-colors p-1.5 rounded-full shadow-sm"
-              aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
-            >
-              <ChevronDown size={16} className={`text-[#28483f] ${isMinimized ? "rotate-180" : ""}`} />
-            </button>
-          </div>
-        )}
-        
         <div className={`flex-1 flex flex-col overflow-hidden relative ${isFullyMinimized ? 'h-0 m-0 p-0' : ''}`}>
           <div 
             ref={messagesContainerRef}
@@ -267,6 +240,32 @@ const ChatInterface: React.FC = () => {
               fontFamily: "'Inter', system-ui, sans-serif"
             }}
           >
+            {/* Control buttons - inside the chat container */}
+            {conversationStarted && !isMinimized && !isFullyMinimized && (
+              <div 
+                className="absolute z-50 flex space-x-2 m-2" 
+                style={{ 
+                  top: '0',
+                  left: '0'
+                }}
+              >
+                <button
+                  onClick={handleRestartClick}
+                  className="bg-gray-100 hover:bg-gray-200 transition-colors p-1 rounded-full shadow-sm"
+                  aria-label="Restart chat"
+                >
+                  <X size={14} className="text-[#28483f]" />
+                </button>
+                <button
+                  onClick={toggleMinimize}
+                  className="bg-gray-100 hover:bg-gray-200 transition-colors p-1 rounded-full shadow-sm"
+                  aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
+                >
+                  <ChevronDown size={14} className={`text-[#28483f] ${isMinimized ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+            )}
+            
             <ChatMessages 
               messages={messages} 
               isTyping={isTyping}

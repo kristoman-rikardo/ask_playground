@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="dist/widget/chatWidget.css" />
+</head>
+<body>
+  <div style="height: 100px; background-color: #000000;"></div>
+  <div id="chat-widget-container"></div>
+  <script src="dist/widget/chatWidget.js"></script>
+  <script>
+    window.onload = function () {
+      window.ChatWidget?.init({
+        containerId: 'chat-widget-container',
+        apiKey: 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv',
+        projectID: '67f291952280faa3b19ddfcb'
+      });
+    };
+  </script>
+  <div style="height: 100px; background-color: #000000;"></div>
+</body>
+</html>
