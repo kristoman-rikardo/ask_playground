@@ -27,6 +27,23 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   
+  // Ensure carousel is properly visible by scrolling it into view
+  useEffect(() => {
+    if (containerRef.current) {
+      // Allow layout to stabilize before scrolling
+      const timer = setTimeout(() => {
+        // Find the nearest scrollable parent
+        const scrollContainer = document.querySelector('.overflow-y-auto');
+        if (scrollContainer) {
+          // Scroll to fully show the carousel
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [cards]);
+  
   // Measure container width
   useEffect(() => {
     const updateWidth = () => {
@@ -110,17 +127,19 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
         window.open(url, '_blank');
         // Focus on the newly opened tab
         window.focus();
+        // Don't call the original onButtonClick for Buy Now buttons to prevent rendering a message
+        return;
       }
     }
     
-    // Always call the original onButtonClick for analytics or other processing
+    // For non-Buy Now buttons, call the original onButtonClick for analytics or other processing
     onButtonClick(button);
   };
 
   return (
     <div 
       ref={containerRef}
-      className={cn("w-full max-w-full mt-2 mb-3 pl-2", className)}
+      className={cn("w-full max-w-full mt-2 mb-5 pl-4", className)}
     >
       <Carousel 
         className="w-full mx-auto" 
@@ -131,7 +150,7 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
           loop: false,
         }}
       >
-        <CarouselContent className={`${cards.length === 1 ? "flex justify-start" : "flex"} gap-3 pl-1`}>
+        <CarouselContent className={`${cards.length === 1 ? "flex justify-start" : "flex"} gap-3 pl-2`}>
           {cards.map((card, index) => (
             <CarouselItem 
               key={card.id || card.title} 
@@ -143,7 +162,7 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
                     : slidesPerView === 2 
                       ? 'basis-1/2' 
                       : 'basis-1/3'
-              } ${index === 0 ? 'ml-1' : ''}`}
+              } ${index === 0 ? 'ml-2' : ''}`}
             >
               <Card 
                 className="border border-gray-200 rounded-lg overflow-hidden h-full flex flex-col shadow-sm hover:shadow-md transition-shadow font-sans" 

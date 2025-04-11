@@ -36,16 +36,16 @@ class ChatWidget {
    * Initialiserer chat-widgeten med tilpasset konfigurasjon
    */
   public init(userConfig: Partial<ChatWidgetConfig>) {
-
+    // First, combine user config with defaults
+    this.config = { ...this.config, ...userConfig };
+    
+    // Then check if the required properties exist
     const { apiKey, projectID } = this.config;
-
+    
     if (!apiKey || !projectID) {
       console.error(`[ChatWidget] Api key was not found.`);
       return;
     }
-
-    // Kombiner brukerens konfigurasjon med standardverdier
-    this.config = { ...this.config, ...userConfig };
     
     // Finn container-elementet
     this.container = document.getElementById(this.config.containerId);

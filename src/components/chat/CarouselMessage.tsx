@@ -27,6 +27,23 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   
+  // Ensure carousel is properly visible by scrolling it into view
+  useEffect(() => {
+    if (containerRef.current) {
+      // Allow layout to stabilize before scrolling
+      const timer = setTimeout(() => {
+        // Find the nearest scrollable parent
+        const scrollContainer = document.querySelector('.overflow-y-auto');
+        if (scrollContainer) {
+          // Scroll to fully show the carousel
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [cards]);
+  
   // Fix for embla-carousel viewport overflow
   useEffect(() => {
     // Find the embla viewport element and fix its overflow
@@ -147,17 +164,19 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
         window.open(url, '_blank', 'noopener,noreferrer');
         // Focus on the new tab
         window.focus();
+        // Don't call the original onButtonClick for Buy Now buttons to prevent rendering a message
+        return;
       }
     }
     
-    // Always call the original onButtonClick for tracking and other functionality
+    // For non-Buy Now buttons, call the original onButtonClick for tracking and other functionality
     onButtonClick(button);
   };
 
   return (
     <div 
       ref={containerRef}
-      className={cn("w-full relative overflow-visible mt-2 mb-3 pl-3 pr-3", className)} // Added left padding to prevent leftmost card cutoff
+      className={cn("w-full relative overflow-visible mt-2 mb-5", className)} // Increased bottom margin to ensure full visibility
     >
       <Carousel 
         className="w-full mx-auto overflow-visible" // Simplified to maintain consistent width
@@ -168,7 +187,7 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
           loop: false,
         }}
       >
-        <CarouselContent className={`flex gap-1 pl-1 pr-1 overflow-visible`}> {/* Added right padding and adjusted left padding */}
+        <CarouselContent className={`flex gap-1 pl-2 pr-1 overflow-visible`}> {/* Increased left padding */}
           {cards.map((card, index) => (
             <CarouselItem 
               key={card.id || card.title} 
@@ -188,8 +207,8 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
                   width: cardWidth > 0 ? cardWidth : undefined,
                   maxWidth: containerWidth > 0 ? `${cardWidth}px` : '100%',
                   margin: '0 auto',
-                  marginLeft: index === 0 ? '8px' : '0 auto', // Add left margin for first card
-                  marginRight: index === cards.length - 1 ? '8px' : '0 auto', // Add right margin for last card
+                  marginLeft: index === 0 ? '10px' : '0 auto', // Increased left margin for first card
+                  marginRight: index === cards.length - 1 ? '10px' : '0 auto', // Increased right margin for last card
                   fontFamily: "'Inter', system-ui, sans-serif"
                 }}
               >
@@ -296,14 +315,14 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
             <CarouselPrevious 
               variant="outline" 
               size="sm"
-              className="left-2 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full z-10"
+              className="left-3 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full z-10"
             >
               <ChevronLeft className="h-3.5 w-3.5 text-gray-600" />
             </CarouselPrevious>
             <CarouselNext 
               variant="outline"
               size="sm" 
-              className="right-2 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full z-10"
+              className="right-3 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full z-10"
             >
               <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
             </CarouselNext>

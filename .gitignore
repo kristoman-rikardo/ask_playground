@@ -9,7 +9,7 @@ lerna-debug.log*
 
 
 node_modules
-dist
+# dist (commented out to allow committing the dist directory)
 dist-ssr
 *.local
 

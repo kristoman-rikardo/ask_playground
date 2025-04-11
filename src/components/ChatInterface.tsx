@@ -90,14 +90,30 @@ const ChatInterface: React.FC = () => {
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     const chatBoxElement = document.querySelector('.overflow-y-auto');
     if (chatBoxElement) {
+      // First scroll attempt
       chatBoxElement.scrollTop = chatBoxElement.scrollHeight;
       
-      // Extra check to ensure we're really at the bottom
-      setTimeout(() => {
-        if (chatBoxElement) {
-          chatBoxElement.scrollTop = chatBoxElement.scrollHeight;
-        }
-      }, 50);
+      // Multiple check attempts with increasing delays to ensure proper scrolling
+      // This helps with dynamic content like carousels that may change height
+      const scrollAttempts = [50, 200, 500];
+      scrollAttempts.forEach(delay => {
+        setTimeout(() => {
+          if (chatBoxElement) {
+            chatBoxElement.scrollTop = chatBoxElement.scrollHeight;
+          }
+        }, delay);
+      });
+      
+      // Special handling for carousels
+      if (carouselData) {
+        // Add extra scroll attempts for carousels with longer delays
+        // This ensures the carousel is fully rendered and visible
+        setTimeout(() => {
+          if (chatBoxElement) {
+            chatBoxElement.scrollTop = chatBoxElement.scrollHeight;
+          }
+        }, 800);
+      }
     }
   };
 
@@ -150,6 +166,18 @@ const ChatInterface: React.FC = () => {
       }
     }
   }, [messages, carouselData]);
+  
+  // Special handling for carousel data changes to ensure they're fully visible
+  useEffect(() => {
+    if (carouselData) {
+      // Use multiple scroll attempts with increasing delays
+      // This ensures the carousel is properly rendered and visible
+      const scrollDelays = [100, 300, 600, 1000];
+      scrollDelays.forEach(delay => {
+        setTimeout(() => scrollToBottom('auto'), delay);
+      });
+    }
+  }, [carouselData]);
 
   // Add custom scrollbar style
   useEffect(() => {
