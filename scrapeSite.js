@@ -180,6 +180,15 @@
   // Sett browser_url til den faktiske URL-en
   let browser_url = window.location.href;
 
+  // Dispatch an event with the scraped content and URL
+  console.log('Dispatching scrape event with content length:', side_innhold.length);
+  const scrapeEvent = new CustomEvent('scrapeComplete', {
+    detail: {
+      side_innhold: side_innhold,
+      browser_url: browser_url
+    }
+  });
+  window.dispatchEvent(scrapeEvent);
 })();
 
 

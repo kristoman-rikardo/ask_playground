@@ -5,32 +5,70 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, MemoryRouter } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { createContext } from "react";
 // import IframeReceiver from "./components/IframeReceiver";
+
+// Create a context to hold the chat configuration
+export interface ChatContextType {
+  apiEndpoint: string;
+  apiKey: string;
+  projectID: string;
+  launchConfig?: {
+    event: {
+      type: string;
+      payload: Record<string, any>;
+    }
+  };
+}
+
+export const ChatContext = createContext<ChatContextType>({
+  apiEndpoint: '',
+  apiKey: '',
+  projectID: '',
+});
 
 const queryClient = new QueryClient();
 
 interface AppProps {
   apiEndpoint: string;
+  apiKey: string;
+  projectID: string;
+  launchConfig?: {
+    event: {
+      type: string;
+      payload: Record<string, any>;
+    }
+  };
   onClose?: () => void;
   onMaximize?: () => void;
   isEmbedded?: boolean;
 }
 
-export const App = ({ apiEndpoint, onClose, onMaximize, isEmbedded = false }: AppProps) => {
+export const App = ({ 
+  apiEndpoint, 
+  apiKey, 
+  projectID, 
+  launchConfig,
+  onClose, 
+  onMaximize, 
+  isEmbedded = false 
+}: AppProps) => {
   const queryClient = new QueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <MemoryRouter>
-          <Routes>
-            <Route path="/" element={<Index isEmbedded={isEmbedded} />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </MemoryRouter>
-      </TooltipProvider>
+      <ChatContext.Provider value={{ apiEndpoint, apiKey, projectID, launchConfig }}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <MemoryRouter>
+            <Routes>
+              <Route path="/" element={<Index isEmbedded={isEmbedded} />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </MemoryRouter>
+        </TooltipProvider>
+      </ChatContext.Provider>
     </QueryClientProvider>
   );
 };

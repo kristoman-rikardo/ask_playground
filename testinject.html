@@ -10,12 +10,46 @@
   <div id="chat-widget-container"></div>
   <script src="https://kristoman-rikardo.github.io/ask1proto-21/dist/widget/chatWidget.js"></script>
   <script>
-    window.onload = function () {
-      window.ChatWidget?.init({
-        containerId: 'chat-widget-container',
-        apiKey: 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv',
-        projectID: '67f291952280faa3b19ddfcb'
-      });
+    // Flag to track if widget has been initialized
+    let widgetInitialized = false;
+
+    // Listen for the scrapeComplete event from scrapeSite.js
+    window.addEventListener('scrapeComplete', function(event) {
+      // Check if we've already initialized the widget
+      if (widgetInitialized) return;
+      
+      const { side_innhold, browser_url } = event.detail;
+      
+      // Only initialize if side_innhold has content
+      if (side_innhold) {
+        console.log('Initializing chat widget with scraped content, length:', side_innhold.length);
+        
+        window.ChatWidget?.init({
+          containerId: 'chat-widget-container',
+          apiKey: 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv',
+          projectID: '67f291952280faa3b19ddfcb',
+          launchConfig: {
+            event: {
+              type: "launch",
+              payload: {
+                browser_url: browser_url,
+                side_innhold: side_innhold
+              }
+            }
+          }
+        });
+        
+        widgetInitialized = true;
+      } else {
+        console.log('Scraping did not produce content, widget will not be initialized');
+      }
+    });
+
+    window.onload = function() {
+      // Load the scraping script
+      const script = document.createElement('script');
+      script.src = 'scrapeSite.js';
+      document.body.appendChild(script);
     };
   </script>
   <div style="height: 100px; background-color: #000000;"></div>

@@ -33,21 +33,54 @@ export function parseMarkdown(text: string): string {
 // Simple delay function for animations
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Define interfaces for launch configuration
+interface LaunchPayload {
+  [key: string]: any;
+}
+
+interface LaunchEvent {
+  type: string;
+  payload: LaunchPayload;
+}
+
+interface LaunchConfig {
+  event: LaunchEvent;
+}
+
 // Send a launch request to Voiceflow Dialog API
 export async function vfSendLaunch(
-  variables: Record<string, any> = {}, 
+  configOrVariables: LaunchConfig | Record<string, any>, 
   traceHandler: (trace: any) => void
 ): Promise<void> {
   console.log('Sending launch request to Voiceflow');
   
-  await sendRequest(
-    {
-      type: 'launch',
-      payload: {}
-    },
-    variables,
-    traceHandler
-  );
+  // Check if we have a launch config with event and payload
+  if (configOrVariables && 'event' in configOrVariables && configOrVariables.event?.type === 'launch') {
+    const launchConfig = configOrVariables as LaunchConfig;
+    console.log('Using structured launch payload:', launchConfig.event.payload);
+    
+    await sendRequest(
+      {
+        type: 'launch',
+        payload: launchConfig.event.payload
+      },
+      launchConfig.event.payload, // Also send payload as variables
+      traceHandler
+    );
+  } else {
+    // Legacy format - treat the input as variables
+    const variables = configOrVariables as Record<string, any>;
+    console.log('Using legacy variables format:', variables);
+    
+    await sendRequest(
+      {
+        type: 'launch',
+        payload: {}
+      },
+      variables,
+      traceHandler
+    );
+  }
 }
 
 // Send a message to Voiceflow Dialog API

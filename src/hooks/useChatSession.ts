@@ -1,13 +1,17 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { vfSendLaunch } from '@/lib/voiceflow';
 import { Message, Button } from '@/types/chat';
 import { useMessageStreaming } from './useMessageStreaming';
 import { useTraceEventHandler } from './useTraceEventHandler';
 import { useMessageInteraction } from './useMessageInteraction';
+import { ChatContext } from '@/App';
 
 export type { Message, Button };
 
 export function useChatSession() {
+  // Access the ChatContext to get configuration
+  const chatContext = useContext(ChatContext);
+  
   const [isTyping, setIsTyping] = useState(false);
   const [buttons, setButtons] = useState<Button[]>([]);
   const [isButtonsLoading, setIsButtonsLoading] = useState(false);
@@ -60,14 +64,20 @@ export function useChatSession() {
     setIsButtonsLoading(true);
     receivedFirstTraceRef.current = false;
     
-    // Basic variables for the conversation
-    const variables = {
-      pageSlug: 'faq-page',
-      productName: 'faq'
-    };
-    
     try {
-      await vfSendLaunch(variables, handleTraceEvent);
+      if (chatContext.launchConfig) {
+        // Use the launch config from context
+        console.log('Using custom launch configuration:', chatContext.launchConfig);
+        await vfSendLaunch(chatContext.launchConfig, handleTraceEvent);
+      } else {
+        // Fallback to basic variables if no launch config
+        const variables = {
+          pageSlug: 'faq-page',
+          productName: 'faq'
+        };
+        console.log('Using default variables:', variables);
+        await vfSendLaunch(variables, handleTraceEvent);
+      }
     } catch (error) {
       console.error('Error starting chat session:', error);
       streaming.addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');

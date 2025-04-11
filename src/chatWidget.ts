@@ -16,12 +16,19 @@ interface ChatWidgetConfig {
   apiEndpoint: string;
   apiKey: string;
   projectID: string;
+  launchConfig?: {
+    event: {
+      type: string;
+      payload: Record<string, any>;
+    }
+  };
 }
 
 // Klasse for ChatWidget
 class ChatWidget {
   private config: ChatWidgetConfig;
   private container: HTMLElement | null = null;
+  private launchConfig: any = null;
 
   constructor() {
     this.config = {
@@ -38,6 +45,9 @@ class ChatWidget {
   public init(userConfig: Partial<ChatWidgetConfig>) {
     // First, combine user config with defaults
     this.config = { ...this.config, ...userConfig };
+    
+    // Store the launch configuration separately if provided
+    this.launchConfig = userConfig.launchConfig;
     
     // Then check if the required properties exist
     const { apiKey, projectID } = this.config;
@@ -68,6 +78,9 @@ class ChatWidget {
     root.render(
       React.createElement(App, { 
         apiEndpoint: this.config.apiEndpoint,
+        apiKey: this.config.apiKey,
+        projectID: this.config.projectID,
+        launchConfig: this.launchConfig,
         onClose: () => this.minimizeChat(),
         onMaximize: () => this.maximizeChat(),
         isEmbedded: true
