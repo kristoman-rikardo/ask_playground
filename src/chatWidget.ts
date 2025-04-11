@@ -69,7 +69,8 @@ class ChatWidget {
       React.createElement(App, { 
         apiEndpoint: this.config.apiEndpoint,
         onClose: () => this.minimizeChat(),
-        onMaximize: () => this.maximizeChat() 
+        onMaximize: () => this.maximizeChat(),
+        isEmbedded: true
       }),
       // this.container
     );
