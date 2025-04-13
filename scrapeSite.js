@@ -1,195 +1,177 @@
+/**
+ * Konverterer en webside til Markdown format
+ * Kan også håndtere accordion-knapper dersom de finnes
+ * Fjerner lenker og alt etter spesifikk tekst
+ * Sender resultat som CustomEvent
+ */
 (async function() {
-  let finalMarkdown = ""; // skal inneholde det skrapede markdown-innholdet
-  
-  try {
-    // ────────────────────────────────
-    // Del 1: Simulerer åpning av accordion-knapper
-    // ────────────────────────────────
-
-    // Legg til midlertidig CSS som skjuler knappene og innholdet (usynlig, men i DOM)
-    const style = document.createElement('style');
-    style.textContent = `
-      button.accordion-item__btn, 
-      .accordion-item__content {
-        opacity: 0 !important;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Hjelpefunksjon: vent en gitt tidsperiode (her 0ms)
-    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-    // Finn de tre første accordion-knappene og åpne de
-    const buttons = Array.from(document.querySelectorAll('button.accordion-item__btn'));
-    for (let i = 0; i < 3; i++) {
-      const btn = buttons[i];
-      if (!btn) {
-        console.warn(`Antall knapper er mindre enn forventet. Fant bare ${buttons.length} knapper.`);
-        break;
-      }
-      if (!btn.classList.contains('is-active')) {
-        btn.click();
-        await wait(0);
-      }
-      if (i === 2) {
-        btn.click();
-        await wait(0);
-      }
-    }
-
-    // Fjern midlertidig CSS
-    document.head.removeChild(style);
-
-    // ────────────────────────────────
-    // Del 2: Konverter hele DOM til Markdown
-    // ────────────────────────────────
-
-    // Hjelpefunksjon for å hente innhold fra ::before og ::after
-    function getPseudoContent(element, pseudo) {
-      let content = window.getComputedStyle(element, pseudo).getPropertyValue('content');
-      if (content && content !== 'none') {
-        return content.replace(/^["'](.*)["']$/, '$1');
-      }
-      return "";
-    }
-
-    // Hjelpefunksjon for å hente kun direkte tekstnoder
-    function getImmediateText(element) {
-      let text = "";
-      Array.from(element.childNodes).forEach(child => {
-        if (child.nodeType === Node.TEXT_NODE) {
-          text += child.textContent.trim() + " ";
-        }
-      });
-      return text.trim();
-    }
-
-    // Rekursiv funksjon for å traversere DOM-treet og bygge Markdown
-    function extractMarkdownFromElement(el, indent = 0) {
-      let md = "";
-      const pseudoBefore = getPseudoContent(el, '::before');
-      const pseudoAfter  = getPseudoContent(el, '::after');
-      const tag = el.tagName ? el.tagName.toLowerCase() : "";
-
-      switch(tag) {
-        case "h1":
-          md += "\n# " + pseudoBefore + el.textContent.trim() + pseudoAfter + "\n\n";
-          break;
-        case "h2":
-          md += "\n## " + pseudoBefore + el.textContent.trim() + pseudoAfter + "\n\n";
-          break;
-        case "h3":
-          md += "\n### " + pseudoBefore + el.textContent.trim() + pseudoAfter + "\n\n";
-          break;
-        case "h4":
-          md += "\n#### " + pseudoBefore + el.textContent.trim() + pseudoAfter + "\n\n";
-          break;
-        case "h5":
-          md += "\n##### " + pseudoBefore + el.textContent.trim() + pseudoAfter + "\n\n";
-          break;
-        case "h6":
-          md += "\n###### " + pseudoBefore + el.textContent.trim() + pseudoAfter + "\n\n";
-          break;
-        case "p":
-          md += "\n" + pseudoBefore + el.textContent.trim() + pseudoAfter + "\n\n";
-          break;
-        case "li": {
-          let immediateText = getImmediateText(el);
-          md += "  ".repeat(indent) + "- " + pseudoBefore + immediateText + pseudoAfter + "\n";
-          Array.from(el.children).forEach(child => {
-            const childTag = child.tagName ? child.tagName.toLowerCase() : "";
-            if (childTag === "ul" || childTag === "ol") {
-              md += extractMarkdownFromElement(child, indent + 1);
-            }
-          });
-          break;
-        }
-        case "ul":
-        case "ol":
-          Array.from(el.children).forEach(child => {
-            if (child.tagName && child.tagName.toLowerCase() === "li") {
-              md += extractMarkdownFromElement(child, indent);
-            }
-          });
-          md += "\n";
-          break;
-        default:
-          if (el.childNodes.length > 0) {
-            Array.from(el.childNodes).forEach(child => {
-              if (child.nodeType === Node.ELEMENT_NODE) {
-                md += extractMarkdownFromElement(child, indent);
-              } else if (child.nodeType === Node.TEXT_NODE) {
-                const text = child.textContent.trim();
-                if (text) {
-                  md += text + " ";
-                }
-              }
-            });
-          } else if (el.textContent && el.textContent.trim()) {
-            md += pseudoBefore + el.textContent.trim() + pseudoAfter + " ";
+    // Sjekk om det finnes accordion-knapper
+    const accordionButtons = Array.from(document.querySelectorAll('button.accordion-item__btn'));
+    
+    // Hvis det finnes knapper, åpne dem for å få tilgang til innholdet
+    if (accordionButtons.length > 0) {
+        // Legg til midlertidig CSS som skjuler knappene og innholdet (usynlig, men beholdt i DOM)
+        const style = document.createElement('style');
+        style.textContent = `
+          button.accordion-item__btn, 
+          .accordion-item__content {
+            opacity: 0 !important;
           }
-          break;
-      }
-      return md;
+        `;
+        document.head.appendChild(style);
+        
+        // Hjelpefunksjon: venter et gitt tidsintervall
+        const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+        
+        // Klikk på knappene (max 3 knapper)
+        const maxButtons = Math.min(accordionButtons.length, 3);
+        for (let i = 0; i < maxButtons; i++) {
+            const btn = accordionButtons[i];
+            if (!btn.classList.contains('is-active')) {
+                btn.click();
+                await wait(100); // Litt ventetid for å sikre at innholdet lastes
+            }
+        }
+        
+        // Fjern midlertidig CSS
+        document.head.removeChild(style);
+    }
+    
+    function getTextContent(element, level = 0) {
+        let result = '';
+        const tagName = element.tagName ? element.tagName.toLowerCase() : '';
+        
+        // Hopp over skjulte elementer og script/style tags
+        if (element.style && element.style.display === 'none' || 
+            element.style && element.style.visibility === 'hidden' ||
+            tagName === 'script' || tagName === 'style' || tagName === 'noscript') {
+            return '';
+        }
+        
+        // Behandle overskrifter
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+            const headerLevel = parseInt(tagName.charAt(1));
+            const headerMarks = '#'.repeat(headerLevel);
+            const text = element.textContent.trim();
+            if (text) {
+                result += `${headerMarks} ${text}\n\n`;
+            }
+            return result;
+        }
+        
+        // Behandle lister
+        if (tagName === 'ul' || tagName === 'ol') {
+            let listItems = '';
+            const listPrefix = tagName === 'ul' ? '- ' : '';
+            let counter = 1;
+            
+            for (const child of element.children) {
+                if (child.tagName.toLowerCase() === 'li') {
+                    const itemContent = child.textContent.trim();
+                    if (itemContent) {
+                        if (tagName === 'ul') {
+                            listItems += `${listPrefix}${itemContent}\n`;
+                        } else {
+                            listItems += `${counter}. ${itemContent}\n`;
+                            counter++;
+                        }
+                    }
+                }
+            }
+            
+            if (listItems) {
+                result += listItems + '\n';
+            }
+            return result;
+        }
+        
+        // Behandle paragrafer
+        if (tagName === 'p') {
+            const text = element.textContent.trim();
+            if (text) {
+                result += `${text}\n\n`;
+            }
+            return result;
+        }
+        
+        // Behandle lenker
+        if (tagName === 'a' && element.href) {
+            const text = element.textContent.trim();
+            if (text && !element.querySelector('img')) {
+                return `[${text}](${element.href})`;
+            }
+        }
+        
+        // Behandle bilder
+        if (tagName === 'img' && element.alt && element.src) {
+            return `![${element.alt}](${element.src})`;
+        }
+        
+        // Behandle kodefelt
+        if (tagName === 'pre' || tagName === 'code') {
+            const text = element.textContent.trim();
+            if (text) {
+                if (tagName === 'pre') {
+                    result += `\`\`\`\n${text}\n\`\`\`\n\n`;
+                } else {
+                    result += `\`${text}\``;
+                }
+                return result;
+            }
+        }
+        
+        // Behandle accordion-innhold spesifikt
+        if ((element.classList && element.classList.contains('accordion-item__content')) || 
+            (tagName === 'div' && element.getAttribute('aria-hidden') === 'false')) {
+            const text = element.textContent.trim();
+            if (text) {
+                result += `${text}\n\n`;
+            }
+        }
+        
+        // Rekursivt behandle andre elementer
+        if (element.childNodes && element.childNodes.length > 0) {
+            for (const child of element.childNodes) {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    const text = child.textContent.trim();
+                    if (text) {
+                        result += text + ' ';
+                    }
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    result += getTextContent(child, level + 1);
+                }
+            }
+        }
+        
+        return result;
     }
 
-    // Generer full Markdown for hele siden
-    finalMarkdown = extractMarkdownFromElement(document.body).trim();
-
-    // ────────────────────────────────
-    // Del 3: Fjerner uønsket tekst med regex
-    // ────────────────────────────────
-
-    // Fjern uønsket innhold (definerte regex-mønstre)
-    finalMarkdown = finalMarkdown.replace(
-      /<iframe\s*src="[\s\S]*?}\s*Previous\s*Next\s*1\s*2\s*3/gi,
-      ''
-    ).trim();
-
-    finalMarkdown = finalMarkdown.replace(
-      /###\s*Similar\s*styles[\s\S]*?##\s*Guide/gi,
-      ''
-    ).trim();
-
-    finalMarkdown = finalMarkdown.replace(
-      /## Secure Payment[\s\S]*/gi,
-      ''
-    ).trim();
-
-    finalMarkdown = finalMarkdown.replace(
-      /###\s*Subscribe\s*to\s*our\s*newsletter[\s\S]*?Filter\s*Clear\s*All\s*Apply\s*filters/gi,
-      ''
-    ).trim();
-
-    // Dersom sluttresultatet er over 10 000 tegn, kaster vi en feil
-    if (finalMarkdown.length > 10000) {
-      throw new Error("Sluttresultatet er over 10 000 tegn.");
+    // Samle alt innhold fra body
+    let markdown = getTextContent(document.body).trim();
+    
+    // Anvend regex for å fjerne lenker
+    markdown = markdown.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    
+    // Anvend regex for å fjerne alt etter "OVER 2,000,000 JUMPSUITS SOLD"
+    const targetPattern = /OVER 2,000,000 JUMPSUITS SOLD/i;
+    const matchIndex = markdown.search(targetPattern);
+    
+    if (matchIndex !== -1) {
+        // Finn slutten av den matchende teksten
+        const endOfMatch = matchIndex + "OVER 2,000,000 JUMPSUITS SOLD".length;
+        // Kutt strengen ved slutten av den matchende teksten
+        markdown = markdown.substring(0, endOfMatch);
     }
-  } catch (err) {
-    console.error("Fallback-scraping ble aktivert grunnet en feil eller for langt resultat:", err);
-    // Dersom det oppstår feil, bruk en tom streng for side_innhold
-    finalMarkdown = "";
-  }
-  
-  // ────────────────────────────────
-  // Del 4: Bruk skrapet markdown-innhold til å sende til ekstern chat
-  // ────────────────────────────────
-
-  // Bruk det skrapede markdown-innholdet (uten fallback) direkte
-  let side_innhold = finalMarkdown;
-  // Sett browser_url til den faktiske URL-en
-  let browser_url = window.location.href;
-
-  // Dispatch an event with the scraped content and URL
-  console.log('Dispatching scrape event with content length:', side_innhold.length);
-  const scrapeEvent = new CustomEvent('scrapeComplete', {
-    detail: {
-      side_innhold: side_innhold,
-      browser_url: browser_url
-    }
-  });
-  window.dispatchEvent(scrapeEvent);
+    
+    // Hent nåværende URL
+    const browser_url = window.location.href;
+    
+    // Send resultat som en CustomEvent
+    const scrapeEvent = new CustomEvent('scrapeComplete', {
+        detail: {
+            side_innhold: markdown,
+            browser_url: browser_url
+        }
+    });
+    window.dispatchEvent(scrapeEvent);
 })();
-
-
-
