@@ -2,6 +2,7 @@
  * Konverterer en webside til Markdown format
  * Kan også håndtere accordion-knapper dersom de finnes
  * Fjerner lenker og alt etter spesifikk tekst
+ * Begrenser lengden til 7500 tegn
  * Sender resultat som CustomEvent
  */
 (async function() {
@@ -161,6 +162,20 @@
         const endOfMatch = matchIndex + "OVER 2,000,000 JUMPSUITS SOLD".length;
         // Kutt strengen ved slutten av den matchende teksten
         markdown = markdown.substring(0, endOfMatch);
+    }
+    
+    // Begrens lengden til 7500 tegn
+    const MAX_LENGTH = 7500;
+    let truncated = false;
+    
+    if (markdown.length > MAX_LENGTH) {
+        markdown = markdown.substring(0, MAX_LENGTH);
+        truncated = true;
+    }
+    
+    // Legg til avkortningsmelding hvis nødvendig
+    if (truncated) {
+        markdown += "\n\nBeskrivelse avkortet";
     }
     
     // Hent nåværende URL
