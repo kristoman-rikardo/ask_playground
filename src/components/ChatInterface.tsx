@@ -393,8 +393,8 @@ const ChatInterface: React.FC = () => {
   };
 
   const handleRestartClick = () => {
-    // Show rating dialog instead of immediately restarting
-    setIsRatingDialogOpen(true);
+    // Direkte restart uten å vise rating-dialog
+    handleRestart();
   };
   
   const handleRatingSubmit = (rating: number, comment: string) => {
@@ -521,6 +521,7 @@ const ChatInterface: React.FC = () => {
               onInputFocus={handleInputFocus}
               isMinimized={isMinimized || isFullyMinimized}
               onMaximize={expandChat}
+              isLoading={isTyping}
             />
             
             {/* Disclaimer under innskrivingsfeltet - alltid synlig */}

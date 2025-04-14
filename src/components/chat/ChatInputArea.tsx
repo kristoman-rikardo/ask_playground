@@ -6,18 +6,20 @@ interface ChatInputAreaProps {
   onInputFocus?: () => void;
   isMinimized?: boolean;
   onMaximize?: () => void;
+  isLoading?: boolean;
 }
 
 const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   onSendMessage,
   onInputFocus,
   isMinimized = false,
-  onMaximize
+  onMaximize,
+  isLoading = false
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
-  const inputRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const placeholder = isMinimized ? "Click to ask about the product..." : "Ask about the product...";
   
@@ -48,7 +50,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   }, [isMinimized]);
 
   const handleSend = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return;
     
     // Send message and clear input
     onSendMessage(inputValue.trim());
@@ -70,7 +72,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   };
 
   const handleInputClick = () => {
-    if (isMinimized && onMaximize) {
+    if (onMaximize) {
       onMaximize();
     }
   };
@@ -78,16 +80,17 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   return (
     <div className="ask-w-full ask-bg-transparent ask-p-4 ask-pt-2">
       <div className="ask-flex ask-items-center ask-space-x-2 ask-relative">
-        <div 
+        <input 
+          type="text"
           ref={inputRef}
           id="ask-widget-input-field"
           data-ask-input="true"
           data-ask-role="textbox"
           data-ask-minimized={isMinimized ? "true" : "false"}
           data-ask-focused={isFocused ? "true" : "false"}
-          contentEditable={!isMinimized}
-          suppressContentEditableWarning={true}
-          onInput={(e) => setInputValue(e.currentTarget.textContent || '')}
+          readOnly={isMinimized}
+          value={inputValue}
+          onChange={(e) => !isMinimized && setInputValue(e.target.value)}
           onKeyDown={(e) => {
             if (!isMinimized && e.key === 'Enter') {
               e.preventDefault();
@@ -117,36 +120,17 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             padding: "0.5rem 1rem",
             width: "100%",
             outline: "none",
-            minHeight: "40px",
-            maxHeight: "80px",
-            overflowY: "auto",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
+            height: "40px",
             color: "#333333",
             lineHeight: "1.5",
             fontSize: "14px",
             boxShadow: isFocused ? "0 0 0 2px #28483F" : "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
             position: "relative",
-            transition: "all 0.2s ease-in-out"
+            transition: "all 0.2s ease-in-out",
+            cursor: isMinimized ? "pointer" : "text"
           }}
-        >
-          {!inputValue && !isFocused && (
-            <span 
-              data-ask-placeholder="true" 
-              style={{ 
-                color: '#9CA3AF', 
-                pointerEvents: 'none',
-                position: 'absolute',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                left: '1rem',
-                userSelect: 'none'
-              }}
-            >
-              {placeholder}
-            </span>
-          )}
-        </div>
+          placeholder={placeholder}
+        />
         
         <div 
           className={`ask-absolute ask-right-3 ask-top-1/2 ask--translate-y-1/2 ask-transition-all ask-duration-300 ask-transform 
@@ -169,11 +153,13 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             <button 
               onClick={handleSend}
               data-ask-button="send"
+              disabled={isLoading}
               className={`ask-p-1.5 ask-rounded-full 
                        ask-transition-all ask-duration-300 ask-transform 
                        hover:ask-bg-opacity-80 active:ask-shadow-sm ask-widget-send-ripple
                        focus:ask-outline-none focus:ask-ring-2 focus:ask-ring-gray-400
-                       ${isFocused ? 'ask-scale-110' : 'ask-scale-100'}`}
+                       ${isFocused ? 'ask-scale-110' : 'ask-scale-100'}
+                       ${isLoading ? 'ask-opacity-50 ask-cursor-not-allowed' : ''}`}
               aria-label="Send message"
               style={{ backgroundColor: "#28483F" }}
             >
