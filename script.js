@@ -104,6 +104,18 @@
         visibility: visible !important;
         opacity: 1 !important;
       }
+
+      /* Fjern høyde fra notifications-region */
+      div[role="region"][aria-label="Notifications (F8)"] {
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+      }
     `;
     
     document.head.appendChild(overrideStyleElement);
