@@ -53,6 +53,121 @@ const inputProtectionStyles = `
   }
 `;
 
+// Critical component styles that must be injected in shadow DOM
+const criticalComponentStyles = `
+  /* Chat container */
+  .ask-flex {
+    display: flex !important;
+  }
+  
+  .ask-flex-col {
+    flex-direction: column !important;
+  }
+  
+  .ask-flex-1 {
+    flex: 1 1 0% !important;
+  }
+  
+  .ask-relative {
+    position: relative !important;
+  }
+  
+  .ask-absolute {
+    position: absolute !important;
+  }
+  
+  .ask-w-full {
+    width: 100% !important;
+  }
+  
+  .ask-max-w-3xl {
+    max-width: 48rem !important;
+  }
+  
+  .ask-mx-auto {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  .ask-my-6 {
+    margin-top: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .ask-p-4 {
+    padding: 1rem !important;
+  }
+  
+  .ask-m-2 {
+    margin: 0.5rem !important;
+  }
+  
+  .ask-bg-transparent {
+    background-color: transparent !important;
+  }
+  
+  .ask-bg-gray-100 {
+    background-color: rgb(243, 244, 246) !important;
+  }
+  
+  .ask-text-xs {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+  
+  .ask-text-gray-400 {
+    color: rgb(156, 163, 175) !important;
+  }
+  
+  .ask-overflow-hidden {
+    overflow: hidden !important;
+  }
+  
+  .ask-overflow-y-auto {
+    overflow-y: auto !important;
+  }
+  
+  .ask-shadow-none {
+    box-shadow: none !important;
+  }
+  
+  .ask-rounded-lg {
+    border-radius: 0.5rem !important;
+  }
+  
+  .ask-rounded-full {
+    border-radius: 9999px !important;
+  }
+  
+  .ask-font-sans {
+    font-family: 'Inter', system-ui, sans-serif !important;
+  }
+  
+  .ask-space-x-2 > * + * {
+    margin-left: 0.5rem !important;
+  }
+  
+  .ask-z-50 {
+    z-index: 50 !important;
+  }
+  
+  .ask-hover\\:bg-gray-200:hover {
+    background-color: rgb(229, 231, 235) !important;
+  }
+  
+  .ask-transition-all {
+    transition-property: all !important;
+  }
+  
+  .ask-sticky {
+    position: sticky !important;
+  }
+  
+  .ask-bottom-0 {
+    bottom: 0 !important;
+  }
+`;
+
 const ChatInterface: React.FC = () => {
   const {
     messages,
@@ -68,7 +183,7 @@ const ChatInterface: React.FC = () => {
     resetSession
   } = useChatSession();
   
-  const { isEmbedded, disableGlobalAutoScroll } = useContext(ChatContext);
+  const { isEmbedded, disableGlobalAutoScroll, shadowRoot } = useContext(ChatContext);
   
   // Track if user has started conversation
   const [conversationStarted, setConversationStarted] = useState(false);
@@ -78,25 +193,29 @@ const ChatInterface: React.FC = () => {
   const [isFullyMinimized, setIsFullyMinimized] = useState(false);
   const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false);
   
+  // Inject styles into shadow DOM if it exists
+  useEffect(() => {
+    if (shadowRoot) {
+      // Inject custom styles into Shadow DOM
+      const styleElement = document.createElement('style');
+      styleElement.textContent = `${scrollbarStyles}\n${inputProtectionStyles}\n${criticalComponentStyles}`;
+      shadowRoot.appendChild(styleElement);
+
+      // Cleanup function to remove style element when component unmounts
+      return () => {
+        if (styleElement.parentNode === shadowRoot) {
+          shadowRoot.removeChild(styleElement);
+        }
+      };
+    }
+  }, [shadowRoot]);
+  
   useEffect(() => {
     if (messages.length > 0 && !conversationStarted) {
       setConversationStarted(true);
     }
   }, [messages, conversationStarted]);
   
-  // Unngå scrolling ved oppstart av chatten
-  useEffect(() => {
-    // Vi setter en kort forsinkelse for å sikre at alt innhold er lastet inn
-    const timer = setTimeout(() => {
-      // Sørg for at vi ikke scroller ved oppstart
-      if (window && typeof window.scrollTo === 'function') {
-        window.scrollTo({ top: 0, left: 0 });
-      }
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
   const handleSendMessage = (message: string) => {
     setConversationStarted(true);
     sendUserMessage(message);
@@ -137,7 +256,15 @@ const ChatInterface: React.FC = () => {
   };
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    const chatBoxElement = document.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
+    // Select from shadow DOM if it exists
+    let chatBoxElement: Element | null = null;
+    
+    if (shadowRoot) {
+      chatBoxElement = shadowRoot.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
+    } else {
+      chatBoxElement = document.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
+    }
+    
     if (chatBoxElement) {
       // First scroll attempt - immediate
       chatBoxElement.scrollTop = chatBoxElement.scrollHeight;
@@ -184,7 +311,14 @@ const ChatInterface: React.FC = () => {
 
   // Listen for scroll events to show/hide scroll indicator
   useEffect(() => {
-    const chatBoxElement = document.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
+    let chatBoxElement: Element | null = null;
+    
+    if (shadowRoot) {
+      chatBoxElement = shadowRoot.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
+    } else {
+      chatBoxElement = document.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
+    }
+    
     if (!chatBoxElement) return;
 
     const handleScroll = () => {
@@ -208,7 +342,7 @@ const ChatInterface: React.FC = () => {
       chatBoxElement.removeEventListener('scroll', handleScroll);
       clearInterval(intervalCheck);
     };
-  }, []);
+  }, [shadowRoot]);
 
   // Auto-scroll during typing for better view of streamed messages
   useEffect(() => {
@@ -253,17 +387,6 @@ const ChatInterface: React.FC = () => {
     }
   }, [carouselData, isEmbedded, disableGlobalAutoScroll]);
 
-  // Add custom scrollbar style
-  useEffect(() => {
-    const styleElement = document.createElement('style');
-    styleElement.textContent = scrollbarStyles + inputProtectionStyles;
-    document.head.appendChild(styleElement);
-    
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []);
-
   const expandChat = () => {
     setIsMinimized(false);
     setIsFullyMinimized(false);
@@ -296,22 +419,29 @@ const ChatInterface: React.FC = () => {
       <div 
         className="ask-w-full ask-mx-auto ask-bg-transparent ask-shadow-none ask-overflow-hidden ask-transition-all ask-font-sans ask-flex ask-flex-col ask-relative"
         style={{ 
+          minHeight: isFullyMinimized ? 'auto' : 'auto', 
           height: isFullyMinimized ? 'auto' : '100%', 
-          maxHeight: isFullyMinimized ? 'auto' : '100vh', 
-          fontFamily: "'Inter', system-ui, sans-serif"
+          maxHeight: '100%',
+          fontFamily: "'Inter', system-ui, sans-serif",
+          width: '100%',
+          boxSizing: 'border-box',
+          position: 'relative'
         }}
       >
-        <div className={`ask-flex-1 ask-flex ask-flex-col ask-overflow-hidden ask-relative ${isFullyMinimized ? 'ask-h-0 ask-m-0 ask-p-0' : ''}`}>
+        <div className={`ask-flex-1 ask-flex ask-flex-col ask-overflow-hidden ask-relative ${isFullyMinimized ? 'ask-h-0 ask-m-0 ask-p-0' : ''}`}
+             style={{ width: '100%', boxSizing: 'border-box', maxHeight: '100%', minHeight: isFullyMinimized ? '0' : 'auto' }}>
           <div 
             ref={messagesContainerRef}
-            className="ask-flex-1 ask-overflow-hidden ask-transition-all ask-duration-300 ask-flex ask-flex-col ask-font-sans ask-relative"
+            className="ask-flex-1 ask-overflow-y-auto ask-transition-all ask-duration-300 ask-flex ask-flex-col ask-font-sans ask-relative"
             style={{ 
               display: isMinimized ? 'none' : 'flex',
               height: isMinimized ? '0' : 'auto',
-              minHeight: conversationStarted && !isMinimized ? '200px' : '0',
-              maxHeight: isMinimized ? '0' : 'calc(100vh - 120px)',
-              overflow: 'hidden',
-              fontFamily: "'Inter', system-ui, sans-serif"
+              minHeight: conversationStarted && !isMinimized ? '0' : '0',
+              maxHeight: isMinimized ? '0' : 'calc(100% - 80px)',
+              overflowY: 'auto',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              width: '100%',
+              boxSizing: 'border-box'
             }}
           >
             {/* Control buttons - inside the chat container */}
@@ -372,7 +502,8 @@ const ChatInterface: React.FC = () => {
           )}
           
           {/* Bottom container that stays together when minimized */}
-          <div className={`${isMinimized ? 'ask-mt-0' : 'ask-mt-auto'} ask-sticky ask-bottom-0 ask-bg-transparent ask-transition-all ask-duration-300 ${isMinimized ? 'ask-rounded-2xl' : ''}`}>
+          <div className={`${isMinimized ? 'ask-mt-0' : 'ask-mt-auto'} ask-sticky ask-bottom-0 ask-bg-transparent ask-transition-all ask-duration-300 ${isMinimized ? 'ask-rounded-2xl' : ''}`}
+               style={{ width: '100%', flexShrink: 0 }}>
             {/* ButtonPanel - visible in minimized but not fully minimized state */}
             {(!isFullyMinimized) && (
               <ButtonPanel 

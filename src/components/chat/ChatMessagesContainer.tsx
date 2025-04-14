@@ -50,10 +50,11 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior,
-        block: 'end'
-      });
+      // Bruk scrollIntoView med containment i stedet for å påvirke hele siden
+      if (chatBoxRef.current) {
+        const chatBox = chatBoxRef.current;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
       
       // Double-check that we're really at the bottom after a short delay
       setTimeout(() => {
@@ -213,9 +214,19 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
     <div 
       ref={chatBoxRef} 
       className="ask-flex-1 ask-overflow-y-auto ask-relative ask-scroll-smooth ask-custom-scrollbar" 
-      style={{ overflowY: 'auto', minHeight: '0', fontFamily: "'Inter', system-ui, sans-serif" }}
+      style={{ 
+        overflowY: 'auto', 
+        height: 'auto',
+        maxHeight: '100%',
+        fontFamily: "'Inter', system-ui, sans-serif",
+        width: '100%',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
     >
-      <div className="ask-flex ask-flex-col ask-space-y-2 ask-w-full ask-px-4 ask-pt-2 ask-pb-0 ask-font-sans">
+      <div className="ask-flex ask-flex-col ask-space-y-2 ask-w-full ask-px-4 ask-pt-2 ask-pb-0 ask-font-sans"
+           style={{ width: '100%', flex: '1 1 auto' }}>
         <TopScrollIndicator />
         
         {messages.map((message, index) => {
@@ -235,7 +246,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
                 className="ask-flex ask-justify-start ask-w-full ask-relative ask-group ask-my-5"
               >
                 <div
-                  className="ask-max-w-[100%] ask-self-start ask-px-1 ask-cursor-pointer"
+                  className="ask-w-full ask-self-start ask-px-1 ask-cursor-pointer"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                 >
                   <CarouselMessage 
