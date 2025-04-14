@@ -30,4 +30,33 @@
   .chat-input:focus {
     @apply ask-ring-2 ask-ring-gray-400 ask-bg-white ask-border-black;
   }
+  
+  /* Specifikt selector for å overkjøre globale css-regler fra tredjeparts nettsider */
+  #ask-widget-input-field, 
+  input#ask-widget-input-field,
+  input[type="text"]#ask-widget-input-field {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: none !important;
+    border-radius: inherit !important;
+    box-sizing: border-box !important;
+    color: inherit !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    /* Ekstra regler for å sikre overkjøring */
+    all: revert !important;
+    margin: 0 !important;
+    display: block !important;
+    /* Deretter sett våre egne verdier */
+    background-color: rgba(249, 250, 251, 0.9) !important;
+    border: 1px solid rgba(229, 231, 235, 1) !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 1rem !important;
+    width: 100% !important;
+    outline: none !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    opacity: 1 !important;
+  }
 }

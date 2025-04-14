@@ -97,7 +97,19 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             active:ask-translate-y-[1px]
             ${isFocused ? 'ask-widget-input-focused ask-bg-white' : ''}
             ${isMinimized ? 'ask-widget-input-minimized ask-cursor-pointer' : ''}`} 
-          style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 300 }}
+          style={{ 
+            fontFamily: "'Inter', system-ui, sans-serif", 
+            fontWeight: 300,
+            appearance: "none",
+            WebkitAppearance: "none",
+            MozAppearance: "none",
+            border: "1px solid rgba(229, 231, 235, 1)",
+            backgroundImage: "none",
+            backgroundColor: "rgba(249, 250, 251, 0.9)",
+            padding: "0.5rem 1rem",
+            width: "100%",
+            outline: "none"
+          }}
         />
         
         <div 
