@@ -92,7 +92,6 @@
       #${config.containerID}:not(#\\9) .message-item {
         height: auto !important;
         max-height: none !important;
-        min-height: inherit !important;
         overflow: visible !important;
         visibility: visible !important;
         display: block !important;
