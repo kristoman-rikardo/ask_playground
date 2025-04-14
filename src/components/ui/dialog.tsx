@@ -19,7 +19,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "ask-fixed ask-inset-0 ask-z-50 ask-bg-black/80 ask-data-[state=open]:animate-in ask-data-[state=closed]:animate-out ask-data-[state=closed]:fade-out-0 ask-data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -36,15 +36,15 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "ask-fixed ask-left-[50%] ask-top-[50%] ask-z-50 ask-grid ask-w-full ask-max-w-lg ask-translate-x-[-50%] ask-translate-y-[-50%] ask-gap-4 ask-border ask-bg-background ask-p-6 ask-shadow-lg ask-duration-200 ask-data-[state=open]:animate-in ask-data-[state=closed]:animate-out ask-data-[state=closed]:fade-out-0 ask-data-[state=open]:fade-in-0 ask-data-[state=closed]:zoom-out-95 ask-data-[state=open]:zoom-in-95 ask-data-[state=closed]:slide-out-to-left-1/2 ask-data-[state=closed]:slide-out-to-top-[48%] ask-data-[state=open]:slide-in-from-left-1/2 ask-data-[state=open]:slide-in-from-top-[48%] ask-sm:rounded-lg",
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
+      <DialogPrimitive.Close className="ask-absolute ask-right-4 ask-top-4 ask-rounded-sm ask-opacity-70 ask-ring-offset-background ask-transition-opacity hover:ask-opacity-100 focus:ask-outline-none focus:ask-ring-2 focus:ask-ring-ring focus:ask-ring-offset-2 ask-disabled:pointer-events-none ask-data-[state=open]:bg-accent ask-data-[state=open]:text-muted-foreground">
+        <X className="ask-h-4 ask-w-4" />
+        <span className="ask-sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
@@ -57,7 +57,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
+      "ask-flex ask-flex-col ask-space-y-1.5 ask-text-center ask-sm:text-left",
       className
     )}
     {...props}
@@ -71,7 +71,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "ask-flex ask-flex-col-reverse ask-sm:flex-row ask-sm:justify-end ask-sm:space-x-2",
       className
     )}
     {...props}
@@ -86,7 +86,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
+      "ask-text-lg ask-font-semibold ask-leading-none ask-tracking-tight",
       className
     )}
     {...props}
@@ -100,7 +100,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("ask-text-sm ask-text-muted-foreground", className)}
     {...props}
   />
 ))

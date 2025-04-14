@@ -49,13 +49,13 @@
   }
   
   .shimmer-effect {
-    @apply bg-gradient-to-r from-faq-agent via-faq-light to-faq-agent 
-           bg-[length:400%_100%] animate-shimmer;
+    @apply ask-bg-gradient-to-r ask-from-faq-agent ask-via-faq-light ask-to-faq-agent 
+           ask-bg-[length:400%_100%] ask-animate-shimmer;
   }
 
   /* Thinking indicator animation - enhanced version */
   .thinking-text {
-    @apply font-light text-gray-700 transition-opacity duration-300;
+    @apply ask-font-light ask-text-gray-700 ask-transition-opacity ask-duration-300;
   }
   
   .dots-animation {

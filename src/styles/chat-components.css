@@ -1,33 +1,33 @@
 @layer components {
   .chat-message-user {
-    @apply bg-gray-100 text-gray-800 ml-auto shadow-sm rounded-xl border-transparent font-sans;
+    @apply ask-bg-gray-100 ask-text-gray-800 ask-ml-auto ask-shadow-sm ask-rounded-xl ask-border-transparent ask-font-sans;
   }
 
   .chat-message-agent {
-    @apply bg-gray-50 text-gray-800 mr-auto shadow-sm rounded-xl border-transparent font-sans;
+    @apply ask-bg-gray-50 ask-text-gray-800 ask-mr-auto ask-shadow-sm ask-rounded-xl ask-border-transparent ask-font-sans;
   }
 
   .choice-button {
-    @apply bg-gray-100 text-gray-800 hover:bg-gray-200 active:bg-gray-100 transition-all 
-           shadow-sm hover:shadow-md border-gray-200/30 rounded-xl px-2 py-1.5
-           transform hover:scale-[1.02] active:scale-[0.98] 
-           duration-200 font-normal whitespace-nowrap overflow-hidden text-ellipsis font-sans;
+    @apply ask-bg-gray-100 ask-text-gray-800 hover:ask-bg-gray-200 active:ask-bg-gray-100 ask-transition-all 
+           ask-shadow-sm hover:ask-shadow-md ask-border-gray-200/30 ask-rounded-xl ask-px-2 ask-py-1.5
+           ask-transform hover:ask-scale-[1.02] active:ask-scale-[0.98] 
+           ask-duration-200 ask-font-normal ask-whitespace-nowrap ask-overflow-hidden ask-text-ellipsis ask-font-sans;
     width: fit-content !important;
     display: inline-block !important;
   }
   
   /* Chat input styling */
   .chat-input {
-    @apply border-transparent rounded-lg px-3 py-2 w-full outline-none
-           transition-all duration-200 bg-gray-100
-           hover:bg-gray-100/95 font-sans;
+    @apply ask-border-transparent ask-rounded-lg ask-px-3 ask-py-2 ask-w-full ask-outline-none
+           ask-transition-all ask-duration-200 ask-bg-gray-100
+           hover:ask-bg-gray-100/95 ask-font-sans;
   }
   
   .chat-input:hover {
-    @apply shadow-sm bg-gray-100/95;
+    @apply ask-shadow-sm ask-bg-gray-100/95;
   }
   
   .chat-input:focus {
-    @apply ring-2 ring-gray-400 bg-white border-black;
+    @apply ask-ring-2 ask-ring-gray-400 ask-bg-white ask-border-black;
   }
 }

@@ -37,7 +37,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   // Sparkle SVG icon for buttons
   const SparkleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-      fill="currentColor" className="size-5 inline-block ml-1" 
+      fill="currentColor" className="ask-size-5 ask-inline-block ask-ml-1" 
       style={{ color: "39665a", filter: "drop-shadow(0 0 3px rgba(127, 127, 127, 0.5))" }}>
       <path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785
               l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238
@@ -57,7 +57,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   
   // Enhanced thinking indicator with separate animation for dots - no background label
   const ThinkingIndicator = () => (
-    <div className="mb-3 transition-all duration-300">
+    <div className="ask-mb-3 ask-transition-all ask-duration-300">
       <span className="thinking-text">Thinking</span>
       <span className="dots-animation"></span>
     </div>
@@ -65,7 +65,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   
   // Simplified loader component with thinking text
   const LoadingIndicator = () => (
-    <div className="h-[70px] flex flex-col items-center justify-center transition-opacity duration-300">
+    <div className="ask-h-[70px] ask-flex ask-flex-col ask-items-center ask-justify-center ask-transition-opacity ask-duration-300">
       <ThinkingIndicator />
       <div className="simple-loader" aria-label="Loading" role="status"></div>
     </div>
@@ -215,7 +215,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   const ButtonList = () => (
     <div 
       ref={buttonContainerRef}
-      className="flex flex-wrap gap-2 px-4 py-2 content-start"
+      className="ask-flex ask-flex-wrap ask-gap-2 ask-px-4 ask-py-2 ask-content-start"
       style={{ 
         opacity: isVisible ? 1 : 0,
         transition: 'opacity 0.2s ease-in-out',
@@ -226,11 +226,11 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
           key={`button-${index}-${button.name.substring(0, 10)}`} 
           onClick={() => handleButtonClick(button)} 
           title={button.name} 
-          className="choice-button whitespace-normal break-words transition-all 
-                   duration-300 text-base text-left rounded-2xl 
-                   px-3 py-2 border border-gray-200/50 
-                   shadow-sm hover:shadow-md bg-gray-100 
-                   hover:bg-gray-200 font-sans"
+          className="choice-button ask-whitespace-normal ask-break-words ask-transition-all 
+                   ask-duration-300 ask-text-base ask-text-left ask-rounded-2xl 
+                   ask-px-3 ask-py-2 ask-border ask-border-gray-200/50 
+                   ask-shadow-sm hover:ask-shadow-md ask-bg-gray-100 
+                   hover:ask-bg-gray-200 ask-font-sans"
           style={{ maxWidth: '100%', fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 400 }}
         >
           {button.name}
@@ -241,7 +241,7 @@ const ButtonPanel: React.FC<ButtonPanelProps> = ({
   );
   
   return (
-    <div className={`w-full bg-transparent p-0 relative font-sans ${className}`} style={{ fontFamily: "'Inter', system-ui, sans-serif", marginTop: '8px' }}>
+    <div className={`ask-w-full ask-bg-transparent ask-p-0 ask-relative ask-font-sans ${className}`} style={{ fontFamily: "'Inter', system-ui, sans-serif", marginTop: '8px' }}>
       {isLoading && !isMinimized ? <LoadingIndicator /> : buttons.length > 0 ? <ButtonList /> : null}
     </div>
   );

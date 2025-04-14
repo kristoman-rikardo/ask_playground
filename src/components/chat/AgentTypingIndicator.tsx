@@ -15,7 +15,7 @@ const AgentTypingIndicator: React.FC<AgentTypingIndicatorProps> = ({
   if (!isTyping || hasPartialMessages) return null;
   
   return (
-    <div className="px-4 py-2.5 rounded-xl max-w-[85%] mr-auto mb-1">
+    <div className="ask-px-4 ask-py-2.5 ask-rounded-xl ask-max-w-[85%] ask-mr-auto ask-mb-1">
       <TypingIndicator 
         isTyping={isTyping} 
         textStreamingStarted={textStreamingStarted}

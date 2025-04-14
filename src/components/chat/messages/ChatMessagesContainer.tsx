@@ -130,7 +130,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = memo(({
         marginBottom: '2px'
       }}
     >
-      <div className="w-[90%] h-[2px] bg-gray-300" style={{ borderRadius: '10px' }}></div>
+      <div className="w-[90%] h-[2px] bg-gray-100" style={{ borderRadius: '10px' }}></div>
     </div>
   ));
 

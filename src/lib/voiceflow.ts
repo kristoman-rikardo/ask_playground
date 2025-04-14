@@ -15,7 +15,7 @@ export function parseMarkdown(text: string): string {
   // Convert markdown links: [text](url)
   text = text.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g, 
-    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>'
+    '<a href="$2" target="_blank" rel="noopener noreferrer" class="ask-text-[#28483F] ask-underline hover:ask-opacity-80">$1</a>'
   );
   
   // Handle bold: **text** or __text__

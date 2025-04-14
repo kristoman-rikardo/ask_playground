@@ -179,7 +179,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
   // Top indicator component
   const TopScrollIndicator = () => (
     <div 
-      className={`w-full flex items-center justify-center transition-all duration-300 ${showTopIndicator ? 'opacity-100' : 'opacity-0'}`}
+      className={`ask-w-full ask-flex ask-items-center ask-justify-center ask-transition-all ask-duration-300 ${showTopIndicator ? 'ask-opacity-100' : 'ask-opacity-0'}`}
       style={{
         position: 'sticky',
         top: 0,
@@ -192,7 +192,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
         marginBottom: '2px'
       }}
     >
-      <div className="w-[90%] h-[2px] bg-gray-300" style={{ borderRadius: '10px' }}></div>
+      <div className="ask-w-[90%] ask-h-[2px] ask-bg-gray-100" style={{ borderRadius: '10px' }}></div>
     </div>
   );
 
@@ -212,10 +212,10 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
   return (
     <div 
       ref={chatBoxRef} 
-      className="flex-1 overflow-y-auto relative scroll-smooth custom-scrollbar" 
+      className="ask-flex-1 ask-overflow-y-auto ask-relative ask-scroll-smooth ask-custom-scrollbar" 
       style={{ overflowY: 'auto', minHeight: '0', fontFamily: "'Inter', system-ui, sans-serif" }}
     >
-      <div className="flex flex-col space-y-2 w-full px-4 pt-2 pb-0 font-sans">
+      <div className="ask-flex ask-flex-col ask-space-y-2 ask-w-full ask-px-4 ask-pt-2 ask-pb-0 ask-font-sans">
         <TopScrollIndicator />
         
         {messages.map((message, index) => {
@@ -232,10 +232,10 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
                 key={message.id}
                 id={`message-${message.id}`}
                 ref={isLast ? lastMessageRef : null}
-                className="flex justify-start w-full relative group my-5"
+                className="ask-flex ask-justify-start ask-w-full ask-relative ask-group ask-my-5"
               >
                 <div
-                  className="max-w-[100%] self-start px-1 cursor-pointer"
+                  className="ask-max-w-[100%] ask-self-start ask-px-1 ask-cursor-pointer"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                 >
                   <CarouselMessage 
@@ -268,7 +268,7 @@ const ChatMessagesContainer: React.FC<ChatMessagesContainerProps> = ({
         />
       </div>
       
-      <div ref={messagesEndRef} className="h-1" />
+      <div ref={messagesEndRef} className="ask-h-1" />
     </div>
   );
 };

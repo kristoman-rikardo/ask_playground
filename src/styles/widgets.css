@@ -1,7 +1,7 @@
 @layer components {
   /* Widget container */
   .widget-container {
-    @apply flex flex-col h-full;
+    @apply ask-flex ask-flex-col ask-h-full;
   }
 
   /* Improved circular loader animation - more refined */

@@ -5,25 +5,25 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "ask-inline-flex ask-items-center ask-justify-center ask-gap-2 ask-whitespace-nowrap ask-rounded-md ask-text-sm ask-font-medium ask-ring-offset-background ask-transition-colors ask-focus-visible:outline-none ask-focus-visible:ring-2 ask-focus-visible:ring-ring ask-focus-visible:ring-offset-2 ask-disabled:pointer-events-none ask-disabled:opacity-50 [&_svg]:ask-pointer-events-none [&_svg]:ask-size-4 [&_svg]:ask-shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "ask-bg-primary ask-text-primary-foreground ask-hover:bg-primary/90",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "ask-bg-destructive ask-text-destructive-foreground ask-hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "ask-border ask-border-input ask-bg-background ask-hover:bg-accent ask-hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "ask-bg-secondary ask-text-secondary-foreground ask-hover:bg-secondary/80",
+        ghost: "ask-hover:bg-accent ask-hover:text-accent-foreground",
+        link: "ask-text-primary ask-underline-offset-4 ask-hover:underline",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        default: "ask-h-10 ask-px-4 ask-py-2",
+        sm: "ask-h-9 ask-rounded-md ask-px-3",
+        lg: "ask-h-11 ask-rounded-md ask-px-8",
+        icon: "ask-h-10 ask-w-10",
       },
     },
     defaultVariants: {

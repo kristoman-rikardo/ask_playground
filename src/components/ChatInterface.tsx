@@ -3,7 +3,7 @@ import { useChatSession } from '@/hooks/useChatSession';
 import ChatMessages from './chat/ChatMessages';
 import ChatInputArea from './chat/ChatInputArea';
 import ButtonPanel from './ButtonPanel';
-import ScrollDownIndicator from './chat/ScrollDownIndicator';
+import ScrollDownIndicator from './chat/indicators/ScrollDownIndicator';
 import { ChevronDown, Maximize2, X } from 'lucide-react';
 import RatingDialog from './RatingDialog';
 import { ChatContext } from '@/App';
@@ -91,18 +91,23 @@ const ChatInterface: React.FC = () => {
   };
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    const chatBoxElement = document.querySelector('.overflow-y-auto');
+    const chatBoxElement = document.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
     if (chatBoxElement) {
-      // First scroll attempt
+      // First scroll attempt - immediate
       chatBoxElement.scrollTop = chatBoxElement.scrollHeight;
+      
+      // Force layout recalculation
+      if (chatBoxElement instanceof HTMLElement) {
+        void chatBoxElement.offsetHeight;
+      }
       
       // Multiple check attempts with increasing delays to ensure proper scrolling
       // This helps with dynamic content like carousels that may change height
-      const scrollAttempts = [50, 200, 500];
+      const scrollAttempts = [10, 50, 200, 500];
       scrollAttempts.forEach(delay => {
         setTimeout(() => {
           if (chatBoxElement) {
-            chatBoxElement.scrollTop = chatBoxElement.scrollHeight;
+            chatBoxElement.scrollTop = chatBoxElement.scrollHeight + 1000; // Ensure it scrolls past the end
           }
         }, delay);
       });
@@ -111,11 +116,14 @@ const ChatInterface: React.FC = () => {
       if (carouselData) {
         // Add extra scroll attempt for carousels with longer delays
         // This ensures the carousel is fully rendered and visible
-        setTimeout(() => {
-          if (chatBoxElement) {
-            chatBoxElement.scrollTop = chatBoxElement.scrollHeight;
-          }
-        }, 800);
+        const carouselDelays = [300, 600, 900, 1200];
+        carouselDelays.forEach(delay => {
+          setTimeout(() => {
+            if (chatBoxElement) {
+              chatBoxElement.scrollTop = chatBoxElement.scrollHeight + 1000;
+            }
+          }, delay);
+        });
       }
     }
   };
@@ -124,35 +132,48 @@ const ChatInterface: React.FC = () => {
   const handleButtonClick = (button: any) => {
     originalHandleButtonClick(button);
     // Scroll to bottom whenever a button is clicked
-    setTimeout(() => scrollToBottom('auto'), 50);
+    setTimeout(() => scrollToBottom('auto'), 10);
+    setTimeout(() => scrollToBottom('auto'), 300);
   };
 
   // Listen for scroll events to show/hide scroll indicator
   useEffect(() => {
-    const chatBoxElement = document.querySelector('.overflow-y-auto');
+    const chatBoxElement = document.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
     if (!chatBoxElement) return;
 
     const handleScroll = () => {
       if (chatBoxElement) {
         const scrollBottom = chatBoxElement.scrollHeight - chatBoxElement.scrollTop - chatBoxElement.clientHeight;
-        const threshold = 40;
+        const threshold = 100; // Increased threshold to make the button appear earlier
         setShowScrollButton(scrollBottom > threshold);
       }
     };
 
+    // Initial check
+    handleScroll();
+
+    // Add event listener
     chatBoxElement.addEventListener('scroll', handleScroll);
-    return () => chatBoxElement.removeEventListener('scroll', handleScroll);
+    
+    // Also check periodically in case content changes without scrolling
+    const intervalCheck = setInterval(handleScroll, 500);
+
+    return () => {
+      chatBoxElement.removeEventListener('scroll', handleScroll);
+      clearInterval(intervalCheck);
+    };
   }, []);
 
   // Auto-scroll during typing for better view of streamed messages
   useEffect(() => {
     // Only auto-scroll if:
     // 1. Text is typing AND
-    // 2. The user is near the bottom of the chat already AND
-    // 3. Either we're not in embedded mode OR global auto-scroll is not disabled
-    if (isTyping && !showScrollButton && (!isEmbedded || !disableGlobalAutoScroll)) {
+    // 2. Either we're near the bottom OR global auto-scroll is not disabled
+    if (isTyping && (!isEmbedded || !disableGlobalAutoScroll)) {
       const interval = setInterval(() => {
-        scrollToBottom('auto');
+        if (!showScrollButton) { // Only auto-scroll if already near bottom
+          scrollToBottom('auto');
+        }
       }, 300);
       return () => clearInterval(interval);
     }
@@ -227,17 +248,17 @@ const ChatInterface: React.FC = () => {
   return (
     <>
       <div 
-        className="w-full mx-auto bg-transparent shadow-none overflow-hidden transition-all font-sans flex flex-col relative"
+        className="ask-w-full ask-mx-auto ask-bg-transparent ask-shadow-none ask-overflow-hidden ask-transition-all ask-font-sans ask-flex ask-flex-col ask-relative"
         style={{ 
           height: isFullyMinimized ? 'auto' : '100%', 
           maxHeight: isFullyMinimized ? 'auto' : '100vh', 
           fontFamily: "'Inter', system-ui, sans-serif"
         }}
       >
-        <div className={`flex-1 flex flex-col overflow-hidden relative ${isFullyMinimized ? 'h-0 m-0 p-0' : ''}`}>
+        <div className={`ask-flex-1 ask-flex ask-flex-col ask-overflow-hidden ask-relative ${isFullyMinimized ? 'ask-h-0 ask-m-0 ask-p-0' : ''}`}>
           <div 
             ref={messagesContainerRef}
-            className="flex-1 overflow-hidden transition-all duration-300 flex flex-col font-sans relative"
+            className="ask-flex-1 ask-overflow-hidden ask-transition-all ask-duration-300 ask-flex ask-flex-col ask-font-sans ask-relative"
             style={{ 
               display: isMinimized ? 'none' : 'flex',
               height: isMinimized ? '0' : 'auto',
@@ -250,7 +271,7 @@ const ChatInterface: React.FC = () => {
             {/* Control buttons - inside the chat container */}
             {conversationStarted && !isMinimized && !isFullyMinimized && (
               <div 
-                className="absolute z-50 flex space-x-2 m-2" 
+                className="ask-absolute ask-z-50 ask-flex ask-space-x-2 ask-m-2" 
                 style={{ 
                   top: '0',
                   left: '0'
@@ -258,17 +279,17 @@ const ChatInterface: React.FC = () => {
               >
                 <button
                   onClick={handleRestartClick}
-                  className="bg-gray-100 hover:bg-gray-200 transition-colors p-1 rounded-full shadow-sm"
+                  className="ask-bg-gray-100 ask-hover:bg-gray-200 ask-transition-colors ask-p-1 ask-rounded-full ask-shadow-sm"
                   aria-label="Restart chat"
                 >
-                  <X size={14} className="text-[#28483f]" />
+                  <X size={14} className="ask-text-[#28483f]" />
                 </button>
                 <button
                   onClick={toggleMinimize}
-                  className="bg-gray-100 hover:bg-gray-200 transition-colors p-1 rounded-full shadow-sm"
+                  className="ask-bg-gray-100 ask-hover:bg-gray-200 ask-transition-colors ask-p-1 ask-rounded-full ask-shadow-sm"
                   aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
                 >
-                  <ChevronDown size={14} className={`text-[#28483f] ${isMinimized ? "rotate-180" : ""}`} />
+                  <ChevronDown size={14} className={`ask-text-[#28483f] ${isMinimized ? "ask-rotate-180" : ""}`} />
                 </button>
               </div>
             )}
@@ -286,21 +307,33 @@ const ChatInterface: React.FC = () => {
           
           {/* Scroll down indicator - only visible when not minimized */}
           {!isMinimized && (
-            <ScrollDownIndicator
-              visible={showScrollButton}
-              onClick={scrollToBottom}
-            />
+            <div className="ask-relative ask-z-50">
+              <ScrollDownIndicator
+                visible={showScrollButton}
+                onClick={() => {
+                  scrollToBottom('smooth');
+                  // Etter scroll, sjekk om indikatoren bør skjules
+                  setTimeout(() => {
+                    const chatBoxElement = document.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
+                    if (chatBoxElement) {
+                      const scrollBottom = chatBoxElement.scrollHeight - chatBoxElement.scrollTop - chatBoxElement.clientHeight;
+                      setShowScrollButton(scrollBottom > 100);
+                    }
+                  }, 100);
+                }}
+              />
+            </div>
           )}
           
           {/* Bottom container that stays together when minimized */}
-          <div className={`${isMinimized ? 'mt-0' : 'mt-auto'} sticky bottom-0 bg-transparent transition-all duration-300 ${isMinimized ? 'rounded-2xl' : ''}`}>
+          <div className={`${isMinimized ? 'ask-mt-0' : 'ask-mt-auto'} ask-sticky ask-bottom-0 ask-bg-transparent ask-transition-all ask-duration-300 ${isMinimized ? 'ask-rounded-2xl' : ''}`}>
             {/* ButtonPanel - visible in minimized but not fully minimized state */}
             {(!isFullyMinimized) && (
               <ButtonPanel 
                 buttons={buttons} 
                 isLoading={isButtonsLoading} 
                 onButtonClick={handleButtonClick} 
-                className={isMinimized ? 'mb-0 pb-0' : ''}
+                className={isMinimized ? 'ask-mb-0 ask-pb-0' : ''}
                 isMinimized={isMinimized}
                 onMaximize={expandChat}
               />
@@ -314,12 +347,12 @@ const ChatInterface: React.FC = () => {
             />
             
             {/* Disclaimer under innskrivingsfeltet - alltid synlig */}
-            <div className="w-full text-center text-xs text-gray-400 pt-0 mt-0 mb-1 font-light">
+            <div className="ask-w-full ask-text-center ask-text-xs ask-text-gray-400 ask-pt-0 ask-mt-0 ask-mb-1 ask-font-light">
               <a 
                 href="https://askask.no" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="font-normal"
+                className="ask-font-normal"
                 style={{ color: "#28483F" }}
               >
                 Ask

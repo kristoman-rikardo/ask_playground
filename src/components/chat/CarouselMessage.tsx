@@ -32,11 +32,28 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
     if (containerRef.current) {
       // Allow layout to stabilize before scrolling
       const timer = setTimeout(() => {
-        // Find the nearest scrollable parent
-        const scrollContainer = document.querySelector('.overflow-y-auto');
+        // Find the nearest scrollable parent - try both with and without prefix
+        let scrollContainer = document.querySelector('.ask-overflow-y-auto');
+        
+        // If not found with prefix, try without (for backward compatibility)
+        if (!scrollContainer) {
+          scrollContainer = document.querySelector('.overflow-y-auto'); 
+        }
+        
+        // Alternatively, search for the exact element with ref
+        if (!scrollContainer) {
+          const allScrollable = document.querySelectorAll('[class*="overflow-y-auto"]');
+          if (allScrollable.length > 0) {
+            scrollContainer = allScrollable[0];
+          }
+        }
+        
         if (scrollContainer) {
           // Scroll to fully show the carousel
           scrollContainer.scrollTop = scrollContainer.scrollHeight;
+          console.log('Scrolled container to show carousel');
+        } else {
+          console.warn('Could not find scrollable container for carousel');
         }
       }, 300);
       
@@ -176,76 +193,89 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
   return (
     <div 
       ref={containerRef}
-      className={cn("w-full relative overflow-visible mt-2 mb-5", className)} // Increased bottom margin to ensure full visibility
+      className={cn("ask-w-full ask-relative ask-overflow-visible ask-mt-2 ask-mb-5", className)}
     >
       <Carousel 
-        className="w-full mx-auto overflow-visible" // Simplified to maintain consistent width
+        className="ask-w-full ask-mx-auto ask-overflow-visible"
         opts={{ 
-          align: 'center', // Changed to center alignment for better distribution
-          containScroll: false, // Changed to false to prevent clipping
-          slidesToScroll: slidesPerView,
+          align: 'start',
+          containScroll: 'trimSnaps',
+          slidesToScroll: slidesPerView === 1 ? 1 : slidesPerView,
+          dragFree: true,
           loop: false,
         }}
       >
-        <CarouselContent className={`flex gap-1 pl-2 pr-1 overflow-visible`}> {/* Increased left padding */}
+        <CarouselContent className={`${cards.length === 1 ? "ask-flex ask-justify-start" : "ask-flex ask-justify-between"} ask-gap-2 ask-pl-1`}>
           {cards.map((card, index) => (
             <CarouselItem 
               key={card.id || card.title} 
               className={`${
                 cards.length === 1 && slidesPerView > 1 
-                  ? 'basis-1/2 px-1' 
+                  ? 'ask-basis-1/2 ask-px-1' 
                   : slidesPerView === 1 
-                    ? 'basis-full px-1' 
+                    ? 'ask-basis-full ask-px-1' 
                     : slidesPerView === 2 
-                      ? 'basis-1/2 px-1' 
-                      : 'basis-1/3 px-1'
-              } ${index === 0 ? 'ml-0' : ''} overflow-visible`} // Removed extra left margin for first item
+                      ? 'ask-basis-1/2 ask-px-1' 
+                      : 'ask-basis-1/3 ask-px-1'
+              } ${index === 0 ? 'ask-ml-0' : ''} ask-overflow-visible`}
+              style={{
+                flex: slidesPerView === 1 ? '0 0 100%' : `0 0 calc(${100 / slidesPerView}% - 16px)`,
+                maxWidth: slidesPerView === 1 ? '100%' : `calc(${100 / slidesPerView}% - 16px)`
+              }}
             >
               <Card 
-                className="border border-gray-200 rounded-lg overflow-hidden h-full flex flex-col shadow-sm hover:shadow-md transition-shadow font-sans" 
+                className="ask-border ask-border-gray-200 ask-rounded-lg ask-overflow-hidden ask-h-full ask-flex ask-flex-col ask-shadow-sm hover:ask-shadow-md ask-transition-shadow ask-font-sans" 
                 style={{ 
-                  width: cardWidth > 0 ? cardWidth : undefined,
-                  maxWidth: containerWidth > 0 ? `${cardWidth}px` : '100%',
+                  minWidth: '140px',
+                  maxWidth: '100%',
                   margin: '0 auto',
-                  marginLeft: index === 0 ? '10px' : '0 auto', // Increased left margin for first card
-                  marginRight: index === cards.length - 1 ? '10px' : '0 auto', // Increased right margin for last card
-                  fontFamily: "'Inter', system-ui, sans-serif"
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  backgroundColor: '#fafafa'
                 }}
               >
                 {card.imageUrl && (
                   <div 
-                    className="relative w-full overflow-hidden" 
+                    className="ask-relative ask-w-full ask-overflow-hidden" 
                     style={{ 
-                      paddingTop: '70%', // Reduced height for better fit
+                      paddingTop: '65%', // Adjusted for better proportion
                       position: 'relative' 
                     }}
                   >
                     <img 
                       src={card.imageUrl} 
                       alt={card.title}
-                      className="object-cover absolute top-0 left-0 w-full h-full"
+                      className="ask-object-cover ask-absolute ask-top-0 ask-left-0 ask-w-full ask-h-full"
                       loading="lazy"
                     />
                   </div>
                 )}
-                <CardHeader className="p-2 pb-1 flex-none">
+                <CardHeader className="ask-p-2 ask-pb-1 ask-flex-none">
                   <CardTitle 
-                    className="font-medium truncate text-sm"
-                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    className="ask-font-medium ask-truncate ask-text-sm"
+                    style={{ 
+                      fontFamily: "'Inter', system-ui, sans-serif",
+                      fontSize: '0.9rem', // Adjusted font size for better proportion
+                      lineHeight: 1.3
+                    }}
                   >
                     {card.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 pt-0 flex-grow">
+                <CardContent className="ask-p-2 ask-pt-0 ask-flex-grow">
                   <CardDescription 
-                    className="line-clamp-2 text-xs"
-                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    className="ask-line-clamp-2 ask-text-xs"
+                    style={{ 
+                      fontFamily: "'Inter', system-ui, sans-serif",
+                      fontSize: '0.8rem', // Adjusted font size for better proportion
+                      lineHeight: 1.4,
+                      color: '#666'
+                    }}
                   >
                     {card.description.text}
                   </CardDescription>
                 </CardContent>
                 {card.buttons && card.buttons.length > 0 && (
-                  <CardFooter className="p-2 pt-1 flex flex-wrap gap-2 flex-none justify-center">
+                  <CardFooter className="ask-p-2 ask-pt-1 ask-flex ask-flex-wrap ask-gap-2 ask-flex-none ask-justify-center">
                     {card.buttons.map((button, idx) => {
                       const isBuyNowButton = isExternalLinkButton(button);
                       
@@ -255,17 +285,21 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
                           variant="secondary"
                           size="sm"
                           onClick={() => handleButtonClick(button)}
-                          className="rounded-md transition-all duration-200 w-full text-xs h-9 px-4 py-2"
+                          className="ask-rounded-md ask-transition-all ask-duration-200 ask-w-full ask-text-xs ask-h-8 ask-px-3 ask-py-1.5"
                           style={{ 
                             fontFamily: "'Inter', system-ui, sans-serif",
                             fontWeight: 500,
+                            fontSize: '0.75rem', // Adjusted font size for better proportion
                             boxShadow: '1px 1px 3px rgba(0,0,0,0.12)',
                             backgroundColor: isBuyNowButton ? '#28483F10' : '#f0f0f0',
                             border: '1px solid #e0e0e0',
                             transform: 'translateY(0)',
                             transition: 'all 0.2s ease',
                             position: 'relative',
-                            zIndex: 1
+                            zIndex: 1,
+                            lineHeight: 1.2,
+                            whiteSpace: 'normal', // Allow text wrapping in buttons
+                            minHeight: '32px'
                           }}
                           onMouseOver={(e) => {
                             e.currentTarget.style.backgroundColor = isBuyNowButton ? '#28483F20' : '#e8e8e8';
@@ -282,7 +316,7 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
                         >
                           <span 
                             style={{ 
-                              fontSize: '0.85rem',
+                              fontSize: '0.75rem', // Adjusted font size for better proportion
                               fontFamily: "'Inter', system-ui, sans-serif",
                               fontWeight: 500,
                               lineHeight: 1.2,
@@ -296,7 +330,7 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
                             {button.name}
                             {isBuyNowButton && (
                               <ExternalLink 
-                                size={12}
+                                size={10} // Adjusted size for better proportion
                                 style={{ color: '#28483F', strokeWidth: 2 }} 
                               />
                             )}
@@ -315,16 +349,16 @@ const CarouselMessage: React.FC<CarouselMessageProps> = ({ cards, onButtonClick,
             <CarouselPrevious 
               variant="outline" 
               size="sm"
-              className="left-3 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full z-10"
+              className="ask-left-3 ask-shadow-sm ask-border ask-border-gray-200 ask-bg-white/90 ask-backdrop-blur-sm ask-h-7 ask-w-7 ask-rounded-full ask-z-10"
             >
-              <ChevronLeft className="h-3.5 w-3.5 text-gray-600" />
+              <ChevronLeft className="ask-h-3.5 ask-w-3.5 ask-text-gray-600" />
             </CarouselPrevious>
             <CarouselNext 
               variant="outline"
               size="sm" 
-              className="right-3 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full z-10"
+              className="ask-right-3 ask-shadow-sm ask-border ask-border-gray-200 ask-bg-white/90 ask-backdrop-blur-sm ask-h-7 ask-w-7 ask-rounded-full ask-z-10"
             >
-              <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
+              <ChevronRight className="ask-h-3.5 ask-w-3.5 ask-text-gray-600" />
             </CarouselNext>
           </>
         )}

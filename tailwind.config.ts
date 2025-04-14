@@ -8,7 +8,7 @@ export default {
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
 	],
-	prefix: "",
+	prefix: "ask-",
 	theme: {
 		container: {
 			center: true,

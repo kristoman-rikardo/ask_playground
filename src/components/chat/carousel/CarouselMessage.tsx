@@ -30,15 +30,24 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
   // Ensure carousel is properly visible by scrolling it into view
   useEffect(() => {
     if (containerRef.current) {
-      // Allow layout to stabilize before scrolling
+      // For bedre ytelse - reduser delay
       const timer = setTimeout(() => {
-        // Find the nearest scrollable parent
-        const scrollContainer = document.querySelector('.overflow-y-auto');
+        // Find the nearest scrollable parent - try both with and without prefix
+        const scrollContainer = document.querySelector('.overflow-y-auto, .ask-overflow-y-auto');
         if (scrollContainer) {
-          // Scroll to fully show the carousel
-          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+          // Scroll to fully show the carousel - bruk både med og uten timeouts
+          scrollContainer.scrollTop = scrollContainer.scrollHeight; // Umiddelbar scroll først
+          
+          // Deretter forsøk med forsinkelser for å sikre at alt er lastet
+          [50, 150, 300].forEach(delay => {
+            setTimeout(() => {
+              if (scrollContainer) {
+                scrollContainer.scrollTop = scrollContainer.scrollHeight + 500;
+              }
+            }, delay);
+          });
         }
-      }, 300);
+      }, 50); // Redusert fra 100ms til 50ms
       
       return () => clearTimeout(timer);
     }
@@ -49,6 +58,15 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
     const updateWidth = () => {
       if (containerRef.current) {
         setContainerWidth(containerRef.current.offsetWidth);
+        // Oppdater slidesPerView basert på ny bredde
+        const width = containerRef.current.offsetWidth;
+        if (width < 350) {
+          setSlidesPerView(1);
+        } else if (width < 550) {
+          setSlidesPerView(2);
+        } else {
+          setSlidesPerView(3);
+        }
       }
     };
     
@@ -65,37 +83,17 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
     };
   }, []);
   
-  // Responsive slides count based on screen width
+  // Debug logging for å verifisere at kortene lastes inn riktig
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 350) {
-        setSlidesPerView(1);
-      } else if (window.innerWidth < 550) {
-        setSlidesPerView(2);
-      } else {
-        setSlidesPerView(3);
-      }
-    };
-    
-    const resizeObserver = new ResizeObserver(handleResize);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-    
-    // Initial setup
-    handleResize();
-    
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
+    console.log(`CarouselMessage rendered with ${cards.length} cards, slidesPerView: ${slidesPerView}`);
+  }, [cards, slidesPerView]);
   
   if (!cards || cards.length === 0) return null;
   
   // Calculate card width based on container width and slides per view
   const cardWidth = containerWidth > 0 
-    ? Math.floor((containerWidth - (slidesPerView * 20)) / slidesPerView) - 8 // Increased spacing between cards
-    : slidesPerView === 1 ? 170 : 150;
+    ? Math.max(140, (containerWidth / slidesPerView) - 24) // Garantert minimum bredde på 140px
+    : 170;
     
   // Helper function to check if button is a Buy Now / external link button
   const isExternalLinkButton = (button: Button) => {
@@ -139,44 +137,49 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
   return (
     <div 
       ref={containerRef}
-      className={cn("w-full max-w-full mt-2 mb-5 pl-4", className)}
+      className={cn("ask-w-full ask-max-w-full ask-mt-2 ask-mb-5 ask-pl-4", className)}
     >
       <Carousel 
-        className="w-full mx-auto" 
+        className="ask-w-full ask-mx-auto" 
         opts={{ 
-          align: cards.length === 1 ? 'start' : 'center',
+          align: 'start',
           containScroll: 'trimSnaps',
-          slidesToScroll: slidesPerView,
+          slidesToScroll: slidesPerView === 1 ? 1 : slidesPerView,
+          dragFree: true,
           loop: false,
         }}
       >
-        <CarouselContent className={`${cards.length === 1 ? "flex justify-start" : "flex"} gap-3 pl-2`}>
+        <CarouselContent className={`${cards.length === 1 ? "ask-flex ask-justify-start" : "ask-flex ask-justify-between"} ask-gap-2 ask-pl-1`}>
           {cards.map((card, index) => (
             <CarouselItem 
               key={card.id || card.title} 
-              className={`px-2 ${
+              className={`ask-px-1 ${
                 cards.length === 1 && slidesPerView > 1 
-                  ? 'basis-1/2' 
+                  ? 'ask-basis-1/2' 
                   : slidesPerView === 1 
-                    ? 'basis-full' 
+                    ? 'ask-basis-full' 
                     : slidesPerView === 2 
-                      ? 'basis-1/2' 
-                      : 'basis-1/3'
-              } ${index === 0 ? 'ml-2' : ''}`}
+                      ? 'ask-basis-1/2' 
+                      : 'ask-basis-1/3'
+              }`}
+              style={{
+                flex: slidesPerView === 1 ? '0 0 100%' : `0 0 calc(${100 / slidesPerView}% - 16px)`,
+                maxWidth: slidesPerView === 1 ? '100%' : `calc(${100 / slidesPerView}% - 16px)`
+              }}
             >
               <Card 
-                className="border border-gray-200 rounded-lg overflow-hidden h-full flex flex-col shadow-sm hover:shadow-md transition-shadow font-sans" 
+                className="ask-border ask-border-gray-200 ask-rounded-lg ask-overflow-hidden ask-h-full ask-flex ask-flex-col ask-shadow-sm hover:ask-shadow-md ask-transition-shadow ask-font-sans" 
                 style={{ 
-                  width: cardWidth > 0 ? cardWidth : undefined,
+                  minWidth: '140px',
                   maxWidth: '100%',
-                  margin: cards.length === 1 ? '0' : '0 auto',
+                  margin: '0 auto',
                   fontFamily: "'Inter', system-ui, sans-serif",
                   backgroundColor: '#fafafa'
                 }}
               >
                 {card.imageUrl && (
                   <div 
-                    className="relative w-full overflow-hidden" 
+                    className="ask-relative ask-w-full ask-overflow-hidden" 
                     style={{ 
                       paddingTop: '70%', // Reduced height for better fit
                       position: 'relative' 
@@ -185,29 +188,29 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
                     <img 
                       src={card.imageUrl} 
                       alt={card.title}
-                      className="object-cover absolute top-0 left-0 w-full h-full"
+                      className="ask-object-cover ask-absolute ask-top-0 ask-left-0 ask-w-full ask-h-full"
                       loading="lazy"
                     />
                   </div>
                 )}
-                <CardHeader className="p-2 pb-1 flex-none">
+                <CardHeader className="ask-p-2 ask-pb-1 ask-flex-none">
                   <CardTitle 
-                    className="font-medium truncate text-sm"
+                    className="ask-font-medium ask-truncate ask-text-sm"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
                     {card.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 pt-0 flex-grow">
+                <CardContent className="ask-p-2 ask-pt-0 ask-flex-grow">
                   <CardDescription 
-                    className="line-clamp-2 text-xs"
+                    className="ask-line-clamp-2 ask-text-xs"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
                     {card.description.text}
                   </CardDescription>
                 </CardContent>
                 {card.buttons && card.buttons.length > 0 && (
-                  <CardFooter className="p-2 pt-1 flex flex-wrap gap-2 flex-none justify-center">
+                  <CardFooter className="ask-p-2 ask-pt-1 ask-flex ask-flex-wrap ask-gap-2 ask-flex-none ask-justify-center">
                     {card.buttons.map((button, idx) => {
                       const isBuyNowButton = isExternalLinkButton(button);
                       
@@ -217,7 +220,7 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
                           variant="secondary"
                           size="sm"
                           onClick={(e) => handleButtonClick(button, e)}
-                          className="rounded-md transition-all duration-200 w-full text-xs h-9 px-4 py-2"
+                          className="ask-rounded-md ask-transition-all ask-duration-200 ask-w-full ask-text-xs ask-h-9 ask-px-4 ask-py-2"
                           style={{ 
                             fontFamily: "'Inter', system-ui, sans-serif",
                             fontWeight: 500,
@@ -277,16 +280,16 @@ const CarouselMessage: React.FC<CarouselMessageProps> = memo(({ cards, onButtonC
             <CarouselPrevious 
               variant="outline" 
               size="sm"
-              className="left-3 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full"
+              className="ask-left-3 ask-shadow-sm ask-border ask-border-gray-200 ask-bg-white/90 ask-backdrop-blur-sm ask-h-7 ask-w-7 ask-rounded-full"
             >
-              <ChevronLeft className="h-3.5 w-3.5 text-gray-600" />
+              <ChevronLeft className="ask-h-3.5 ask-w-3.5 ask-text-gray-600" />
             </CarouselPrevious>
             <CarouselNext 
               variant="outline"
               size="sm" 
-              className="right-3 shadow-sm border border-gray-200 bg-white/90 backdrop-blur-sm h-7 w-7 rounded-full"
+              className="ask-right-3 ask-shadow-sm ask-border ask-border-gray-200 ask-bg-white/90 ask-backdrop-blur-sm ask-h-7 ask-w-7 ask-rounded-full"
             >
-              <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
+              <ChevronRight className="ask-h-3.5 ask-w-3.5 ask-text-gray-600" />
             </CarouselNext>
           </>
         )}

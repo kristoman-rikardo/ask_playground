@@ -25,7 +25,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
   const [isActionsVisible, setIsActionsVisible] = useState(false);
   
   const processContent = (content: string) => {
-    if (!content) return <div className="h-5 w-20 bg-gray-200/50 rounded animate-pulse"></div>;
+    if (!content) return <div className="ask-h-5 ask-w-20 ask-bg-gray-200/50 ask-rounded ask-animate-pulse"></div>;
     return <div dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }} />;
   };
 
@@ -77,14 +77,14 @@ const MessageItem: React.FC<MessageItemProps> = ({
     <div 
       id={`message-${messageId}`}
       ref={isLast ? lastMessageRef : null}
-      className={`flex ${isUser ? 'justify-end' : 'justify-start'} w-full relative group`}
+      className={`ask-flex ${isUser ? 'ask-justify-end' : 'ask-justify-start'} ask-w-full ask-relative ask-group`}
     >
       <div
-        className={`rounded-xl font-sans ${
+        className={`ask-rounded-xl ask-font-sans ${
           isUser 
-            ? 'chat-message-user max-w-[85%] self-end px-3 py-2'
-            : 'chat-message-agent max-w-[85%] self-start px-4 py-2.5 cursor-pointer'
-        } relative`}
+            ? 'chat-message-user ask-max-w-[85%] ask-self-end ask-px-3 ask-py-2'
+            : 'chat-message-agent ask-max-w-[85%] ask-self-start ask-px-4 ask-py-2.5 ask-cursor-pointer'
+        } ask-relative`}
         style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
         onClick={toggleActionsVisibility}
       >
@@ -92,12 +92,12 @@ const MessageItem: React.FC<MessageItemProps> = ({
         
         {!isUser && (
           <div 
-            className={`absolute -right-6 top-1/2 transform -translate-y-1/2 flex flex-col transition-opacity 
-            ${isActionsVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+            className={`ask-absolute ask--right-6 ask-top-1/2 ask-transform ask--translate-y-1/2 ask-flex ask-flex-col ask-transition-opacity 
+            ${isActionsVisible ? 'ask-opacity-100' : 'ask-opacity-0 group-hover:ask-opacity-100'}`}
             style={{ lineHeight: 0 }}
           >
             <button 
-              className="p-0 hover:bg-gray-100 rounded-full my-[2px]" 
+              className="ask-p-0 hover:ask-bg-gray-100 ask-rounded-full ask-my-[2px]" 
               onClick={(e) => {
                 e.stopPropagation();
                 handleFeedback('helpful');
@@ -110,19 +110,19 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"></path>
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="ask-text-gray-400 hover:ask-text-gray-600">
                   <path d="M7 10v12"></path>
                   <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"></path>
                 </svg>
               )}
-              <span className="sr-only">Hjelpsomt</span>
-              <div className="absolute right-full mr-2 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-0 hover:opacity-100 whitespace-nowrap pointer-events-none">
+              <span className="ask-sr-only">Hjelpsomt</span>
+              <div className="ask-absolute ask-right-full ask-mr-2 ask-top-1/2 ask-transform ask--translate-y-1/2 ask-bg-gray-800 ask-text-white ask-text-xs ask-px-2 ask-py-1 ask-rounded ask-opacity-0 group-hover:ask-opacity-0 hover:ask-opacity-100 ask-whitespace-nowrap ask-pointer-events-none">
                 Hjelpsomt
               </div>
             </button>
             
             <button 
-              className="p-0 hover:bg-gray-100 rounded-full my-[2px]" 
+              className="ask-p-0 hover:ask-bg-gray-100 ask-rounded-full ask-my-[2px]" 
               onClick={(e) => {
                 e.stopPropagation();
                 handleFeedback('not_helpful');
@@ -135,19 +135,19 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z"></path>
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="ask-text-gray-400 hover:ask-text-gray-600">
                   <path d="M17 14V2"></path>
                   <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z"></path>
                 </svg>
               )}
-              <span className="sr-only">Ikke hjelpsomt</span>
-              <div className="absolute right-full mr-2 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-0 hover:opacity-100 whitespace-nowrap pointer-events-none">
+              <span className="ask-sr-only">Ikke hjelpsomt</span>
+              <div className="ask-absolute ask-right-full ask-mr-2 ask-top-1/2 ask-transform ask--translate-y-1/2 ask-bg-gray-800 ask-text-white ask-text-xs ask-px-2 ask-py-1 ask-rounded ask-opacity-0 group-hover:ask-opacity-0 hover:ask-opacity-100 ask-whitespace-nowrap ask-pointer-events-none">
                 Ikke hjelpsomt
               </div>
             </button>
             
             <button 
-              className="p-0 hover:bg-gray-100 rounded-full my-[2px]" 
+              className="ask-p-0 hover:ask-bg-gray-100 ask-rounded-full ask-my-[2px]" 
               onClick={(e) => {
                 e.stopPropagation();
                 copyContent();
@@ -159,13 +159,13 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   <path d="M20 6 9 17l-5-5"></path>
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="ask-text-gray-400 hover:ask-text-gray-600">
                   <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
                   <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
                 </svg>
               )}
-              <span className="sr-only">Kopier</span>
-              <div className="absolute right-full mr-2 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-0 hover:opacity-100 whitespace-nowrap pointer-events-none">
+              <span className="ask-sr-only">Kopier</span>
+              <div className="ask-absolute ask-right-full ask-mr-2 ask-top-1/2 ask-transform ask--translate-y-1/2 ask-bg-gray-800 ask-text-white ask-text-xs ask-px-2 ask-py-1 ask-rounded ask-opacity-0 group-hover:ask-opacity-0 hover:ask-opacity-100 ask-whitespace-nowrap ask-pointer-events-none">
                 {isCopied ? 'Kopiert!' : 'Kopier'}
               </div>
             </button>

@@ -8,9 +8,9 @@ interface IndexProps {
 
 const Index = ({ isEmbedded = false }: IndexProps) => {
   return (
-    <div className={`bg-transparent overflow-hidden flex flex-col p-4 font-sans ${isEmbedded ? '' : 'min-h-screen'}`}>
-      <div className="w-full max-w-4xl mx-auto h-full flex flex-col">
-        <div className="w-full flex-1 flex flex-col">
+    <div className={`ask-bg-transparent ask-overflow-hidden ask-flex ask-flex-col ask-p-4 ask-font-sans ${isEmbedded ? '' : 'ask-min-h-screen'}`}>
+      <div className="ask-w-full ask-max-w-4xl ask-mx-auto ask-h-full ask-flex ask-flex-col">
+        <div className="ask-w-full ask-flex-1 ask-flex ask-flex-col">
           <ChatInterface />
         </div>
       </div>

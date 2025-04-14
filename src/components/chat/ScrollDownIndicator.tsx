@@ -13,19 +13,21 @@ const ScrollDownIndicator: React.FC<ScrollDownIndicatorProps> = ({ onClick, visi
   return (
     <div 
       className={cn(
-        "w-full flex items-center justify-center",
-        "transition-all duration-300",
-        visible ? "opacity-100" : "opacity-0"
+        "ask-w-full ask-flex ask-items-center ask-justify-center",
+        "ask-transition-all ask-duration-300",
+        visible ? "ask-opacity-100" : "ask-opacity-0"
       )}
       style={{
-        pointerEvents: 'none',
-        zIndex: 50,
-        position: 'relative', 
-        bottom: '0px'
+        pointerEvents: visible ? 'auto' : 'none',
+        zIndex: 200,
+        position: 'fixed', 
+        bottom: '80px',
+        left: 0,
+        right: 0
       }}
     >
       <div 
-        className={`relative w-[90%] h-[2px] transition-colors duration-200 ${isHovered ? 'bg-gray-400' : 'bg-gray-300'}`} 
+        className={`ask-relative ask-w-[90%] ask-h-[4px] ask-transition-colors ask-duration-200 ${isHovered ? 'ask-bg-gray-500' : 'ask-bg-gray-400'}`} 
         style={{ borderRadius: '10px' }}
       >
         <button 
@@ -33,25 +35,27 @@ const ScrollDownIndicator: React.FC<ScrollDownIndicatorProps> = ({ onClick, visi
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           className={cn(
-            "absolute left-1/2 top-0 -translate-x-1/2",
-            "flex items-center justify-center",
-            "transition-all duration-200",
-            isHovered ? "bg-gray-400" : "bg-gray-300",
-            "px-2"
+            "ask-absolute ask-left-1/2 ask-top-0 ask--translate-x-1/2",
+            "ask-flex ask-items-center ask-justify-center",
+            "ask-transition-all ask-duration-200",
+            isHovered ? "ask-bg-gray-500" : "ask-bg-gray-400",
+            "ask-px-2"
           )}
           style={{
             pointerEvents: 'auto',
             cursor: 'pointer',
             border: 'none',
-            height: '12px',
-            borderRadius: '0 0 6px 6px',
-            marginTop: '0'
+            height: '20px',
+            width: '36px',
+            borderRadius: '0 0 10px 10px',
+            marginTop: '0',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
           }}
           aria-label="Scroll to bottom"
         >
           <ChevronDown 
-            size={12} 
-            className="text-[#28483f]"
+            size={14} 
+            className="ask-text-white"
           />
         </button>
       </div>
