@@ -78,17 +78,21 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   return (
     <div className="ask-w-full ask-bg-transparent ask-p-4 ask-pt-2">
       <div className="ask-flex ask-items-center ask-space-x-2 ask-relative">
-        <input 
-          ref={inputRef} 
-          type="text" id="ask-widget-input-field" 
-          value={inputValue} 
-          onChange={e => setInputValue(e.target.value)} 
-          onKeyPress={e => !isMinimized && e.key === 'Enter' && handleSend()} 
-          placeholder={placeholder}
+        <div 
+          ref={inputRef as React.RefObject<HTMLDivElement>}
+          id="ask-widget-input-field"
+          contentEditable={!isMinimized}
+          suppressContentEditableWarning={true}
+          onInput={(e) => setInputValue(e.currentTarget.textContent || '')}
+          onKeyDown={(e) => {
+            if (!isMinimized && e.key === 'Enter') {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
           onFocus={handleFocus}
           onBlur={() => setIsFocused(false)}
           onClick={handleInputClick}
-          readOnly={isMinimized}
           className={`ask-widget-input ask-flex-1 ask-px-4 ask-py-2 ask-pr-10 ask-font-light ask-font-sans ask-transition-all ask-duration-300 
             ask-rounded-2xl ask-bg-gray-50/90 
             ask-border ask-border-gray-200 
@@ -101,16 +105,23 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             fontFamily: "'Inter', system-ui, sans-serif", 
             fontWeight: 300,
             appearance: "none",
-            WebkitAppearance: "none",
-            MozAppearance: "none",
             border: "1px solid rgba(229, 231, 235, 1)",
             backgroundImage: "none",
             backgroundColor: "rgba(249, 250, 251, 0.9)",
             padding: "0.5rem 1rem",
             width: "100%",
-            outline: "none"
+            outline: "none",
+            minHeight: "40px",
+            maxHeight: "80px",
+            overflowY: "auto",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word"
           }}
-        />
+        >
+          {!inputValue && !isFocused && (
+            <span style={{ color: '#9CA3AF', pointerEvents: 'none' }}>{placeholder}</span>
+          )}
+        </div>
         
         <div 
           className={`ask-absolute ask-right-3 ask-top-1/2 ask--translate-y-1/2 ask-transition-all ask-duration-300 ask-transform 

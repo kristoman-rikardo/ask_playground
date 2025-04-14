@@ -34,7 +34,9 @@
   /* Specifikt selector for å overkjøre globale css-regler fra tredjeparts nettsider */
   #ask-widget-input-field, 
   input#ask-widget-input-field,
-  input[type="text"]#ask-widget-input-field {
+  input[type="text"]#ask-widget-input-field,
+  input[type="url"]#ask-widget-input-field,
+  div#ask-widget-input-field {
     appearance: none !important;
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
