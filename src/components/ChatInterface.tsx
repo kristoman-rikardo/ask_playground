@@ -20,6 +20,39 @@ const scrollbarStyles = `
   }
 `;
 
+// Specific styles for our custom input to avoid third-party styles
+const inputProtectionStyles = `
+  [data-ask-input="true"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-color: rgba(249, 250, 251, 0.9) !important;
+    border: 1px solid rgba(229, 231, 235, 1) !important;
+    outline: none !important;
+    padding: 0.5rem 1rem !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #333333 !important;
+  }
+
+  [data-ask-input="true"][data-ask-focused="true"] {
+    background-color: rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 0 0 2px #28483F !important;
+  }
+
+  [data-ask-placeholder="true"] {
+    color: #9CA3AF !important;
+    pointer-events: none !important;
+    user-select: none !important;
+  }
+
+  [data-ask-button="send"], [data-ask-button="maximize"] {
+    background-color: #28483F !important;
+    color: white !important;
+  }
+`;
+
 const ChatInterface: React.FC = () => {
   const {
     messages,
@@ -51,6 +84,19 @@ const ChatInterface: React.FC = () => {
     }
   }, [messages, conversationStarted]);
   
+  // Unngå scrolling ved oppstart av chatten
+  useEffect(() => {
+    // Vi setter en kort forsinkelse for å sikre at alt innhold er lastet inn
+    const timer = setTimeout(() => {
+      // Sørg for at vi ikke scroller ved oppstart
+      if (window && typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: 0, left: 0 });
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleSendMessage = (message: string) => {
     setConversationStarted(true);
     sendUserMessage(message);
@@ -210,7 +256,7 @@ const ChatInterface: React.FC = () => {
   // Add custom scrollbar style
   useEffect(() => {
     const styleElement = document.createElement('style');
-    styleElement.textContent = scrollbarStyles;
+    styleElement.textContent = scrollbarStyles + inputProtectionStyles;
     document.head.appendChild(styleElement);
     
     return () => {

@@ -1,0 +1,141 @@
+/* Grunnleggende stiler for Shadow DOM - brukes sammen med ShadowRootWrapper */
+
+/* Grunnleggende reset for å unngå arv av vertssiden */
+:host {
+  all: initial;
+  display: block;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #000;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.shadow-root-inner {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #000;
+  box-sizing: border-box;
+}
+
+.shadow-root-inner * {
+  box-sizing: border-box;
+}
+
+/* Basisstiler for knapper */
+button {
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Specific styles for our custom input using data attributes */
+[data-ask-input="true"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: rgba(249, 250, 251, 0.9) !important;
+  border: 1px solid rgba(229, 231, 235, 1) !important;
+  outline: none !important;
+  padding: 0.5rem 1rem !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: #333333 !important;
+  border-radius: 0.75rem !important;
+  min-height: 40px !important;
+  max-height: 80px !important;
+  overflow-y: auto !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+[data-ask-input="true"][data-ask-focused="true"] {
+  background-color: rgba(255, 255, 255, 1) !important;
+  box-shadow: 0 0 0 2px #28483F !important;
+}
+
+[data-ask-placeholder="true"] {
+  color: #9CA3AF !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+[data-ask-button="send"], [data-ask-button="maximize"] {
+  background-color: #28483F !important;
+  color: white !important;
+}
+
+/* Legacy inputs styles (keeping for backward compatibility) */
+input {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(229, 231, 235, 1);
+  background-color: rgba(249, 250, 251, 0.9);
+  width: 100%;
+  outline: none;
+}
+
+input:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #28483F;
+  background-color: white;
+}
+
+/* Chat-message stiler */
+.chat-message-user {
+  background-color: #ebfaef;
+  color: #28483F;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.chat-message-agent {
+  background-color: #f0f1f3;
+  color: #333;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(209, 213, 219, 0.8);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.9);
+}
+
+/* Animasjoner */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+} 
