@@ -7,7 +7,9 @@
     jsPath: 'https://kristoman-rikardo.github.io/ask1proto-21/dist/widget/chatWidget.js',
     scrapePath: 'https://kristoman-rikardo.github.io/ask1proto-21/scrapeSite.js',
     containerID: 'ask-chat-widget-container',
-    targetSelector: '.product-accordion',
+    targetSelectorDesktop: '.actions', // For skjermer 768px eller bredere
+    targetSelectorMobile: '.product-description__short-description', // For skjermer smalere enn 768px
+    breakpoint: 768, // Grensepunkt for å bytte mellom mobile og desktop selektorer
     minHeight: 300,
     resizeInterval: 1000, // Økt til 1000ms for bedre ytelse
     voiceflowTimeout: 15000, // Timeout for Voiceflow API i millisekunder
@@ -24,6 +26,7 @@
   let overrideStyleElement = null;
   let activeMutationObservers = []; // For å holde styr på aktive observers for cleanup
   let activeTimers = []; // For å holde styr på aktive timers for cleanup
+  let lastTargetType = null; // 'mobile' eller 'desktop' for å holde styr på nåværende widget-plassering
 
   // Enkel logging kun til konsoll
   function log(message) {
@@ -143,18 +146,36 @@
     log('Widget minimized/closed - resetting container height to minimum');
     setContainerHeight(config.minHeight);
   }
+
+  // Hjelpefunksjon for å bestemme riktig målselektor basert på skjermbredde
+  function getTargetSelector() {
+    const isMobile = window.innerWidth < config.breakpoint;
+    const targetType = isMobile ? 'mobile' : 'desktop';
+    
+    if (targetType !== lastTargetType) {
+      log(`Skjermstørrelse endret til ${targetType} (${window.innerWidth}px)`);
+      lastTargetType = targetType;
+    }
+    
+    return isMobile ? config.targetSelectorMobile : config.targetSelectorDesktop;
+  }
   
   // Finn target-elementet og sett inn widget-containeren
   function setupContainer() {
     log('Setting up widget container');
     addGlobalStyles();
     
-    let targetElement = document.querySelector(config.targetSelector);
+    const activeSelector = getTargetSelector();
+    log(`Bruker selektor: ${activeSelector} for nåværende skjermstørrelse (${window.innerWidth}px)`);
+    
+    let targetElement = document.querySelector(activeSelector);
     if (!targetElement) {
-      log('Could not find target element: ' + config.targetSelector);
+      log('Could not find target element: ' + activeSelector);
       log('Trying alternative selectors...');
       
       const alternativeSelectors = [
+        config.targetSelectorDesktop,
+        config.targetSelectorMobile,
         '.product-accordion',
         '.product-description',
         '.product-info',
@@ -165,6 +186,8 @@
       ];
       
       for (const selector of alternativeSelectors) {
+        if (selector === activeSelector) continue; // Skip den vi allerede har prøvd
+        
         const alt = document.querySelector(selector);
         if (alt) {
           log('Found alternative target: ' + selector);
@@ -231,6 +254,38 @@
     }
     
     return true;
+  }
+
+  // Håndter vindusendringer - flytt widget ved behov
+  function handleWindowResize() {
+    const currentSelector = getTargetSelector();
+    const container = document.getElementById(config.containerID);
+    
+    // Hvis containeren allerede eksisterer og widget er initialisert, vurder om vi trenger å flytte den
+    if (container && isWidgetInitialized) {
+      const targetElement = document.querySelector(currentSelector);
+      
+      // Sjekk om containeren er plassert etter riktig element
+      if (targetElement && container.previousElementSibling !== targetElement) {
+        log(`Flytter widget til ny posisjon (${currentSelector})`);
+        
+        // Lagre containerens innhold og tilstand
+        const containerContent = container.innerHTML;
+        const containerHeight = container.style.height;
+        const containerMinHeight = container.style.minHeight;
+        const containerDisplay = container.style.display;
+        const containerOpacity = container.style.opacity;
+        const containerVisible = container.getAttribute('data-visible');
+        
+        // Flytt containeren til ny posisjon
+        targetElement.insertAdjacentElement('afterend', container);
+        
+        // Gjenopprett containeren
+        updateContainerMaxWidth();
+        
+        log('Widget flyttet til ny posisjon');
+      }
+    }
   }
   
   // Last inn nødvendige stilark
@@ -492,7 +547,10 @@
       }
     }
     
-    window.addEventListener('resize', checkAndUpdateHeight);
+    window.addEventListener('resize', () => {
+      checkAndUpdateHeight();
+      handleWindowResize();
+    });
     
     if (!config.performanceMode) {
       document.addEventListener('click', function() {
@@ -774,6 +832,11 @@
     
     addGlobalStyles();
     
+    // Registrer resize-lytter for å håndtere endringer i skjermstørrelse
+    window.addEventListener('resize', () => {
+      handleWindowResize();
+    });
+    
     if (!setupContainer()) {
       log('Failed to set up container, aborting initialization');
       return;
@@ -800,7 +863,7 @@
       if (!isWidgetInitialized) {
         log('No scrapeComplete event received, trying to initialize manually');
         let content = '';
-        const targetElement = document.querySelector(config.targetSelector);
+        const targetElement = document.querySelector(getTargetSelector());
         if (targetElement) {
           content = targetElement.innerText || targetElement.textContent || '';
         }
