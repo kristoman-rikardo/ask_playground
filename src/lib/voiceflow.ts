@@ -14,7 +14,9 @@ function getUserId(variables: Record<string, any> = {}): string {
   let userId = DEFAULT_USER_ID;
   
   if (variables.produkt_navn) {
-    userId = `${variables.produkt_navn} // user_${uuidv4()}`;
+    // Erstatt mellomrom med understrek og bruk -- mellom produktnavn og bruker-ID
+    const formattedProductName = variables.produkt_navn.replace(/\s+/g, '_');
+    userId = `${formattedProductName}--user_${uuidv4()}`;
   }
   
   // Bare logg bruker-ID-en uten andre meldinger
