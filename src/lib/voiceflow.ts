@@ -9,14 +9,53 @@ const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID || '67f291952280faa
 // Generate a default user session ID
 const DEFAULT_USER_ID = 'user_' + uuidv4();
 
+// Lagre session ID i sessionStorage for å unngå ny generering ved hver melding
+function getSessionUserId(): string {
+  const sessionKey = 'voiceflow_session_user_id';
+  
+  // Sjekk om vi allerede har en bruker-ID i sessionStorage
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    const storedId = sessionStorage.getItem(sessionKey);
+    if (storedId) {
+      return storedId;
+    }
+    
+    // Hvis ikke, lag en ny
+    const newId = 'user_' + uuidv4();
+    sessionStorage.setItem(sessionKey, newId);
+    return newId;
+  }
+  
+  // Fallback hvis sessionStorage ikke er tilgjengelig
+  return DEFAULT_USER_ID;
+}
+
 // Get custom user ID with product name if available
 function getUserId(variables: Record<string, any> = {}): string {
-  let userId = DEFAULT_USER_ID;
+  // Hent eller generer en konsistent session ID
+  const sessionUserId = getSessionUserId();
+  let userId = sessionUserId;
   
   if (variables.produkt_navn) {
     // Erstatt mellomrom med understrek og bruk -- mellom produktnavn og bruker-ID
     const formattedProductName = variables.produkt_navn.replace(/\s+/g, '_');
-    userId = `${formattedProductName}--user_${uuidv4()}`;
+    
+    // Bruk den samme session ID for hele samtalen, men med produktnavn prefiks
+    const parts = sessionUserId.split('user_');
+    userId = `${formattedProductName}--user_${parts[1] || uuidv4()}`;
+    
+    // Lagre denne sammensetningen for denne sesjonen
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      sessionStorage.setItem('voiceflow_formatted_user_id', userId);
+    }
+  } else {
+    // Sjekk om vi har en tidligere formatert ID som vi kan gjenbruke
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const formattedId = sessionStorage.getItem('voiceflow_formatted_user_id');
+      if (formattedId) {
+        userId = formattedId;
+      }
+    }
   }
   
   // Bare logg bruker-ID-en uten andre meldinger
