@@ -59,7 +59,6 @@ export function useChatSession() {
   }, [sessionStarted]);
 
   const startChatSession = async () => {
-    console.log('Starting chat session...');
     setIsTyping(true);
     setIsButtonsLoading(true);
     receivedFirstTraceRef.current = false;
@@ -67,7 +66,6 @@ export function useChatSession() {
     try {
       if (chatContext.launchConfig) {
         // Use the launch config from context
-        console.log('Using custom launch configuration:', chatContext.launchConfig);
         await vfSendLaunch(chatContext.launchConfig, handleTraceEvent);
       } else {
         // Fallback to basic variables if no launch config
@@ -75,7 +73,6 @@ export function useChatSession() {
           pageSlug: 'faq-page',
           productName: 'faq'
         };
-        console.log('Using default variables:', variables);
         await vfSendLaunch(variables, handleTraceEvent);
       }
     } catch (error) {

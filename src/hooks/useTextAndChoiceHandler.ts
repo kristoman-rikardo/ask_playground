@@ -26,16 +26,12 @@ export function useTextAndChoiceHandler(
       
       messageSourceTracker.current[msgId] = 'text';
       
-      console.log('🟡 Text/Speak message received:', messageContent.substring(0, 50) + '...');
-      
       // Hide typing indicator when starting to stream
       setIsTyping(false);
       
       // Create empty message container first
       partialMessageIdRef.current = msgId;
       addAgentMessage('', true, msgId);
-      
-      console.log('🟢 Beginning text stream with character-by-character rendering');
       
       // Stream the message character by character using streamWords
       streamWords(
@@ -58,16 +54,13 @@ export function useTextAndChoiceHandler(
   const handleChoiceEvent = (trace: any) => {
     if (trace.payload && trace.payload.buttons) {
       const buttonCount = trace.payload.buttons.length;
-      console.log(`🔵 Processing ${buttonCount} buttons`);
       
       // Priority display - always show buttons immediately when they arrive
       setIsButtonsLoading(false);
       
       if (buttonCount > 0) {
-        console.log('🟢 BUTTONS LOADED:', trace.payload.buttons.map((b: Button) => b.name).join(', '));
         setButtons(trace.payload.buttons || []);
       } else {
-        console.log('⚪ No buttons to display');
         setButtons([]);
       }
     }
@@ -75,7 +68,6 @@ export function useTextAndChoiceHandler(
 
   const handleCarouselEvent = (trace: any) => {
     if (trace.payload && trace.payload.cards && setCarouselData) {
-      console.log('🔵 Processing carousel with', trace.payload.cards.length, 'cards');
       setIsTyping(false);
       
       // Create a special message ID for this carousel
@@ -95,8 +87,6 @@ export function useTextAndChoiceHandler(
         messageId: carouselMsgId,
         timestamp: Date.now()
       });
-      
-      console.log('✅ Added carousel message to chat with ID:', carouselMsgId);
     }
   };
 

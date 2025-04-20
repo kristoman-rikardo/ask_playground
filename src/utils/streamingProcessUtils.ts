@@ -1,4 +1,3 @@
-
 import { StreamingWordTracker } from '@/utils/streamingUtils';
 
 /**
@@ -31,7 +30,6 @@ export const processContentStream = (
 ): void => {
   if (!content || content.length === 0) return;
   
-  console.log(`Starting to stream content: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`);
   streamingState.isStreaming = true;
   streamingState.waitingForMoreContent = false;
   
@@ -57,12 +55,10 @@ export const processContentStream = (
       setTimeout(streamNextChar, 5);
     } else {
       // Done streaming this content chunk
-      console.log(`Finished streaming chunk of ${content.length} chars`);
       streamingState.isStreaming = false;
       
       // Check if we have more content in the buffer to process
       if (streamingState.accumulatedContent.length > 0) {
-        console.log(`Processing ${streamingState.accumulatedContent.length} chars from buffer`);
         const nextContent = streamingState.accumulatedContent;
         streamingState.accumulatedContent = '';
         processContentStream(nextContent, msgId, wordTracker, updatePartialMessage, streamingState, onStreamComplete);
@@ -72,7 +68,6 @@ export const processContentStream = (
       } else {
         // Otherwise we're waiting for more content
         streamingState.waitingForMoreContent = true;
-        console.log('Waiting for more traces...');
       }
     }
   };

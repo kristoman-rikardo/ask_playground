@@ -1,4 +1,3 @@
-
 /**
  * Utility for simulating character-by-character streaming for complete text messages
  */
@@ -22,8 +21,6 @@ export const streamWords = (
 
   // Start with an empty string
   onUpdate('');
-  
-  console.log(`🔄 Starting fake streaming of ${fullText.length} characters`);
 
   // Function to add one character at a time
   const appendNextChar = () => {
@@ -44,7 +41,6 @@ export const streamWords = (
       setTimeout(appendNextChar, delay);
     } else {
       // We're done, call the completion callback
-      console.log(`✅ Completed fake streaming of ${fullText.length} characters`);
       onComplete();
     }
   };

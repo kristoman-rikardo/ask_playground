@@ -1,0 +1,7 @@
+# Custom MIME types for http-server
+application/javascript    js
+application/javascript    mjs
+application/javascript    cjs
+text/javascript           js
+text/javascript           mjs
+text/javascript           cjs 

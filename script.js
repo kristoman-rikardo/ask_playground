@@ -587,7 +587,14 @@
     }
     
     log('Received scrapeComplete event');
-    const { side_innhold, browser_url } = event.detail || {};
+    const { side_innhold, browser_url, produkt_navn } = event.detail || {};
+    
+    // Logg bruker-ID info (alltid, uavhengig av debug-flagg)
+    if (produkt_navn) {
+      console.log(`Produktnavn for bruker-ID: "${produkt_navn}"`);
+    } else {
+      console.log('Ingen produktnavn tilgjengelig for bruker-ID');
+    }
     
     if (!side_innhold || side_innhold.length === 0) {
       log('No content extracted from page');
@@ -663,7 +670,8 @@
               type: "launch",
               payload: {
                 browser_url: browser_url || window.location.href,
-                side_innhold: side_innhold.substring(0, 5000)
+                side_innhold: side_innhold.substring(0, 5000),
+                produkt_navn: produkt_navn || ''
               }
             }
           }

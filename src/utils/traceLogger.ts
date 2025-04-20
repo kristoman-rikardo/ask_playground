@@ -1,8 +1,11 @@
-
 /**
  * Utility for logging trace events with appropriate emoji prefixes
  */
 export const logTraceEvent = (traceType: string, payload?: any): void => {
+  // Fjernet all logging av traces for å redusere støy i konsollen
+  // Loggingen nedenfor er helt deaktivert
+  
+  /*
   let logPrefix = '📋';
   
   switch (traceType) {
@@ -40,4 +43,5 @@ export const logTraceEvent = (traceType: string, payload?: any): void => {
   } else {
     console.log(`${logPrefix} Trace received: ${traceType}`);
   }
+  */
 };

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test av Chat Widget Injector</title>
+  <link rel="icon" href="data:,"> <!-- Tom favicon for å unngå 404 -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 10px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Test av Chat Widget Injector</h1>
+    <p>Denne siden demonstrerer hvordan Chat Widget Injector fungerer.</p>
+    
+    <button id="loadInjector">Last inn Chat Widget</button>
+    
+    <h2>Hvordan bruke</h2>
+    <p>Du kan tilpasse chatboten ved å bruke følgende kode:</p>
+    <pre>
+window.ChatInjector.init({
+  position: 'bottom-left',
+  debug: true
+});
+    </pre>
+    
+    <h2>Informasjon</h2>
+    <p>Dette er en testside for å demonstrere hvordan injiseringsskriptet fungerer.</p>
+    <p>Scriptet vil laste inn en chatbot-widget som vises nede til høyre (standardinnstilling).</p>
+  </div>
+
+  <script>
+    document.getElementById('loadInjector').addEventListener('click', function() {
+      // Laster inn innholdet av JavaScript-filen direkte istedenfor å laste den som en separat fil
+      // Dette unngår MIME-type problemer helt
+      fetch('dist/chat-injector.min.js')
+        .then(response => response.text())
+        .then(scriptContent => {
+          // Utfør scriptet i global kontekst
+          const scriptElement = document.createElement('script');
+          scriptElement.textContent = scriptContent;
+          document.body.appendChild(scriptElement);
+          
+          // Initialiser chat-widgeten
+          if (window.ChatInjector) {
+            window.ChatInjector.init({
+              debug: true // Aktiver debugging
+            });
+            console.log('Chat Widget Injector lastet og initialisert');
+          } else {
+            console.error('ChatInjector ikke funnet i window-objektet');
+          }
+        })
+        .catch(error => {
+          console.error('Kunne ikke laste inn injiseringsskriptet:', error);
+        });
+    });
+  </script>
+</body>
+</html> 

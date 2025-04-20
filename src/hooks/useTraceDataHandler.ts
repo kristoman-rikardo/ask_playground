@@ -118,7 +118,7 @@ export function useTraceDataHandler(
   };
   
   const handleSessionEnd = () => {
-    console.log('Session ended');
+    // Session ended
     completionHandler.streamingStateRef.current.messageCompleted = true;
     textTraceManager.messageCompletedRef.current = true;
     

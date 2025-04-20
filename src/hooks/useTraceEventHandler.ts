@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import { Button } from '@/types/chat';
 import { MessageStreamingHook } from '@/hooks/useMessageStreaming';
@@ -66,12 +65,10 @@ export function useTraceEventHandler(
         break;
       
       case 'choice':
-        console.log('🔴 BUTTON TRACE RECEIVED:', trace.payload?.buttons?.length || 0, 'buttons');
         traceDataHandler.textAndChoiceHandler.handleChoiceEvent(trace);
         break;
       
       case 'carousel':
-        console.log('🟣 CAROUSEL TRACE RECEIVED:', trace.payload?.cards?.length || 0, 'cards');
         traceDataHandler.textAndChoiceHandler.handleCarouselEvent(trace);
         // Switch to streaming phase when carousel is displayed
         traceDataHandler.loadingPhaseManager.switchToStreamingPhase();

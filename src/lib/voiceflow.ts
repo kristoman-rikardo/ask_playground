@@ -6,8 +6,22 @@ const RUNTIME_API_KEY = import.meta.env.VITE_VOICEFLOW_API_KEY || 'VF.DM.67f3a3a
 const RUNTIME_ENDPOINT = 'https://general-runtime.voiceflow.com';
 const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID || '67f291952280faa3b19ddfcb';
 
-// Generate a user session ID
-const USER_ID = 'user_' + uuidv4();
+// Generate a default user session ID
+const DEFAULT_USER_ID = 'user_' + uuidv4();
+
+// Get custom user ID with product name if available
+function getUserId(variables: Record<string, any> = {}): string {
+  let userId = DEFAULT_USER_ID;
+  
+  if (variables.produkt_navn) {
+    userId = `${variables.produkt_navn} // user_${uuidv4()}`;
+  }
+  
+  // Bare logg bruker-ID-en uten andre meldinger
+  console.log(userId);
+  
+  return userId;
+}
 
 export function parseMarkdown(text: string): string {
   if (!text) return '';
@@ -52,12 +66,9 @@ export async function vfSendLaunch(
   configOrVariables: LaunchConfig | Record<string, any>, 
   traceHandler: (trace: any) => void
 ): Promise<void> {
-  console.log('Sending launch request to Voiceflow');
-  
   // Check if we have a launch config with event and payload
   if (configOrVariables && 'event' in configOrVariables && configOrVariables.event?.type === 'launch') {
     const launchConfig = configOrVariables as LaunchConfig;
-    console.log('Using structured launch payload:', launchConfig.event.payload);
     
     await sendRequest(
       {
@@ -70,7 +81,6 @@ export async function vfSendLaunch(
   } else {
     // Legacy format - treat the input as variables
     const variables = configOrVariables as Record<string, any>;
-    console.log('Using legacy variables format:', variables);
     
     await sendRequest(
       {
@@ -89,8 +99,6 @@ export async function vfSendMessage(
   traceHandler: (trace: any) => void,
   variables: Record<string, any> = {}
 ): Promise<void> {
-  console.log(`Sending message to Voiceflow: ${message}`);
-  
   await sendRequest(
     {
       type: 'text',
@@ -107,8 +115,6 @@ export async function vfSendAction(
   traceHandler: (trace: any) => void,
   variables: Record<string, any> = {}
 ): Promise<void> {
-  console.log('Sending action to Voiceflow:', action);
-  
   await sendRequest(
     action,
     variables,
@@ -126,6 +132,9 @@ async function sendRequest(
     console.error('Missing Voiceflow API key or project ID');
     throw new Error('Missing Voiceflow API key or project ID');
   }
+
+  // Generate user ID based on variables
+  const USER_ID = getUserId(variables);
 
   const queryParams = new URLSearchParams({
     completion_events: 'true', // Enable streaming completion events

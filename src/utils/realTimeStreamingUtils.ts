@@ -1,4 +1,3 @@
-
 /**
  * Utilities for handling real-time character-by-character streaming
  */
@@ -24,8 +23,6 @@ export class StreamingWordTracker {
   appendContent(newContent: string): { 
     processedText: string
   } {
-    console.log(`Appending new content: "${newContent}" (${newContent.length} chars)`);
-    
     // Add new content to the buffer
     this.currentBuffer += newContent;
     
@@ -77,8 +74,6 @@ export class StreamingWordTracker {
    * @returns Object containing the complete processed text
    */
   finalize(): { text: string } {
-    console.log(`Finalizing with ${this.currentBuffer.length - this.nextCharIndex} chars remaining in buffer`);
-    
     // Instead of immediately processing remaining characters,
     // we'll queue them for processing at the regular rate
     if (this.nextCharIndex < this.currentBuffer.length && !this.isProcessing) {
