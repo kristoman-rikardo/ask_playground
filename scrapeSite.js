@@ -181,11 +181,18 @@
     // Hent nåværende URL
     const browser_url = window.location.href;
     
+    // Hent produktnavnet fra .product-header__title
+    const produkt_navn_elem = document.querySelector('.product-header__title');
+    const produkt_navn = produkt_navn_elem
+        ? produkt_navn_elem.textContent.trim()
+        : '';
+
     // Send resultat som en CustomEvent
     const scrapeEvent = new CustomEvent('scrapeComplete', {
         detail: {
             side_innhold: markdown,
-            browser_url: browser_url
+            browser_url: browser_url,
+            produkt_navn: produkt_navn
         }
     });
     window.dispatchEvent(scrapeEvent);
