@@ -14,7 +14,7 @@
     resizeInterval: 1000, // Økt til 1000ms for bedre ytelse
     voiceflowTimeout: 15000, // Timeout for Voiceflow API i millisekunder
     performanceMode: true,   // Reduserer antall oppdateringer for bedre ytelse
-    debug: false,            // Setter til false for produksjonsmiljø
+    debug: true,             // Setter til true for feilsøking
     conversionTagLabel: 'conversion' // Tag for konverteringer
   };
   
@@ -29,6 +29,7 @@
   let activeTimers = []; // For å holde styr på aktive timers for cleanup
   let lastTargetType = null; // 'mobile' eller 'desktop' for å holde styr på nåværende widget-plassering
   let reportTagId = null; // For å holde styr på conversion-tag-ID
+  let hasAddedScrapeListener = false; // Sjekk om vi allerede har lagt til scrapeComplete-lytter
 
   // Enkel logging kun til konsoll
   function log(message) {
@@ -916,6 +917,8 @@
     const btn = event.target.closest('.actions__add-to-cart');
     if (!btn) return;
     
+    log('Handlekurvknapp klikket');
+    
     try {
       const transcriptId = sessionStorage.getItem('vf_transcript_id');
       if (!transcriptId) {
@@ -923,6 +926,7 @@
         return;
       }
 
+      log(`Forsøker å tagge transcript: ${transcriptId}`);
       tagTranscript(transcriptId)
         .then(success => {
           if (success) {
@@ -940,6 +944,9 @@
   // Funksjon for å sette opp lytter for handlekurvklikk
   function setupConversionListener() {
     log('Setter opp lytter for handlekurvklikk');
+    
+    // Fjern eksisterende lytter først for å unngå duplikater
+    document.removeEventListener('click', handleAddToCartClick, true);
     document.addEventListener('click', handleAddToCartClick, true);
     
     // Legg til i aktive lyttere for cleanup
@@ -956,14 +963,18 @@
 
   // Funksjon for å initialisere konverteringssporing
   async function initConversionTracking() {
-    log('Initialiserer konverteringssporing');
-    reportTagId = await ensureProjectTag();
-    
-    if (reportTagId) {
-      log(`Konverteringssporing initialisert med tag-ID: ${reportTagId}`);
-      setupConversionListener();
-    } else {
-      log('Kunne ikke initialisere konverteringssporing pga. manglende tag-ID');
+    try {
+      log('Initialiserer konverteringssporing');
+      reportTagId = await ensureProjectTag();
+      
+      if (reportTagId) {
+        log(`Konverteringssporing initialisert med tag-ID: ${reportTagId}`);
+        setupConversionListener();
+      } else {
+        log('Kunne ikke initialisere konverteringssporing pga. manglende tag-ID');
+      }
+    } catch (err) {
+      log(`Feil ved initialisering av konverteringssporing: ${err.message}`);
     }
   }
 
@@ -972,11 +983,6 @@
     log('Ask widget initialization started');
     setupCleanup();
     setupWidgetCloseListeners(); // Registrer nye lyttere for lukking/minimering
-    
-    // Initialiser konverteringssporing tidlig
-    initConversionTracking().catch(err => {
-      log(`Feil ved initialisering av konverteringssporing: ${err.message}`);
-    });
     
     canUseShadowDOM = testShadowDOMSupport();
     log(`Shadow DOM support: ${canUseShadowDOM ? 'Detected' : 'Not available'}`);
@@ -994,13 +1000,24 @@
     }
     
     await loadStyles();
-    window.addEventListener('scrapeComplete', handleScrapeComplete);
+    
+    // Unngå doble lyttere for scrapeComplete
+    if (!hasAddedScrapeListener) {
+      window.addEventListener('scrapeComplete', handleScrapeComplete);
+      hasAddedScrapeListener = true;
+      log('Added scrapeComplete event listener');
+    }
     
     const widgetLoaded = await loadWidgetScript();
     if (!widgetLoaded) {
       log('Widget script failed to load, aborting initialization');
       return;
     }
+    
+    // Initialiser konverteringssporing ETTER at widget er lastet
+    initConversionTracking().catch(err => {
+      log(`Feil ved initialisering av konverteringssporing: ${err.message}`);
+    });
     
     loadScrapeScript().then(scrapeLoaded => {
       if (!scrapeLoaded) {
@@ -1039,6 +1056,7 @@
         }
         
         if (content && content.length > 0) {
+          log('Dispatching manual scrapeComplete event');
           window.dispatchEvent(new CustomEvent('scrapeComplete', {
             detail: {
               side_innhold: content.substring(0, 10000),
