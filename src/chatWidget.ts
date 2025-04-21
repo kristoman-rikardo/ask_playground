@@ -16,13 +16,18 @@ interface ChatWidgetConfig {
   apiEndpoint: string;
   apiKey: string;
   projectID: string;
+  disableAutoScroll?: boolean;
   launchConfig?: {
     event: {
       type: string;
-      payload: Record<string, any>;
+      payload: {
+        browser_url?: string;
+        side_innhold?: string;
+        produkt_navn?: string;
+        [key: string]: any;
+      };
     }
   };
-  disableAutoScroll?: boolean;
 }
 
 // Definer ChatWidget-grensesnittet for window
@@ -30,6 +35,7 @@ interface ChatWidgetInterface {
   init: (config: Partial<ChatWidgetConfig>) => void;
   maximizeChat: () => void;
   minimizeChat: () => void;
+  isInitialized: boolean;
 }
 
 // Utvid Window-typen for TypeScript
@@ -50,6 +56,7 @@ class ChatWidgetClass {
   private config: ChatWidgetConfig;
   private container: HTMLElement | null = null;
   private launchConfig: any = null;
+  private _isInitialized: boolean = false;
 
   constructor() {
     this.config = {
@@ -59,6 +66,13 @@ class ChatWidgetClass {
       projectID: '',
       disableAutoScroll: true,
     };
+  }
+
+  /**
+   * Sjekker om widgeten er initialisert
+   */
+  public get isInitialized(): boolean {
+    return this._isInitialized;
   }
 
   /**
@@ -97,6 +111,7 @@ class ChatWidgetClass {
     
     // Render React-applikasjonen i containeren
     this.render();
+    this._isInitialized = true;
   }
 
   /**
@@ -145,7 +160,8 @@ const chatWidgetInstance = new ChatWidgetClass();
 window.ChatWidget = {
   init: chatWidgetInstance.init.bind(chatWidgetInstance),
   maximizeChat: chatWidgetInstance.maximizeChat.bind(chatWidgetInstance),
-  minimizeChat: chatWidgetInstance.minimizeChat.bind(chatWidgetInstance)
+  minimizeChat: chatWidgetInstance.minimizeChat.bind(chatWidgetInstance),
+  get isInitialized() { return chatWidgetInstance.isInitialized; }
 };
 
 // Eksportér chatWidgetInstance for bruk i andre moduler
