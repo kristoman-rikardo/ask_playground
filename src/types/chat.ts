@@ -3,6 +3,7 @@ export interface Message {
   type: 'user' | 'agent';
   content: string;
   isPartial?: boolean;
+  transcriptId?: string;
 }
 
 export interface Button {

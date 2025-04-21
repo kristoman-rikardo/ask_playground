@@ -1,4 +1,10 @@
 (function() {
+  // Aktiv instans av widget
+  let activeWidget = null;
+  // Hold styr på aktive ResizeObservers for cleanup
+  let activeMutationObservers = [];
+  let activeResizeObservers = [];
+  
   // Konfigurasjon - kan endres basert på implementasjon
   const config = {
     apiKey: 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv',
@@ -25,11 +31,18 @@
   let lastMeasuredHeight = 0;
   let resizeIntervalId = null;
   let overrideStyleElement = null;
-  let activeMutationObservers = []; // For å holde styr på aktive observers for cleanup
   let activeTimers = []; // For å holde styr på aktive timers for cleanup
   let lastTargetType = null; // 'mobile' eller 'desktop' for å holde styr på nåværende widget-plassering
-  let reportTagId = null; // For å holde styr på conversion-tag-ID
+  let reportTagId = "68062ad1990094c1088b19d7"; // Fast ID for konverteringstaggen
   let hasAddedScrapeListener = false; // Sjekk om vi allerede har lagt til scrapeComplete-lytter
+
+  // Deklarerer globale variabler
+  let activeWidgetInitialized = false;
+  let activeLoadingScreen = null;
+  let activeContentContainer = null;
+
+  // Legg til en variabel for å spore om bredden er satt
+  let containerWidthIsFixed = false;
 
   // Enkel logging kun til konsoll
   function log(message) {
@@ -127,20 +140,56 @@
     log('Added global CSS overrides');
   }
   
-  // Hjelpefunksjon: Oppdaterer widget-containerens max-width basert på foreldreelementet
+  // Hjelpefunksjon: Setter widget-containerens max-width basert på foreldreelementet, men kun én gang
   function updateContainerMaxWidth() {
-    const container = document.getElementById(config.containerID);
-    if (!container) return;
-    const parent = container.parentElement;
-    if (!parent) return;
-    const computedStyle = window.getComputedStyle(parent);
-    const parentMaxWidth = computedStyle.maxWidth;
-    if (parentMaxWidth && parentMaxWidth !== "none") {
-      container.style.maxWidth = parentMaxWidth;
-      log(`Updated container maxWidth to parent's maxWidth: ${parentMaxWidth}`);
-    } else {
-      container.style.maxWidth = '100%';
-      log('Parent maxWidth not set, defaulting container maxWidth to 100%');
+    try {
+      if (!activeWidget || !activeWidget.shadowRoot || containerWidthIsFixed) return;
+      
+      const container = activeWidget.shadowRoot.querySelector('.chat-container');
+      if (!container) return;
+      
+      const windowWidth = window.innerWidth;
+      const isMobileView = windowWidth < 768;
+      
+      // Finn foreldre-element og dets størrelse
+      const parent = activeWidget.parentElement;
+      if (!parent) return;
+      
+      const parentWidth = parent.offsetWidth;
+      const parentMaxWidth = parseInt(window.getComputedStyle(parent).maxWidth, 10) || Infinity;
+      
+      let containerMaxWidth;
+      
+      // Håndter mobile visning spesielt
+      if (isMobileView) {
+        containerMaxWidth = Math.min(windowWidth - 40, parentWidth) + 'px';
+      } else {
+        // Fallback til window-bredde minus en margin hvis foreldrebredde ikke er tilgjengelig
+        const availableWidth = parentWidth || (windowWidth - 100);
+        
+        // Begrens bredden til maks 1200px for bedre lesbarhet på brede skjermer
+        const maxRecommendedWidth = 1200;
+        
+        // Bruk foreldrebredde, men begrens til maksimalbredden hvis definert
+        containerMaxWidth = parentMaxWidth !== Infinity 
+          ? Math.min(availableWidth, parentMaxWidth, maxRecommendedWidth) + 'px'
+          : Math.min(availableWidth, maxRecommendedWidth) + 'px';
+      }
+      
+      // Sett widgetens bredde én gang og marker som låst
+      console.log(`Låser widget-bredde til ${containerMaxWidth} basert på foreldreelement`);
+      container.style.maxWidth = containerMaxWidth;
+      
+      // Oppdater også bredden for karuselvisningen hvis den finnes
+      const carousel = activeWidget.shadowRoot.querySelector('.carousel-view');
+      if (carousel) {
+        carousel.style.maxWidth = containerMaxWidth;
+      }
+      
+      // Merk at bredden nå er låst og ikke skal endres
+      containerWidthIsFixed = true;
+    } catch (error) {
+      console.error('Feil ved innstilling av container størrelse:', error);
     }
   }
   
@@ -244,17 +293,24 @@
     targetElement.insertAdjacentElement('afterend', container);
     log('Widget container created and inserted into page');
     
-    // Oppdater containerens maksbredde til å matche foreldreelementet
+    // Sett containerens bredde én gang ved oppstart
+    // Vi beholder denne enkle oppdateringen ved første oppstart
     updateContainerMaxWidth();
-    if (window.ResizeObserver) {
-      // Observer endringer på foreldreelementet slik at vi kan oppdatere max-width dynamisk
-      const parentObserver = new ResizeObserver(() => {
-        updateContainerMaxWidth();
+    
+    // Sett opp lytter for orientering/rotasjon av enhet - men kun for høydejusteringer, ikke bredde
+    if ('orientation' in window) {
+      window.addEventListener('orientationchange', () => {
+        log('Orientation changed, updating container height only');
+        // Gi enheten tid til å fullføre rotasjonen før vi måler på nytt
+        setTimeout(() => {
+          // Vi kaller IKKE updateContainerMaxWidth() her lenger
+          checkAndUpdateHeight();
+        }, 300);
       });
-      if (container.parentElement) {
-        parentObserver.observe(container.parentElement);
-      }
     }
+    
+    // Fjern ResizeObserver-oppsett som oppdaterer bredden dynamisk
+    // Vi trenger ikke dette siden bredden nå låses ved oppstart
     
     return true;
   }
@@ -264,7 +320,8 @@
     const currentSelector = getTargetSelector();
     const container = document.getElementById(config.containerID);
     
-    // Hvis containeren allerede eksisterer og widget er initialisert, vurder om vi trenger å flytte den
+    // Siden bredden er låst, fjerner vi kallet til updateContainerMaxWidth()
+    // Vi beholder flytt-logikken hvis widget-containeren ikke er hvor den skal være
     if (container && isWidgetInitialized) {
       const targetElement = document.querySelector(currentSelector);
       
@@ -283,9 +340,7 @@
         // Flytt containeren til ny posisjon
         targetElement.insertAdjacentElement('afterend', container);
         
-        // Gjenopprett containeren
-        updateContainerMaxWidth();
-        
+        // Vi kaller ikke updateContainerMaxWidth() lenger
         log('Widget flyttet til ny posisjon');
       }
     }
@@ -461,6 +516,7 @@
     
     container.setAttribute('data-visible', 'true');
     
+    // Vi oppdaterer kun høyden, ikke bredden som nå er låst
     createTimeout(() => {
       const newHeight = measureWidgetHeight();
       if (newHeight > initialHeight) {
@@ -689,6 +745,7 @@
               showWidget();
               setupHeightMonitoring();
               
+              // Kun oppdater høyden, ikke bredden
               createTimeout(checkAndUpdateHeight, 1000);
               createTimeout(checkAndUpdateHeight, 2000);
             }, 300);
@@ -979,13 +1036,80 @@
 
   // Funksjon for å håndtere klikk på handlekurvknappen
   function handleAddToCartClick(event) {
-    const btn = event.target.closest('.actions__add-to-cart');
-    if (!btn) return;
+    // Logg hver hendelse for feilsøking
+    log(`Click detected on element: ${event.target.tagName}, class: ${event.target.className}`);
     
-    log('Handlekurvknapp klikket');
+    // Bruk flere potensielle knappselektorer
+    const addToCartSelectors = [
+      '.actions__add-to-cart',
+      '.add-to-cart',
+      '.single_add_to_cart_button',
+      'button[name="add"]',
+      '[data-action="add-to-cart"]',
+      'button.cart-button',
+      'input[value="Add to cart"]',
+      'button:contains("Add to Cart")',
+      'button:contains("Legg i handlekurv")',
+      '.woocommerce-loop-add-to-cart-link'
+    ];
+    
+    // Sjekk om klikket traff en av handlekurvknappene
+    let isAddToCartButton = false;
+    let matchedSelector = '';
+    
+    for (const selector of addToCartSelectors) {
+      try {
+        if (selector.includes(':contains(')) {
+          // Spesialhåndtering for innholdsbaserte selektorer
+          const textToMatch = selector.match(/:contains\("(.+?)"\)/)[1];
+          if (event.target.textContent && event.target.textContent.includes(textToMatch)) {
+            isAddToCartButton = true;
+            matchedSelector = selector;
+            break;
+          }
+        } else if (event.target.closest(selector)) {
+          isAddToCartButton = true;
+          matchedSelector = selector;
+          break;
+        }
+      } catch (err) {
+        log(`Feil ved sjekk av selektor ${selector}: ${err.message}`);
+      }
+    }
+    
+    // Spesifikk sjekk for "buy-button" containere
+    if (!isAddToCartButton && 
+        (event.target.classList.contains('buy-button') || 
+         event.target.closest('.buy-button') ||
+         event.target.closest('.actions__add-to-cart'))) {
+      isAddToCartButton = true;
+      matchedSelector = '.buy-button eller .actions__add-to-cart';
+    }
+    
+    if (!isAddToCartButton) return;
+    
+    log(`Handlekurvknapp klikket (matcher: ${matchedSelector})`);
     
     try {
-      const transcriptId = sessionStorage.getItem('vf_transcript_id');
+      // Prøv først å hente transcript-ID fra sessionStorage
+      let transcriptId = sessionStorage.getItem('vf_transcript_id');
+      
+      // Hvis ikke funnet, prøv å finne det fra dokumentet
+      if (!transcriptId) {
+        // Sjekk om ID er lagret i et dataelement
+        transcriptId = document.querySelector('[data-transcript-id]')?.getAttribute('data-transcript-id');
+        
+        // Sjekk om window._vfTranscriptId er definert (ofte satt av chatwidget)
+        if (!transcriptId && window._vfTranscriptId) {
+          transcriptId = window._vfTranscriptId;
+        }
+        
+        // Sjekk lokalt lager
+        if (!transcriptId && localStorage.getItem('vf_transcript_id')) {
+          transcriptId = localStorage.getItem('vf_transcript_id');
+        }
+      }
+      
       if (!transcriptId) {
         log('TranscriptID mangler – tagger ikke konvertering.');
         return;
@@ -996,6 +1120,8 @@
         .then(success => {
           if (success) {
             log('Konvertering registrert: handlekurv-klikk');
+          } else {
+            log('Kunne ikke tagge konvertering: Server returnerte feil');
           }
         })
         .catch(err => {
@@ -1030,10 +1156,10 @@
   async function initConversionTracking() {
     try {
       log('Initialiserer konverteringssporing');
-      reportTagId = await ensureProjectTag();
+      // Her bruker vi den faste tag-ID-en i stedet for å kalle ensureProjectTag
       
       if (reportTagId) {
-        log(`Konverteringssporing initialisert med tag-ID: ${reportTagId}`);
+        log(`Konverteringssporing initialisert med fast tag-ID: ${reportTagId}`);
         setupConversionListener();
       } else {
         log('Kunne ikke initialisere konverteringssporing pga. manglende tag-ID');
@@ -1148,4 +1274,19 @@
   }
   
   monitorLoadState();
+
+  // Legg til en lytter for orientering-endringer
+  window.addEventListener('orientationchange', function() {
+    // Vent litt før oppdatering ved orientering-endringer for å gi nettleseren tid til å fullføre endringen
+    setTimeout(checkAndUpdateHeight, 300); // Kun oppdater høyden, ikke bredden
+  });
+
+  // Forbedret ResizeObserver implementasjon
+  function setupResizeObserver() {
+    if (!activeWidget || !activeWidget.parentElement) return;
+    
+    // Vi trenger ikke denne funksjonen lenger siden bredden er låst
+    // Denne funksjonen kan enten fjernes helt eller tømmes
+    log('ResizeObserver ikke brukt - widget bredde er låst');
+  }
 })();

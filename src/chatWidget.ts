@@ -36,6 +36,7 @@ interface ChatWidgetInterface {
   maximizeChat: () => void;
   minimizeChat: () => void;
   isInitialized: boolean;
+  storeTranscriptId: (transcriptId: string) => void;
 }
 
 // Utvid Window-typen for TypeScript
@@ -44,6 +45,7 @@ declare global {
     ChatWidget: ChatWidgetInterface;
     VOICEFLOW_API_KEY: string;
     VOICEFLOW_PROJECT_ID: string;
+    _vfTranscriptId?: string; // Lag global variabel for transcript-ID
   }
 }
 
@@ -57,6 +59,7 @@ class ChatWidgetClass {
   private container: HTMLElement | null = null;
   private launchConfig: any = null;
   private _isInitialized: boolean = false;
+  private _transcriptId: string | null = null;
 
   constructor() {
     this.config = {
@@ -66,6 +69,13 @@ class ChatWidgetClass {
       projectID: '',
       disableAutoScroll: true,
     };
+
+    // Lytt etter transcriptId fra chatwidget
+    document.addEventListener('vf:transcript-created', (event: any) => {
+      if (event.detail && event.detail.transcriptId) {
+        this.storeTranscriptId(event.detail.transcriptId);
+      }
+    });
   }
 
   /**
@@ -73,6 +83,39 @@ class ChatWidgetClass {
    */
   public get isInitialized(): boolean {
     return this._isInitialized;
+  }
+
+  /**
+   * Lagrer transcript-ID i flere formater for å sikre kompatibilitet med ulike systemer
+   */
+  public storeTranscriptId(transcriptId: string): void {
+    if (!transcriptId) return;
+    
+    this._transcriptId = transcriptId;
+    
+    // Lagre i sessionStorage for persistence
+    try {
+      sessionStorage.setItem('vf_transcript_id', transcriptId);
+    } catch (e) {
+      console.error('Could not store transcript ID in sessionStorage:', e);
+    }
+    
+    // Lagre i localStorage som backup
+    try {
+      localStorage.setItem('vf_transcript_id', transcriptId);
+    } catch (e) {
+      console.error('Could not store transcript ID in localStorage:', e);
+    }
+    
+    // Lagre i window objekt for direkte tilgang
+    window._vfTranscriptId = transcriptId;
+    
+    // Legg til som data-attributt i container
+    if (this.container) {
+      this.container.setAttribute('data-transcript-id', transcriptId);
+    }
+    
+    console.log(`Transcript ID lagret: ${transcriptId}`);
   }
 
   /**
@@ -109,6 +152,10 @@ class ChatWidgetClass {
       return;
     }
     
+    // Sett width for karusellvisning
+    this.container.style.width = "100%";
+    this.container.style.maxWidth = "800px";
+    
     // Render React-applikasjonen i containeren
     this.render();
     this._isInitialized = true;
@@ -129,7 +176,8 @@ class ChatWidgetClass {
         onClose: () => this.minimizeChat(),
         onMaximize: () => this.maximizeChat(),
         isEmbedded: true,
-        disableGlobalAutoScroll: this.config.disableAutoScroll
+        disableGlobalAutoScroll: this.config.disableAutoScroll,
+        onTranscriptCreated: this.storeTranscriptId.bind(this) // Legg til callback for å fange opp transcript-ID
       }),
     );
   }
@@ -161,7 +209,8 @@ window.ChatWidget = {
   init: chatWidgetInstance.init.bind(chatWidgetInstance),
   maximizeChat: chatWidgetInstance.maximizeChat.bind(chatWidgetInstance),
   minimizeChat: chatWidgetInstance.minimizeChat.bind(chatWidgetInstance),
-  get isInitialized() { return chatWidgetInstance.isInitialized; }
+  get isInitialized() { return chatWidgetInstance.isInitialized; },
+  storeTranscriptId: chatWidgetInstance.storeTranscriptId.bind(chatWidgetInstance)
 };
 
 // Eksportér chatWidgetInstance for bruk i andre moduler

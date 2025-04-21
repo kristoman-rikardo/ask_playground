@@ -1,6 +1,8 @@
 import { RUNTIME_API_KEY, PROJECT_ID } from './voiceflow';
 
 const TAG_LABEL = "conversion";
+// Legger til den faste konverteringstag-ID-en
+const CONVERSION_TAG_ID = "68062ad1990094c1088b19d7";
 
 /**
  * Sjekker om "conversion" tag finnes, og oppretter den hvis den ikke eksisterer
@@ -104,14 +106,8 @@ export async function tagTranscript(transcriptId: string, reportTagId: string): 
  * @returns Promise med status for tagging
  */
 export async function tagTranscriptWithRetry(transcriptId: string, maxRetries: number = 2): Promise<boolean> {
-  // Først må vi hente tag-ID
-  let reportTagId: string;
-  try {
-    reportTagId = await ensureProjectTag();
-  } catch (error) {
-    console.error('Kunne ikke hente/opprette tag:', error);
-    return false;
-  }
+  // Bruker den faste tag-ID-en i stedet for å hente den dynamisk
+  let reportTagId: string = CONVERSION_TAG_ID;
   
   // Prøv å tagge transkripsjonen med retry
   let retries = 0;

@@ -7,6 +7,7 @@ import ScrollDownIndicator from './chat/indicators/ScrollDownIndicator';
 import { ChevronDown, Maximize2, X } from 'lucide-react';
 import RatingDialog from './RatingDialog';
 import { ChatContext } from '@/App';
+import { Message } from '@/lib/types';
 
 // Custom styles for scrollbar
 const scrollbarStyles = `
@@ -168,7 +169,12 @@ const criticalComponentStyles = `
   }
 `;
 
-const ChatInterface: React.FC = () => {
+interface ChatInterfaceProps {
+  onClose?: () => void;
+  onMaximize?: () => void;
+}
+
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ onClose, onMaximize }) => {
   const {
     messages,
     isTyping,
@@ -183,7 +189,7 @@ const ChatInterface: React.FC = () => {
     resetSession
   } = useChatSession();
   
-  const { isEmbedded, disableGlobalAutoScroll, shadowRoot } = useContext(ChatContext);
+  const { isEmbedded, disableGlobalAutoScroll, shadowRoot, onTranscriptCreated, width: chatContextWidth } = useContext(ChatContext);
   
   // Track if user has started conversation
   const [conversationStarted, setConversationStarted] = useState(false);
@@ -192,6 +198,32 @@ const ChatInterface: React.FC = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isFullyMinimized, setIsFullyMinimized] = useState(false);
   const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  
+  // Observer for container width
+  useEffect(() => {
+    if (!chatContainerRef.current) return;
+    
+    // Oppsett for ResizeObserver
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        // Hent bredde fra observert element
+        const width = entry.contentRect.width;
+        setContainerWidth(width);
+      }
+    });
+    
+    // Observer parent element
+    const parent = chatContainerRef.current.parentElement;
+    if (parent) {
+      resizeObserver.observe(parent);
+    }
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
   
   // Inject styles into shadow DOM if it exists
   useEffect(() => {
@@ -216,6 +248,35 @@ const ChatInterface: React.FC = () => {
     }
   }, [messages, conversationStarted]);
   
+  // Listen for transcript ID updates
+  useEffect(() => {
+    // Find transcript ID in messages or session
+    const findTranscriptId = () => {
+      for (const message of messages) {
+        if (message.transcriptId) {
+          return message.transcriptId;
+        }
+      }
+      return null;
+    };
+    
+    const transcriptId = findTranscriptId();
+    if (transcriptId && onTranscriptCreated) {
+      console.log(`Transcript ID lagret: ${transcriptId}`);
+      onTranscriptCreated(transcriptId);
+      
+      // Dispatch custom event for external listeners
+      try {
+        const event = new CustomEvent('vf:transcript-created', {
+          detail: { transcriptId }
+        });
+        document.dispatchEvent(event);
+      } catch (error) {
+        console.error('Failed to dispatch transcript event:', error);
+      }
+    }
+  }, [messages, onTranscriptCreated]);
+  
   const handleSendMessage = (message: string) => {
     setConversationStarted(true);
     sendUserMessage(message);
@@ -232,12 +293,39 @@ const ChatInterface: React.FC = () => {
     if (isFullyMinimized && !isMinimized) {
       setIsFullyMinimized(false);
     }
+    
+    // Call external minimize/maximize callback if provided
+    if (isMinimized && onMaximize) {
+      onMaximize();
+    } else if (!isMinimized && onClose) {
+      onClose();
+    }
+    
+    // Dispatch custom event for minimize/maximize
+    try {
+      const eventName = isMinimized ? 'widgetMaximized' : 'widgetMinimized';
+      document.dispatchEvent(new Event(eventName));
+    } catch (error) {
+      console.error('Failed to dispatch widget state event:', error);
+    }
   };
 
   const handleInputFocus = () => {
     if (isMinimized || isFullyMinimized) {
       setIsMinimized(false);
       setIsFullyMinimized(false);
+      
+      // Call external maximize callback if provided
+      if (onMaximize) {
+        onMaximize();
+      }
+      
+      // Dispatch custom event for maximize
+      try {
+        document.dispatchEvent(new Event('widgetMaximized'));
+      } catch (error) {
+        console.error('Failed to dispatch widget state event:', error);
+      }
     }
   };
 
@@ -249,10 +337,6 @@ const ChatInterface: React.FC = () => {
     if (resetSession) {
       resetSession();
     }
-    
-    // Fully minimize the chat after restart (hide buttons too)
-    setIsMinimized(true);
-    setIsFullyMinimized(true);
   };
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -416,20 +500,35 @@ const ChatInterface: React.FC = () => {
 
   return (
     <>
+      {/* Inject styles */}
+      <style>
+        {scrollbarStyles}
+        {inputProtectionStyles}
+        {criticalComponentStyles}
+      </style>
+      
       <div 
-        className="ask-w-full ask-mx-auto ask-bg-transparent ask-shadow-none ask-overflow-hidden ask-transition-all ask-font-sans ask-flex ask-flex-col ask-relative"
+        ref={chatContainerRef}
+        className="ask-flex ask-flex-col ask-font-sans ask-relative ask-overflow-hidden ask-bg-transparent"
         style={{ 
-          minHeight: isFullyMinimized ? 'auto' : 'auto', 
           height: isFullyMinimized ? 'auto' : '100%', 
           maxHeight: '100%',
           fontFamily: "'Inter', system-ui, sans-serif",
           width: '100%',
+          maxWidth: chatContextWidth ? 
+            (typeof chatContextWidth === 'number' ? `${chatContextWidth}px` : chatContextWidth) : 
+            (containerWidth ? `${containerWidth}px` : '100%'),
           boxSizing: 'border-box',
           position: 'relative'
         }}
       >
         <div className={`ask-flex-1 ask-flex ask-flex-col ask-overflow-hidden ask-relative ${isFullyMinimized ? 'ask-h-0 ask-m-0 ask-p-0' : ''}`}
-             style={{ width: '100%', boxSizing: 'border-box', maxHeight: '100%', minHeight: isFullyMinimized ? '0' : 'auto' }}>
+             style={{ 
+               width: '100%', 
+               boxSizing: 'border-box', 
+               maxHeight: '100%', 
+               minHeight: isFullyMinimized ? '0' : 'auto' 
+             }}>
           <div 
             ref={messagesContainerRef}
             className="ask-flex-1 ask-overflow-y-auto ask-transition-all ask-duration-300 ask-flex ask-flex-col ask-font-sans ask-relative"

@@ -21,6 +21,9 @@ export interface ChatContextType {
   };
   isEmbedded?: boolean;
   disableGlobalAutoScroll?: boolean;
+  onTranscriptCreated?: (transcriptId: string) => void;
+  shadowRoot?: ShadowRoot | null;
+  width?: number | string | null;
 }
 
 export const ChatContext = createContext<ChatContextType>({
@@ -28,6 +31,7 @@ export const ChatContext = createContext<ChatContextType>({
   apiKey: '',
   projectID: '',
   isEmbedded: false,
+  width: null,
 });
 
 const queryClient = new QueryClient();
@@ -46,6 +50,8 @@ interface AppProps {
   onMaximize?: () => void;
   isEmbedded?: boolean;
   disableGlobalAutoScroll?: boolean;
+  onTranscriptCreated?: (transcriptId: string) => void;
+  width?: number | string | null;
 }
 
 export const App = ({ 
@@ -56,7 +62,9 @@ export const App = ({
   onClose, 
   onMaximize, 
   isEmbedded = false,
-  disableGlobalAutoScroll = false
+  disableGlobalAutoScroll = false,
+  onTranscriptCreated,
+  width = null
 }: AppProps) => {
   const queryClient = new QueryClient();
 
@@ -68,14 +76,16 @@ export const App = ({
         projectID, 
         launchConfig, 
         isEmbedded,
-        disableGlobalAutoScroll
+        disableGlobalAutoScroll,
+        onTranscriptCreated,
+        width
       }}>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <MemoryRouter>
             <Routes>
-              <Route path="/" element={<Index isEmbedded={isEmbedded} />} />
+              <Route path="/" element={<Index isEmbedded={isEmbedded} onClose={onClose} onMaximize={onMaximize} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </MemoryRouter>
