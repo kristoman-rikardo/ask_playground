@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { vfSendMessage, vfSendAction } from '@/lib/voiceflow';
+import { vfSendMessage, vfSendAction, getUserId } from '@/lib/voiceflow';
 import { Button, Message } from '@/types/chat';
+import { saveTranscriptWithRetry } from '@/lib/transcripts';
 
 export function useMessageInteraction(
   handleTraceEvent: (trace: any) => void,
@@ -43,6 +44,12 @@ export function useMessageInteraction(
 
     try {
       await vfSendMessage(userMessage, handleTraceEvent);
+      
+      // Lagre transkripsjonen asynkront etter sending av meldingen
+      const userId = getUserId();
+      saveTranscriptWithRetry(userId).catch(err => {
+        console.error('Kunne ikke lagre transkripsjon, men fortsetter samtalen:', err);
+      });
     } catch (error) {
       console.error('Error sending message:', error);
       // Handle error case
@@ -66,6 +73,12 @@ export function useMessageInteraction(
 
     try {
       await vfSendAction(button.request, handleTraceEvent);
+      
+      // Lagre transkripsjonen asynkront etter sending av knappeklikket
+      const userId = getUserId();
+      saveTranscriptWithRetry(userId).catch(err => {
+        console.error('Kunne ikke lagre transkripsjon, men fortsetter samtalen:', err);
+      });
     } catch (error) {
       console.error('Error processing button action:', error);
       // Handle error case

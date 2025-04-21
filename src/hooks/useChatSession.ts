@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef, useContext } from 'react';
-import { vfSendLaunch } from '@/lib/voiceflow';
+import { vfSendLaunch, getUserId } from '@/lib/voiceflow';
 import { Message, Button } from '@/types/chat';
 import { useMessageStreaming } from './useMessageStreaming';
 import { useTraceEventHandler } from './useTraceEventHandler';
 import { useMessageInteraction } from './useMessageInteraction';
 import { ChatContext } from '@/App';
+import { saveTranscriptWithRetry } from '@/lib/transcripts';
 
 export type { Message, Button };
 
@@ -75,6 +76,8 @@ export function useChatSession() {
         };
         await vfSendLaunch(variables, handleTraceEvent);
       }
+      
+      // Fjernet transcript-lagring her - vi skal bare lagre etter bruker har sendt melding
     } catch (error) {
       console.error('Error starting chat session:', error);
       streaming.addAgentMessage('Sorry, I encountered an error starting our conversation. Please try refreshing the page.');
@@ -108,6 +111,8 @@ export function useChatSession() {
     // Start a new session after a brief delay to ensure cleanup is complete
     setTimeout(() => {
       startChatSession();
+      
+      // Fjernet transcript-lagring her - vi skal bare lagre etter bruker har sendt melding
     }, 100);
   }, [resetMessageSourceTracker, textStreamingStartedRef, streaming]);
 

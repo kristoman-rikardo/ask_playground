@@ -2,9 +2,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
 // Check for environment variables and provide fallbacks
-const RUNTIME_API_KEY = import.meta.env.VITE_VOICEFLOW_API_KEY || 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv';
-const RUNTIME_ENDPOINT = 'https://general-runtime.voiceflow.com';
-const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID || '67f291952280faa3b19ddfcb';
+// Export these constants for use in other modules
+export const RUNTIME_API_KEY = import.meta.env.VITE_VOICEFLOW_API_KEY || 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv';
+export const RUNTIME_ENDPOINT = 'https://general-runtime.voiceflow.com';
+export const PROJECT_ID = import.meta.env.VITE_VOICEFLOW_PROJECT_ID || '67f291952280faa3b19ddfcb';
 
 // Generate a default user session ID
 const DEFAULT_USER_ID = 'user_' + uuidv4();
@@ -31,7 +32,8 @@ function getSessionUserId(): string {
 }
 
 // Get custom user ID with product name if available
-function getUserId(variables: Record<string, any> = {}): string {
+// Eksporter getUserId funksjonen for å bruke den i andre moduler
+export function getUserId(variables: Record<string, any> = {}): string {
   // Hent eller generer en konsistent session ID
   const sessionUserId = getSessionUserId();
   let userId = sessionUserId;
