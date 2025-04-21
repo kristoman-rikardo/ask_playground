@@ -584,160 +584,111 @@
   
   // Håndter scrapeComplete-hendelsen
   function handleScrapeComplete(event) {
-    if (isWidgetInitialized) {
-      log('Widget already initialized, ignoring duplicate scrapeComplete event');
-      return;
-    }
-    
     log('Received scrapeComplete event');
-    const { side_innhold, browser_url, produkt_navn } = event.detail || {};
     
-    // Logg bruker-ID info (alltid, uavhengig av debug-flagg)
-    if (produkt_navn) {
-      console.log(`Produktnavn for bruker-ID: "${produkt_navn}"`);
+    // Extract scraped content
+    const scrapedData = event.detail || {};
+    const { productName } = scrapedData;
+    
+    if (productName) {
+      log(`Produktnavn for bruker-ID: "${productName}"`);
     } else {
       console.log('Ingen produktnavn tilgjengelig for bruker-ID');
     }
     
-    if (!side_innhold || side_innhold.length === 0) {
-      log('No content extracted from page');
-      return;
-    }
-    
-    isWidgetInitialized = true;
-    
-    const container = document.getElementById(config.containerID);
-    if (!container) {
-      log('Container not found during initialization');
-      return;
-    }
-    
-    container.style.minHeight = `${config.minHeight}px`;
-    container.style.height = 'auto';
-    container.style.maxHeight = 'none';
-    
+    // Now initialize the widget with the data
     log('Initializing widget with scraped content');
     
-    if (window.ChatWidget) {
+    // Forsikre oss om at ChatWidget er lastet før vi initialiserer
+    if (window.ChatWidget && typeof window.ChatWidget.init === 'function') {
+      log('Initializing ChatWidget with options');
+      
       try {
-        const originalFetch = window.fetch;
-        if (!window.fetch._patched) {
-          window.fetch = function(url, options) {
-            const isVoiceflowRequest = typeof url === 'string' && (
-              url.includes('voiceflow.com') || 
-              url.includes('vfre') || 
-              url.includes('vf.to')
-            );
-            
-            if (isVoiceflowRequest) {
-              log('Detected Voiceflow API request, adding timeout');
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => {
-                controller.abort();
-                log('Voiceflow request timed out after ' + config.voiceflowTimeout + 'ms');
-              }, config.voiceflowTimeout);
-              
-              const fetchOptions = options || {};
-              fetchOptions.signal = controller.signal;
-              
-              return originalFetch(url, fetchOptions)
-                .then(response => {
-                  clearTimeout(timeoutId);
-                  return response;
-                })
-                .catch(error => {
-                  clearTimeout(timeoutId);
-                  log('Voiceflow request error: ' + error.message);
-                  throw error;
-                });
-            }
-            return originalFetch(url, options);
-          };
-          window.fetch._patched = true;
-        }
-        
-        const initOptions = {
+        // Initialiser widgeten med konfigurasjonen
+        window.ChatWidget.init({
           containerId: config.containerID,
           apiKey: config.apiKey,
           projectID: config.projectID,
-          disableAutoScroll: true,
-          useShadowDOM: canUseShadowDOM,
-          injectCss: !canUseShadowDOM,
-          runtime: {
-            timeout: config.voiceflowTimeout,
-            maxRetries: 2,
-            retryDelay: 1000
-          },
+          apiEndpoint: 'https://general-runtime.voiceflow.com',
           launchConfig: {
             event: {
-              type: "launch",
+              type: 'launch',
               payload: {
-                browser_url: browser_url || window.location.href,
-                side_innhold: side_innhold.substring(0, 5000),
-                produkt_navn: produkt_navn || ''
+                produkt_navn: productName || ''
               }
             }
           }
-        };
+        });
         
-        log('Initializing ChatWidget with options');
-        window.ChatWidget.init(initOptions);
-        log(`Widget successfully initialized (${canUseShadowDOM ? 'with' : 'without'} Shadow DOM)`);
+        // Merk at widgeten er initialisert
+        isWidgetInitialized = true;
         
-        let voiceflowStatusCheckCount = 0;
-        const maxStatusChecks = 10;
-        
-        const checkVoiceflowStatus = () => {
-          voiceflowStatusCheckCount++;
-          
-          const widgetInitializedProperly = (
-            window.ChatWidget && 
-            window.ChatWidget.isInitialized && 
-            document.getElementById(config.containerID)
-          );
-          
-          if (widgetInitializedProperly) {
-            log('ChatWidget fully initialized');
-            widgetFullyInitialized = true;
-            
-            createTimeout(() => {
-              addGlobalStyles();
-              showWidget();
-              setupHeightMonitoring();
-              
-              createTimeout(checkAndUpdateHeight, 1000);
-              createTimeout(checkAndUpdateHeight, 2000);
-            }, 300);
-          } else if (voiceflowStatusCheckCount < maxStatusChecks) {
-            const delay = 500 * Math.pow(1.5, voiceflowStatusCheckCount - 1);
-            createTimeout(checkVoiceflowStatus, delay);
-          } else {
-            log('WARNING: ChatWidget initialization status could not be confirmed');
-            widgetFullyInitialized = false;
-            createTimeout(() => {
-              addGlobalStyles();
-              showWidget();
-              setupHeightMonitoring();
-            }, 500);
-          }
-        };
-        
-        createTimeout(checkVoiceflowStatus, 500);
+        // Vis widgeten (med en liten forsinkelse for å la den initialisere)
+        setTimeout(() => {
+          showWidget();
+          setupHeightMonitoring();
+        }, 100);
         
       } catch (error) {
-        log(`Failed to initialize widget: ${error.message}`);
+        log(`Error initializing widget: ${error.message}`);
+        
+        // Hvis vi bruker Shadow DOM og det feiler, prøv igjen uten
         if (canUseShadowDOM) {
           log('Retrying widget initialization without Shadow DOM');
           canUseShadowDOM = false;
-          isWidgetInitialized = false;
           handleScrapeComplete(event);
-        } else {
-          isWidgetInitialized = false;
         }
       }
     } else {
-      log('ChatWidget is not available');
-      isWidgetInitialized = false;
+      log('Failed to initialize widget: window.ChatWidget.init is not a function');
+      
+      // Legg til en sjekk som prøver å finne faktisk type av window.ChatWidget
+      if (window.ChatWidget) {
+        log(`window.ChatWidget er av typen: ${typeof window.ChatWidget}`);
+        if (typeof window.ChatWidget === 'object') {
+          const keys = Object.keys(window.ChatWidget);
+          log(`window.ChatWidget har følgende egenskaper: ${keys.join(', ')}`);
+          
+          // Hvis det ser ut som window.ChatWidget er et objekt med default-egenskap som har init
+          if (window.ChatWidget.default && typeof window.ChatWidget.default.init === 'function') {
+            log('Trying to use window.ChatWidget.default.init instead');
+            try {
+              window.ChatWidget.default.init({
+                containerId: config.containerID,
+                apiKey: config.apiKey,
+                projectID: config.projectID,
+                apiEndpoint: 'https://general-runtime.voiceflow.com',
+                launchConfig: {
+                  event: {
+                    type: 'launch',
+                    payload: {
+                      produkt_navn: productName || ''
+                    }
+                  }
+                }
+              });
+              
+              isWidgetInitialized = true;
+              
+              setTimeout(() => {
+                showWidget();
+                setupHeightMonitoring();
+              }, 100);
+              
+              return; // Vi har lykkes, avslutt funksjonen
+            } catch (error) {
+              log(`Error initializing with default export: ${error.message}`);
+            }
+          }
+        }
+      }
+      
+      // Hvis vi bruker Shadow DOM og det feiler, prøv igjen uten
+      if (canUseShadowDOM) {
+        log('Retrying widget initialization without Shadow DOM');
+        canUseShadowDOM = false;
+        handleScrapeComplete(event);
+      }
     }
   }
   

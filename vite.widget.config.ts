@@ -17,6 +17,7 @@ export default defineConfig({
       output: {
         entryFileNames: 'chatWidget.js',
         assetFileNames: 'chatWidget.css',
+        exports: 'named',
       },
     },
     outDir: 'dist/widget',

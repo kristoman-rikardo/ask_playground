@@ -25,12 +25,28 @@ interface ChatWidgetConfig {
   disableAutoScroll?: boolean;
 }
 
+// Definer ChatWidget-grensesnittet for window
+interface ChatWidgetInterface {
+  init: (config: Partial<ChatWidgetConfig>) => void;
+  maximizeChat: () => void;
+  minimizeChat: () => void;
+}
+
+// Utvid Window-typen for TypeScript
+declare global {
+  interface Window {
+    ChatWidget: ChatWidgetInterface;
+    VOICEFLOW_API_KEY: string;
+    VOICEFLOW_PROJECT_ID: string;
+  }
+}
+
 // Eksportér API-konstanter for bruk i injeksjonsscript
 export let API_KEY = '';
 export let PROJECT_ID = '';
 
 // Klasse for ChatWidget
-class ChatWidget {
+class ChatWidgetClass {
   private config: ChatWidgetConfig;
   private container: HTMLElement | null = null;
   private launchConfig: any = null;
@@ -68,8 +84,8 @@ class ChatWidget {
     PROJECT_ID = projectID;
     
     // Legg til disse variablene på window-objektet for bruk i injeksjonsscript
-    (window as any).VOICEFLOW_API_KEY = apiKey;
-    (window as any).VOICEFLOW_PROJECT_ID = projectID;
+    window.VOICEFLOW_API_KEY = apiKey;
+    window.VOICEFLOW_PROJECT_ID = projectID;
     
     // Finn container-elementet
     this.container = document.getElementById(this.config.containerId);
@@ -100,14 +116,13 @@ class ChatWidget {
         isEmbedded: true,
         disableGlobalAutoScroll: this.config.disableAutoScroll
       }),
-      // this.container
     );
   }
 
   /**
    * Minimerer chat-widgeten
    */
-  private minimizeChat() {
+  public minimizeChat() {
     if (this.container) {
       this.container.classList.add('minimized');
     }
@@ -116,18 +131,22 @@ class ChatWidget {
   /**
    * Maksimerer chat-widgeten
    */
-  private maximizeChat() {
+  public maximizeChat() {
     if (this.container) {
       this.container.classList.remove('minimized');
     }
   }
 }
 
-// Eksportér en instans av ChatWidget til window-objektet
-const chatWidgetInstance = new ChatWidget();
+// Opprett en instans av ChatWidgetClass
+const chatWidgetInstance = new ChatWidgetClass();
 
-// Legg til instansen på window-objektet
-window.ChatWidget = chatWidgetInstance;
+// Eksportér metodene direkte til window.ChatWidget som et objekt med ChatWidgetInterface
+window.ChatWidget = {
+  init: chatWidgetInstance.init.bind(chatWidgetInstance),
+  maximizeChat: chatWidgetInstance.maximizeChat.bind(chatWidgetInstance),
+  minimizeChat: chatWidgetInstance.minimizeChat.bind(chatWidgetInstance)
+};
 
-// Export for bruk i andre moduler
+// Eksportér chatWidgetInstance for bruk i andre moduler
 export default chatWidgetInstance; 
