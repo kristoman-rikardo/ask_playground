@@ -25,6 +25,10 @@ interface ChatWidgetConfig {
   disableAutoScroll?: boolean;
 }
 
+// Eksportér API-konstanter for bruk i injeksjonsscript
+export let API_KEY = '';
+export let PROJECT_ID = '';
+
 // Klasse for ChatWidget
 class ChatWidget {
   private config: ChatWidgetConfig;
@@ -58,6 +62,14 @@ class ChatWidget {
       console.error(`[ChatWidget] Api key was not found.`);
       return;
     }
+    
+    // Oppdater eksporterte API-konstanter
+    API_KEY = apiKey;
+    PROJECT_ID = projectID;
+    
+    // Legg til disse variablene på window-objektet for bruk i injeksjonsscript
+    (window as any).VOICEFLOW_API_KEY = apiKey;
+    (window as any).VOICEFLOW_PROJECT_ID = projectID;
     
     // Finn container-elementet
     this.container = document.getElementById(this.config.containerId);

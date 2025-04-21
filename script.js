@@ -14,7 +14,8 @@
     resizeInterval: 1000, // Økt til 1000ms for bedre ytelse
     voiceflowTimeout: 15000, // Timeout for Voiceflow API i millisekunder
     performanceMode: true,   // Reduserer antall oppdateringer for bedre ytelse
-    debug: false             // Setter til false for produksjonsmiljø
+    debug: false,            // Setter til false for produksjonsmiljø
+    conversionTagLabel: 'conversion' // Tag for konverteringer
   };
   
   // Globale variabler for å holde styr på widgetstatus
@@ -27,6 +28,7 @@
   let activeMutationObservers = []; // For å holde styr på aktive observers for cleanup
   let activeTimers = []; // For å holde styr på aktive timers for cleanup
   let lastTargetType = null; // 'mobile' eller 'desktop' for å holde styr på nåværende widget-plassering
+  let reportTagId = null; // For å holde styr på conversion-tag-ID
 
   // Enkel logging kun til konsoll
   function log(message) {
@@ -829,11 +831,152 @@
     document.addEventListener('widgetClosed', handleWidgetMinimize);
   }
   
+  // Funksjon for å sjekke om "conversion"-tag eksisterer og opprette den hvis den ikke finnes
+  async function ensureProjectTag() {
+    if (!config.apiKey || !config.projectID) {
+      log('Mangler API-nøkkel eller prosjekt-ID for tag-håndtering');
+      return null;
+    }
+    
+    try {
+      // 1. Hent gjeldende tag-liste
+      const base = `https://api.voiceflow.com/v2/projects/${config.projectID}/tags`;
+      const listRes = await fetch(base, {
+        headers: { Authorization: config.apiKey }
+      });
+      
+      if (!listRes.ok) {
+        log(`Feil ved henting av tags: ${listRes.status}`);
+        return null;
+      }
+      
+      const tags = await listRes.json();
+      let tag = tags.find(t => t.label === config.conversionTagLabel);
+
+      // 2. Opprett tag hvis den ikke finnes
+      if (!tag) {
+        log(`Oppretter "${config.conversionTagLabel}" tag for prosjektet...`);
+        
+        const createRes = await fetch(base, {
+          method: 'PUT',
+          headers: {
+            Authorization: config.apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ label: config.conversionTagLabel })
+        });
+        
+        if (!createRes.ok) {
+          log(`Feil ved opprettelse av tag: ${createRes.status}`);
+          return null;
+        }
+        
+        tag = await createRes.json();
+        log(`Tag "${config.conversionTagLabel}" opprettet med ID: ${tag._id}`);
+      } else {
+        log(`Tag "${config.conversionTagLabel}" eksisterer allerede med ID: ${tag._id}`);
+      }
+      
+      return tag._id;
+    } catch (error) {
+      log(`Feil ved håndtering av prosjekt-tag: ${error.message}`);
+      return null;
+    }
+  }
+
+  // Funksjon for å tagge et transcript med "conversion"-tag
+  async function tagTranscript(transcriptId) {
+    if (!reportTagId || !transcriptId) {
+      log('Mangler transcriptID eller reportTagID for tagging');
+      return false;
+    }
+    
+    try {
+      const url = `https://api.voiceflow.com/v2/transcripts/${config.projectID}/${transcriptId}/report_tag/${reportTagId}`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: { Authorization: config.apiKey }
+      });
+      
+      if (response.ok) {
+        log(`Transcript ${transcriptId} er tagget med "${config.conversionTagLabel}"`);
+        return true;
+      } else {
+        log(`Feil ved tagging av transcript: ${response.status}`);
+        return false;
+      }
+    } catch (error) {
+      log(`Feil ved tagging av transcript: ${error.message}`);
+      return false;
+    }
+  }
+
+  // Funksjon for å håndtere klikk på handlekurvknappen
+  function handleAddToCartClick(event) {
+    const btn = event.target.closest('.actions__add-to-cart');
+    if (!btn) return;
+    
+    try {
+      const transcriptId = sessionStorage.getItem('vf_transcript_id');
+      if (!transcriptId) {
+        log('TranscriptID mangler – tagger ikke konvertering.');
+        return;
+      }
+
+      tagTranscript(transcriptId)
+        .then(success => {
+          if (success) {
+            log('Konvertering registrert: handlekurv-klikk');
+          }
+        })
+        .catch(err => {
+          log(`Kunne ikke tagge konvertering: ${err.message}`);
+        });
+    } catch (err) {
+      log(`Feil ved tagging av konvertering: ${err.message}`);
+    }
+  }
+
+  // Funksjon for å sette opp lytter for handlekurvklikk
+  function setupConversionListener() {
+    log('Setter opp lytter for handlekurvklikk');
+    document.addEventListener('click', handleAddToCartClick, true);
+    
+    // Legg til i aktive lyttere for cleanup
+    const cleanup = () => {
+      document.removeEventListener('click', handleAddToCartClick, true);
+    };
+    
+    if (typeof window.__widgetCleanupHandlers === 'undefined') {
+      window.__widgetCleanupHandlers = [];
+    }
+    
+    window.__widgetCleanupHandlers.push(cleanup);
+  }
+
+  // Funksjon for å initialisere konverteringssporing
+  async function initConversionTracking() {
+    log('Initialiserer konverteringssporing');
+    reportTagId = await ensureProjectTag();
+    
+    if (reportTagId) {
+      log(`Konverteringssporing initialisert med tag-ID: ${reportTagId}`);
+      setupConversionListener();
+    } else {
+      log('Kunne ikke initialisere konverteringssporing pga. manglende tag-ID');
+    }
+  }
+
   // Hovedfunksjon for å initialisere alt - optimalisert for ytelse
   async function initialize() {
     log('Ask widget initialization started');
     setupCleanup();
     setupWidgetCloseListeners(); // Registrer nye lyttere for lukking/minimering
+    
+    // Initialiser konverteringssporing tidlig
+    initConversionTracking().catch(err => {
+      log(`Feil ved initialisering av konverteringssporing: ${err.message}`);
+    });
     
     canUseShadowDOM = testShadowDOMSupport();
     log(`Shadow DOM support: ${canUseShadowDOM ? 'Detected' : 'Not available'}`);
