@@ -24,8 +24,15 @@ export async function ensureProjectTag(): Promise<string> {
       throw new Error(`Feil ved henting av tags: ${listRes.status}`);
     }
     
-    const tags = await listRes.json();
-    let tag = tags.find((t: any) => t.label === TAG_LABEL);
+    const tagsResponse = await listRes.json();
+    
+    // Sjekk om tagsResponse er en array
+    if (!Array.isArray(tagsResponse)) {
+      console.error('Uventet respons-format fra API: tags er ikke en array', tagsResponse);
+      throw new Error('Uventet respons-format: tags er ikke en array');
+    }
+    
+    let tag = tagsResponse.find((t: any) => t.label === TAG_LABEL);
 
     // 2. Opprett tag hvis den ikke finnes
     if (!tag) {

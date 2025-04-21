@@ -851,36 +851,63 @@
         return null;
       }
       
-      const tags = await listRes.json();
-      let tag = tags.find(t => t.label === config.conversionTagLabel);
+      const tagsResponse = await listRes.json();
+      
+      // Sjekk om tagsResponse er en array
+      if (!Array.isArray(tagsResponse)) {
+        log(`Uventet respons-format fra API: tags er ikke en array: ${typeof tagsResponse}`);
+        // Forsøk å håndtere tilfeller der tags kan være i en annen struktur
+        const tags = Array.isArray(tagsResponse.tags) ? tagsResponse.tags : [];
+        log(`Prøver å bruke alternativ tagsstruktur, fant ${tags.length} tags`);
+        let tag = tags.find(t => t.label === config.conversionTagLabel);
+        
+        if (!tag) {
+          return await createTag(base);
+        }
+        
+        log(`Tag "${config.conversionTagLabel}" eksisterer allerede med ID: ${tag._id}`);
+        return tag._id;
+      }
+      
+      let tag = tagsResponse.find(t => t.label === config.conversionTagLabel);
 
       // 2. Opprett tag hvis den ikke finnes
       if (!tag) {
-        log(`Oppretter "${config.conversionTagLabel}" tag for prosjektet...`);
-        
-        const createRes = await fetch(base, {
-          method: 'PUT',
-          headers: {
-            Authorization: config.apiKey,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ label: config.conversionTagLabel })
-        });
-        
-        if (!createRes.ok) {
-          log(`Feil ved opprettelse av tag: ${createRes.status}`);
-          return null;
-        }
-        
-        tag = await createRes.json();
-        log(`Tag "${config.conversionTagLabel}" opprettet med ID: ${tag._id}`);
+        return await createTag(base);
       } else {
         log(`Tag "${config.conversionTagLabel}" eksisterer allerede med ID: ${tag._id}`);
+        return tag._id;
       }
-      
-      return tag._id;
     } catch (error) {
       log(`Feil ved håndtering av prosjekt-tag: ${error.message}`);
+      return null;
+    }
+  }
+  
+  // Hjelpefunksjon for å opprette tag
+  async function createTag(base) {
+    log(`Oppretter "${config.conversionTagLabel}" tag for prosjektet...`);
+    
+    try {
+      const createRes = await fetch(base, {
+        method: 'PUT',
+        headers: {
+          Authorization: config.apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ label: config.conversionTagLabel })
+      });
+      
+      if (!createRes.ok) {
+        log(`Feil ved opprettelse av tag: ${createRes.status}`);
+        return null;
+      }
+      
+      const tag = await createRes.json();
+      log(`Tag "${config.conversionTagLabel}" opprettet med ID: ${tag._id}`);
+      return tag._id;
+    } catch (error) {
+      log(`Feil ved opprettelse av tag: ${error.message}`);
       return null;
     }
   }
