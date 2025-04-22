@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hilleberg Unna Red - Test Embed</title>
+    <style>
+        :root {
+             --accent-color: #ff9900; /* Orange accent */
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+        }
+        a {
+             color: var(--accent-color);
+             text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        h1, h2, h3, h4 {
+             /* Subtle accent on headings */
+             /* color: var(--accent-color); */
+             margin-top: 1em;
+             margin-bottom: 0.5em;
+        }
+        .header-info, .footer-info {
+             background-color: #eee;
+             padding: 10px 20px;
+             margin-bottom: 20px;
+             text-align: center;
+             font-size: 0.9em;
+        }
+         .header-info span, .footer-info span {
+             margin: 0 10px;
+             display: inline-block;
+         }
+         .nav-mock {
+             padding: 10px 20px;
+             background-color: #333;
+             color: white;
+             margin-bottom: 20px;
+         }
+         .nav-mock span {
+             margin-right: 15px;
+             cursor: pointer;
+         }
+        .product-page-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 1fr; /* Default mobile: single column */
+            gap: 20px 30px; /* Increased gap for desktop */
+        }
+        .product-image {
+            /* Ensure image container fills its grid space */
+             width: 100%;
+        }
+        .product-image img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid #ddd;
+        }
+        .product-info {
+            padding: 10px 0; /* Removed horizontal padding */
+        }
+        .breadcrumb-mock {
+            font-size: 0.85em;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        .product-title {
+            font-size: 1.8em; /* Keep title size */
+            margin-bottom: 5px;
+            font-weight: bold;
+             color: #222; /* Darker title */
+        }
+         .product-brand {
+             font-size: 1.1em;
+             color: #666;
+             margin-bottom: 15px;
+         }
+        .product-price {
+            font-size: 1.7em;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .product-rating-mock {
+            color: #f0ad4e; /* Keep stars orange */
+            margin-bottom: 20px;
+        }
+        .product-highlights {
+             margin-bottom: 20px;
+             font-size: 0.9em;
+        }
+         .product-highlights li {
+             margin-bottom: 5px;
+         }
+        /* This is the desktop target container for the widget */
+        .actions {
+            padding: 10px 0;
+            margin-top: 10px;
+        }
+        .add-to-cart-button {
+            display: inline-block;
+            /* --- Smaller Button --- */
+            padding: 10px 18px;      /* Reduced padding */
+            font-size: 1em;          /* Reduced font size */
+            /* --- Accent Color --- */
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;     /* Slightly smaller radius */
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s ease;
+        }
+        .add-to-cart-button:hover {
+            background-color: #e68a00; /* Darker orange on hover */
+        }
+        .stock-info {
+             font-weight: bold;
+             color: green;
+             margin-top: 10px;
+             font-size: 0.9em;
+        }
+
+        /* This is the mobile target container for the widget */
+        /* Keep this div present for script.js targeting, even if visually empty/hidden on desktop */
+        .product-description__short-description {
+             padding: 10px;
+             margin-top: 15px;
+             font-size: 0.9em;
+             color: #555;
+             border-top: 1px solid #eee;
+        }
+
+        .product-description__long {
+            padding: 10px 0; /* Remove horizontal padding */
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .product-description__long h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+             color: #444;
+        }
+        .product-description__long p, .product-description__long ul {
+             margin-bottom: 15px;
+        }
+        .product-specs {
+            margin-top: 20px;
+            border-top: 1px dashed #ccc;
+            padding-top: 15px;
+        }
+         .product-specs dt {
+             font-weight: bold;
+             width: 120px;
+             float: left;
+             clear: left;
+         }
+         .product-specs dd {
+             margin-left: 130px;
+             margin-bottom: 8px;
+         }
+
+        .related-items {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .related-items h3 {
+             margin-bottom: 15px;
+             color: #444;
+        }
+        .related-grid {
+             display: grid;
+             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+             gap: 15px;
+             text-align: center;
+             font-size: 0.9em;
+        }
+         .related-item img {
+             max-width: 100%;
+             height: auto;
+             margin-bottom: 5px;
+         }
+         .related-item .price {
+             font-weight: bold;
+         }
+
+        /* --- Responsive Layout --- */
+        @media (min-width: 768px) { /* Corresponds to script.js breakpoint */
+            .product-page-container {
+                 /* --- Desktop Ratio 5:2 --- */
+                grid-template-columns: 5fr 2fr;
+                gap: 20px 40px; /* Adjust gap if needed */
+            }
+            .product-image {
+                grid-column: 1 / 2;
+                grid-row: 1 / 3; /* Span image over info and actions rows */
+            }
+            .product-info {
+                grid-column: 2 / 3;
+                grid-row: 1 / 2;
+                display: flex;
+                flex-direction: column;
+                 padding: 0; /* Remove padding */
+            }
+             .product-description__short-description {
+                 /* Hide short description visually on desktop, but keep the element */
+                 /* Widget will insert after .actions instead */
+                  display: none; /* More direct way to hide it */
+             }
+             .actions {
+                grid-column: 2 / 3;
+                grid-row: 2 / 3;
+                align-self: start; /* Align to top of its grid area */
+                border-top: none;
+                margin-top: 0;
+                padding: 0; /* Remove padding */
+             }
+             /* The widget will be injected *after* .actions on desktop */
+
+             .product-description__long {
+                 grid-column: 1 / 3; /* Span full width below */
+                 grid-row: 3 / 4;
+                 padding: 10px 0;
+             }
+             .related-items {
+                 grid-column: 1 / 3; /* Span full width */
+                 grid-row: 4 / 5;
+             }
+        }
+
+        /* Style for the injected widget container */
+        #ask-chat-widget-container {
+            /* border: 1px dashed blue; */ /* Debug border */
+            padding: 0; /* Remove padding if added by script */
+            margin-top: 15px; /* Space above widget */
+            margin-bottom: 15px; /* Space below widget */
+            width: 100%;
+            /* min-height set by script.js */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header-info">
+        <span>Fri frakt over 1200,-</span>
+        <span>100 dagers åpent kjøp og fri retur</span>
+        <span>Klimakompensert lynrask levering</span>
+    </div>
+
+    <div class="nav-mock">
+        <span>Søk blant 25 000 produkter</span> |
+        <span>Herre</span>
+        <span>Dame</span>
+        <span>Utstyr</span>
+        <span>Sko og støvler</span>
+        <span>Barn</span>
+        <span>Sove ute</span>
+        <span>Aktiviteter</span> |
+        <span style="color: var(--accent-color); font-weight: bold;">Kampanjer</span>
+        <span>Nyheter</span>
+        <span>Fjellsportpris</span>
+        <span>Outlet</span>
+        <span>Varemerker</span>
+        <span>🐥PÅSKERABATT🐥 Se <a href="#">rabattstigen her!</a></span>
+    </div>
+
+    <div class="product-page-container">
+
+        <div class="product-image">
+             <img src="https://www.fjellsport.no/assets/blobs/H15-UnnaRed-sRGBtag-c90ddd6535.jpeg?preset=medium&dpr=2" alt="Hilleberg Unna Red">
+             <p style="text-align: center; font-size: 0.9em; margin-top: 10px;">(Image gallery mock - <a href="#">click for video</a>)</p>
+        </div>
+
+        <div class="product-info">
+            <div class="breadcrumb-mock"><a href="#">Utstyr</a> > <a href="#">Telt, tarp og lavvo</a> > <a href="#">Telt</a></div>
+            <h1 class="product-title">Unna Red</h1>
+            <p class="product-brand"><a href="#">Hilleberg</a></p>
+             <div class="product-rating-mock">★★★★☆ (<a href="#">15</a>)</div>
+            <p class="product-price">10 400,-</p>
+
+             <ul class="product-highlights">
+                 <li>Frittstående enmannstelt fra Hilleberg</li>
+                 <li>Ideelt for leirplasser med begrenset plass</li>
+                 <li>God evne til å tåle snøbelastning</li>
+             </ul>
+             <p>Farge: Rød</p>
+             <!-- Color Swatch Mock -->
+             <div style="margin-bottom: 15px;">
+                 <span style="display: inline-block; width: 20px; height: 20px; background-color: green; border: 1px solid #ccc; margin-right: 5px; cursor: pointer;" title="Green"></span>
+                 <span style="display: inline-block; width: 20px; height: 20px; background-color: red; border: 2px solid black; margin-right: 5px; cursor: pointer;" title="Red"></span>
+             </div>
+
+
+            <!-- Mobile Target for Widget Insertion (Content might be hidden on desktop via CSS) -->
+            <div class="product-description__short-description">
+                Et superlett, helt frittstående kuppeltelt. Ideelt for turer der vekten betyr mye og plassen er begrenset.
+            </div>
+
+             <!-- Desktop Target Container (Widget inserted AFTER this) -->
+            <div class="actions">
+                <button class="add-to-cart-button actions__add-to-cart">Legg i handlekurv</button>
+                <div class="stock-info">✔ Få på lager</div>
+                <!-- NOTE: script.js targets '.actions' on desktop -->
+            </div>
+             <!-- #ask-chat-widget-container will be injected here (after .actions on desktop, after .product-description__short-description on mobile) by script.js -->
+
+        </div>
+
+
+        <div class="product-description__long">
+            <h3>Produktbeskrivelse</h3>
+            <p>Et frittstående enmannstelt som kan slås opp hvor som helst. Det superlette, helt frittstående kuppelteltet Hilleberg Unna forener enkelthet og allsidighet på en enestående måte. Det er ideelt for turer der vekten betyr mye, og på turer hvor det kan være vanskelig å finne gode teltplasser. Med yttertelt i sterk Kerlon 1200-duk, med en rivestyrke på 12 kilo, overgår dette teltet de fleste “ekspedisjonstelt” på markedet.</p>
+
+            <p>Unna er et utmerket valg for de fleste turer på utsatte steder over tregrensen. Kuppelkonstruksjonen gir teltet god evne til å tåle snøbelastning, og det er derfor et godt telt også for bruk i baseleir for kortere perioder. Romsligheten og den lave vekten settes pris på når man stadig flytter leir. Istedenfor et stort fortelt har Unna ekstra romslig innertelt der én person har plass nok både seg selv og sin pakning. Det er også fullt mulig å sove to personer i teltet. Ved å løsne det ene hjørnet på innerteltet kan man få et mindre fortelt samtidig som innerteltet holder seg tørt selv om man går ut og inn av teltet når det regner.</p>
+
+            <p>Unna er helt frittstående og er derfor et suverent telt å sette opp overalt, på fjellhyller, smale fjellrygger, i tett skog og naturligvis på mer normale teltplasser. Som “singeltelt” gir det et meget generøst rom innvendig. Når det dessuten både er stabilt og lett er det ikke rart at Unna er blitt en favoritt blant mange brukere, som kajakkpadlere, “jorden rundt-backpakkere”, sykkelturister, alpinister og friluftsmennesker.</p>
+
+            <p>Hvert Hillebergtelt leveres med yttertelt, innertelt, barduner, med strammere, stenger, plugger, oppbevaringsposer for telt, stenger og plugger, resevestangdel med reparasjonshylse samt instruksjoner.</p>
+
+            <p>“Nettovekt” er innertelt- og yttertelt samt stenger. “Bruttovekt” er telt inkludert alt som følger med.</p>
+
+             <div class="product-specs">
+                 <h3>Spesifikasjoner</h3>
+                 <dl>
+                     <dt>Nettovekt</dt><dd>1.5 kg</dd>
+                     <dt>Bruttovekt</dt><dd>2.1 kg</dd>
+                     <dt>Høyde Innvendig</dt><dd>100 cm</dd>
+                     <dt>Areal Innertelt</dt><dd>2.5 m²</dd>
+                     <dt>Stenger (9 mm)</dt><dd>2 x 387 cm</dd>
+                     <dt>Teltplugger</dt><dd>12 V-Pegs</dd>
+                     <dt>Modellnavn</dt><dd>UNNA RÖD</dd>
+                     <dt>Fargekode</dt><dd>Red</dd>
+                     <dt>Varemerke</dt><dd>Hilleberg</dd>
+                     <dt>Antall soveplasser</dt><dd>1</dd>
+                     <dt>Teltsesong</dt><dd>4-sesongs</dd>
+                     <dt>Telttype</dt><dd>Kuppeltelt</dd>
+                     <dt>Størrelse</dt><dd>1SIZE</dd>
+                     <dt>Varenummer</dt><dd>P101722</dd>
+                 </dl>
+             </div>
+
+             <div style="margin-top: 20px;">
+                 <button>Still et spørsmål</button> (Vær den første til å stille et spørsmål)
+             </div>
+        </div>
+
+        <div class="related-items">
+             <h3>Passende tilbehør</h3>
+             <div class="related-grid">
+                 <div class="related-item">
+                     <img src="https://via.placeholder.com/150x100?text=Solarproof" alt="Nikwax Tent & Gear Solarproof">
+                     <p><a href="#">Nikwax Tent & Gear Solarproof 500 ml</a></p>
+                     <p class="price">229,-</p>
+                 </div>
+                 <!-- Add more related items if needed -->
+             </div>
+
+              <h3>Lignende produkter</h3>
+             <div class="related-grid">
+                 <div class="related-item">
+                     <img src="https://via.placeholder.com/150x100?text=Soulo+Red" alt="Soulo Red">
+                     <p><a href="#">Hilleberg Soulo Red</a></p>
+                     <p class="price">12 000,-</p>
+                 </div>
+                 <div class="related-item">
+                     <img src="https://via.placeholder.com/150x100?text=Allak+2+Red" alt="Allak 2 Red">
+                     <p><a href="#">Hilleberg Allak 2 Red</a></p>
+                     <p class="price">15 400,-</p>
+                 </div>
+                 <div class="related-item">
+                     <img src="https://via.placeholder.com/150x100?text=Soulo+Green" alt="Soulo Green">
+                     <p><a href="#">Hilleberg Soulo Green</a></p>
+                     <p class="price">12 000,-</p>
+                 </div>
+                 <div class="related-item">
+                     <img src="https://via.placeholder.com/150x100?text=Mutha+Hubba" alt="Mutha Hubba">
+                     <p><a href="#">MSR Mutha Hubba NX Green</a></p>
+                     <p style="color: red;">-33%</p>
+                     <p class="price"><del>11 999,-</del> 7 999,-</p>
+                 </div>
+                 <!-- Add more similar products -->
+             </div>
+
+              <h3>Ofte kjøpt sammen med dette produktet</h3>
+             <div class="related-grid">
+                 <div class="related-item">
+                     <img src="https://via.placeholder.com/150x100?text=Footprint" alt="Footprint">
+                     <p><a href="#">Hilleberg Unna Footprint</a></p>
+                     <p class="price">1 000,-</p>
+                 </div>
+                  <div class="related-item">
+                     <img src="https://via.placeholder.com/150x100?text=Repair+Kit" alt="Repair Kit">
+                     <p><a href="#">Hilleberg Repair Kit Red Label</a></p>
+                     <p class="price">330,-</p>
+                 </div>
+                 <!-- Add more -->
+             </div>
+         </div>
+    </div>
+
+     <div class="footer-info" style="background-color: #ddd; margin-top: 30px; padding: 30px 20px; text-align: left;">
+         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+             <div>
+                 <h4>Bli medlem og få -20%...</h4>
+                 <p>Få velkomstrabatt, nyheter, tips...</p>
+                 <input type="email" placeholder="Din e-post" style="padding: 8px; margin-right: 5px;"> <button style="padding: 8px 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Send</button>
+             </div>
+              <div>
+                  <h4>Kundeservice</h4>
+                  <ul style="list-style: none; padding: 0;">
+                     <li><a href="#">Ofte stilte spørsmål</a></li>
+                     <li><a href="#">Sjekk balanse på gavekort</a></li>
+                     <li><a href="#">Returinfo</a></li>
+                     <li><a href="#">Tips & Råd</a></li>
+                     <li><a href="#">Kontakt oss</a></li>
+                 </ul>
+              </div>
+             <div>
+                  <h4>Om oss</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li><a href="#">Om Fjellsport</a></li>
+                        <li><a href="#">Kundeklubb</a></li>
+                        <li><a href="#">Medlemsvilkår</a></li>
+                        <li><a href="#">Ledige stillinger</a></li>
+                        <li><a href="#">Bærekraft</a></li>
+                    </ul>
+              </div>
+              <div>
+                  <h4>Våre venner</h4>
+                   <ul style="list-style: none; padding: 0;">
+                       <li><a href="#">Skitt Fiske</a></li>
+                       <li><a href="#">Jollyroom</a></li>
+                       <li><a href="#">Med24</a></li>
+                       <li><a href="#">Bakern og Kokken</a></li>
+                       <li><a href="#">...og flere</a></li>
+                   </ul>
+             </div>
+             <div>
+                 <h4>Følg oss</h4>
+                 <!-- Social media icons mock -->
+                 <span>FB</span> <span>IG</span> <span>YT</span>
+                 <hr style="margin: 15px 0; border-top: 1px solid #ccc; border-bottom: none;">
+                 <a href="#">Personvernerklæring</a><br>
+                 <a href="#">Kjøpsvilkår</a><br>
+                 <a href="#">Cookies</a>
+             </div>
+         </div>
+     </div>
+
+
+    <!-- Load the embedding script -->
+    <!-- Ensure script.js and the dist/widget folder are served relative to this HTML file -->
+    <script src="script.js"></script>
+
+</body>
+</html>
+// ask-widget-config.js
+export const config = {
+    // --- Required ---
+    apiKey: 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv', // Your Voiceflow API Key
+    projectID: '67f291952280faa3b19ddfcb', // Your Voiceflow Project ID
+    reportTagId: "68062ad1990094c1088b19d7", // Pre-defined Voiceflow Tag ID for conversions
+
+    // --- Paths ---
+    // Assumes script is loaded from root, adjust if needed
+    cssPath: './dist/widget/chatWidget.css',
+    jsPath: './dist/widget/chatWidget.js',
+    // Keep external scrape path for now, or provide a local path if hosted
+    scrapePath: 'https://kristoman-rikardo.github.io/ask1proto-21/scrapeSite.js',
+
+    // --- DOM & Layout ---
+    containerID: 'ask-chat-widget-container',
+    // Target element selectors for placing the widget
+    targetSelectorDesktop: '.actions', // For screens >= breakpoint
+    targetSelectorMobile: '.product-description__short-description', // For screens < breakpoint
+    breakpoint: 768, // Width threshold (px) for mobile/desktop swap
+    minHeight: 150, // Minimum height for the container (px) - adjust as needed
+
+    // --- Behavior ---
+    voiceflowTimeout: 15000, // Timeout for Voiceflow API calls (ms)
+    manualScrapeFallbackTimeout: 5000, // Timeout before trying manual scrape (ms)
+    debug: true, // Enable console logging
+
+    // --- Conversion Tracking ---
+    conversionTagLabel: 'conversion', // Label used for logging (tag ID is used for API)
+    // Selectors for the "Add to Cart" button(s)
+    addToCartSelectors: [
+      '.actions__add-to-cart',
+      '.add-to-cart',
+      '.single_add_to_cart_button',
+      'button[name="add"]',
+      '[data-action="add-to-cart"]',
+      'button.cart-button',
+      'input[value="Add to cart"]',
+      'button:contains("Add to Cart")', // Requires Sizzle or similar if not natively supported
+      'button:contains("Legg i handlekurv")', // Requires Sizzle or similar
+      '.woocommerce-loop-add-to-cart-link',
+      '.buy-button' // Added from original script logic
+    ]
+};
+
+// Simple logger
+export function log(message) {
+    if (config.debug) {
+      console.log(`[AskWidget] ${message}`);
+    }
+}

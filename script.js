@@ -1,1292 +1,605 @@
+// script.js - Refactored and Optimized
+
 (function() {
-  // Aktiv instans av widget
-  let activeWidget = null;
-  // Hold styr på aktive ResizeObservers for cleanup
-  let activeMutationObservers = [];
-  let activeResizeObservers = [];
-  
-  // Konfigurasjon - kan endres basert på implementasjon
-  const config = {
-    apiKey: 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv',
-    projectID: '67f291952280faa3b19ddfcb',
-    cssPath: 'https://kristoman-rikardo.github.io/ask1proto-21/dist/widget/chatWidget.css',
-    jsPath: 'https://kristoman-rikardo.github.io/ask1proto-21/dist/widget/chatWidget.js',
-    scrapePath: 'https://kristoman-rikardo.github.io/ask1proto-21/scrapeSite.js',
-    containerID: 'ask-chat-widget-container',
-    targetSelectorDesktop: '.actions', // For skjermer 768px eller bredere
-    targetSelectorMobile: '.product-description__short-description', // For skjermer smalere enn 768px
-    breakpoint: 768, // Grensepunkt for å bytte mellom mobile og desktop selektorer
-    minHeight: 300,
-    resizeInterval: 1000, // Økt til 1000ms for bedre ytelse
-    voiceflowTimeout: 15000, // Timeout for Voiceflow API i millisekunder
-    performanceMode: true,   // Reduserer antall oppdateringer for bedre ytelse
-    debug: true,             // Setter til true for feilsøking
-    conversionTagLabel: 'conversion' // Tag for konverteringer
-  };
-  
-  // Globale variabler for å holde styr på widgetstatus
-  let isWidgetInitialized = false;
-  let widgetFullyInitialized = false; // For å holde styr på om widgeten er fullt initialisert
-  let canUseShadowDOM = true;
-  let lastMeasuredHeight = 0;
-  let resizeIntervalId = null;
-  let overrideStyleElement = null;
-  let activeTimers = []; // For å holde styr på aktive timers for cleanup
-  let lastTargetType = null; // 'mobile' eller 'desktop' for å holde styr på nåværende widget-plassering
-  let reportTagId = "68062ad1990094c1088b19d7"; // Fast ID for konverteringstaggen
-  let hasAddedScrapeListener = false; // Sjekk om vi allerede har lagt til scrapeComplete-lytter
+    'use strict';
 
-  // Deklarerer globale variabler
-  let activeWidgetInitialized = false;
-  let activeLoadingScreen = null;
-  let activeContentContainer = null;
+    // --- 1. Configuration ---
+    const config = {
+        apiKey: 'VF.DM.67f3a3aabc8d1cb788d71d55.oO0bhO9dNnsn67Lv',
+        projectID: '67f291952280faa3b19ddfcb',
+        reportTagId: "68062ad1990094c1088b19d7", // Pre-defined conversion tag ID
+        cssPath: './dist/widget/chatWidget.css', // Relative path to built CSS
+        jsPath: './dist/widget/chatWidget.js',   // Relative path to built JS
+        scrapePath: 'https://kristoman-rikardo.github.io/ask1proto-21/scrapeSite.js', // External scraper (or local path)
+        containerID: 'ask-chat-widget-container',
+        targetSelectorDesktop: '.actions',
+        targetSelectorMobile: '.product-description__short-description',
+        breakpoint: 768,
+        minHeight: 150, // Adjusted minimum height
+        voiceflowTimeout: 15000,
+        manualScrapeFallbackTimeout: 5000,
+        debug: true,
+        conversionTagLabel: 'conversion', // For logging purposes
+        addToCartSelectors: [
+            '.actions__add-to-cart', '.add-to-cart', '.single_add_to_cart_button',
+            'button[name="add"]', '[data-action="add-to-cart"]', 'button.cart-button',
+            'input[value="Add to cart"]', 'button:contains("Add to Cart")',
+            'button:contains("Legg i handlekurv")', '.woocommerce-loop-add-to-cart-link',
+            '.buy-button'
+        ]
+    };
 
-  // Legg til en variabel for å spore om bredden er satt
-  let containerWidthIsFixed = false;
-
-  // Enkel logging kun til konsoll
-  function log(message) {
-    if (config.debug) {
-      console.log(`[AskWidget] ${message}`);
-    }
-  }
-  
-  // Test om Shadow DOM faktisk fungerer i denne konteksten
-  function testShadowDOMSupport() {
-    try {
-      const testDiv = document.createElement('div');
-      const shadow = testDiv.attachShadow({ mode: 'open' });
-      
-      if (shadow && testDiv.shadowRoot) {
-        const testParagraph = document.createElement('p');
-        testParagraph.textContent = 'Shadow DOM Test';
-        shadow.appendChild(testParagraph);
-        
-        const success = testDiv.shadowRoot.querySelector('p') !== null;
-        testDiv.remove();
-        return success;
-      }
-      return false;
-    } catch (error) {
-      log(`Shadow DOM not supported: ${error.message}`);
-      return false;
-    }
-  }
-  
-  // Legg til globale CSS-overstyringer
-  function addGlobalStyles() {
-    if (overrideStyleElement) {
-      overrideStyleElement.remove();
-    }
-    
-    overrideStyleElement = document.createElement('style');
-    overrideStyleElement.id = 'ask-widget-global-overrides';
-    
-    overrideStyleElement.innerHTML = `
-      /* Globale stiler for å sikre at widget-containeren kan ekspandere fritt */
-      #${config.containerID}:not(#\\9):not(#\\9):not(#\\9) {
-        height: auto !important;
-        min-height: ${config.minHeight}px !important;
-        max-height: none !important;
-        overflow: visible !important;
-        position: relative !important;
-        display: block !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        box-sizing: border-box !important;
-        flex: 1 1 auto !important;
-        resize: none !important;
-        /* Maksbredde settes dynamisk senere */
-        margin: 20px 0 !important;
-        z-index: 100 !important;
-      }
-      
-      /* Sikre at Shadow DOM wrapper også kan ekspandere */
-      #${config.containerID}:not(#\\9) > div,
-      #${config.containerID}:not(#\\9) .chat-widget-shadow-container,
-      #${config.containerID}:not(#\\9) .chat-interface,
-      #${config.containerID}:not(#\\9) .chat-messages-container,
-      #${config.containerID}:not(#\\9) .chat-messages-scroll-container,
-      #${config.containerID}:not(#\\9) .messages-list,
-      #${config.containerID}:not(#\\9) .message-item {
-        height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
-        visibility: visible !important;
-        display: block !important;
-      }
-      
-      /* Spesifikk stil for å sikre at shadow-container er synlig */
-      #chat-widget-shadow-container {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-      }
-
-      /* Fjern høyde fra notifications-region */
-      div[role="region"][aria-label="Notifications (F8)"] {
-        height: 0 !important;
-        min-height: 0 !important;
-        max-height: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: hidden !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-      }
-    `;
-    
-    document.head.appendChild(overrideStyleElement);
-    log('Added global CSS overrides');
-  }
-  
-  // Hjelpefunksjon: Setter widget-containerens max-width basert på foreldreelementet, men kun én gang
-  function updateContainerMaxWidth() {
-    try {
-      if (!activeWidget || !activeWidget.shadowRoot || containerWidthIsFixed) return;
-      
-      const container = activeWidget.shadowRoot.querySelector('.chat-container');
-      if (!container) return;
-      
-      const windowWidth = window.innerWidth;
-      const isMobileView = windowWidth < 768;
-      
-      // Finn foreldre-element og dets størrelse
-      const parent = activeWidget.parentElement;
-      if (!parent) return;
-      
-      const parentWidth = parent.offsetWidth;
-      const parentMaxWidth = parseInt(window.getComputedStyle(parent).maxWidth, 10) || Infinity;
-      
-      let containerMaxWidth;
-      
-      // Håndter mobile visning spesielt
-      if (isMobileView) {
-        containerMaxWidth = Math.min(windowWidth - 40, parentWidth) + 'px';
-      } else {
-        // Fallback til window-bredde minus en margin hvis foreldrebredde ikke er tilgjengelig
-        const availableWidth = parentWidth || (windowWidth - 100);
-        
-        // Begrens bredden til maks 1200px for bedre lesbarhet på brede skjermer
-        const maxRecommendedWidth = 1200;
-        
-        // Bruk foreldrebredde, men begrens til maksimalbredden hvis definert
-        containerMaxWidth = parentMaxWidth !== Infinity 
-          ? Math.min(availableWidth, parentMaxWidth, maxRecommendedWidth) + 'px'
-          : Math.min(availableWidth, maxRecommendedWidth) + 'px';
-      }
-      
-      // Sett widgetens bredde én gang og marker som låst
-      console.log(`Låser widget-bredde til ${containerMaxWidth} basert på foreldreelement`);
-      container.style.maxWidth = containerMaxWidth;
-      
-      // Oppdater også bredden for karuselvisningen hvis den finnes
-      const carousel = activeWidget.shadowRoot.querySelector('.carousel-view');
-      if (carousel) {
-        carousel.style.maxWidth = containerMaxWidth;
-      }
-      
-      // Merk at bredden nå er låst og ikke skal endres
-      containerWidthIsFixed = true;
-    } catch (error) {
-      console.error('Feil ved innstilling av container størrelse:', error);
-    }
-  }
-  
-  // Funksjon for å håndtere widgetminimering/lukking
-  function handleWidgetMinimize() {
-    log('Widget minimized/closed - resetting container height to minimum');
-    setContainerHeight(config.minHeight);
-  }
-
-  // Hjelpefunksjon for å bestemme riktig målselektor basert på skjermbredde
-  function getTargetSelector() {
-    const isMobile = window.innerWidth < config.breakpoint;
-    const targetType = isMobile ? 'mobile' : 'desktop';
-    
-    if (targetType !== lastTargetType) {
-      log(`Skjermstørrelse endret til ${targetType} (${window.innerWidth}px)`);
-      lastTargetType = targetType;
-    }
-    
-    return isMobile ? config.targetSelectorMobile : config.targetSelectorDesktop;
-  }
-  
-  // Finn target-elementet og sett inn widget-containeren
-  function setupContainer() {
-    log('Setting up widget container');
-    addGlobalStyles();
-    
-    const activeSelector = getTargetSelector();
-    log(`Bruker selektor: ${activeSelector} for nåværende skjermstørrelse (${window.innerWidth}px)`);
-    
-    let targetElement = document.querySelector(activeSelector);
-    if (!targetElement) {
-      log('Could not find target element: ' + activeSelector);
-      log('Trying alternative selectors...');
-      
-      const alternativeSelectors = [
-        config.targetSelectorDesktop,
-        config.targetSelectorMobile,
-        '.product-accordion',
-        '.product-description',
-        '.product-info',
-        '.product-details',
-        'main',
-        '.main-content',
-        'body'
-      ];
-      
-      for (const selector of alternativeSelectors) {
-        if (selector === activeSelector) continue; // Skip den vi allerede har prøvd
-        
-        const alt = document.querySelector(selector);
-        if (alt) {
-          log('Found alternative target: ' + selector);
-          targetElement = alt;
-          break;
+    // Simple logger
+    function log(message) {
+        if (config.debug) {
+            console.log(`[AskWidget] ${message}`);
         }
-      }
-      
-      if (!targetElement) {
-        targetElement = document.body;
-        log('Using document.body as fallback container');
-      }
     }
-    
-    // Fjern eksisterende container dersom den finnes
-    const existingContainer = document.getElementById(config.containerID);
-    if (existingContainer) {
-      existingContainer.remove();
-      log('Removed existing widget container');
-    }
-    
-    // Opprett ny container for chat-widgeten
-    const container = document.createElement('div');
-    container.id = config.containerID;
-    container.setAttribute('data-ask-widget', 'true');
-    container.setAttribute('data-expandable', 'true');
-    
-    // Bruk inline style – merk at max-width settes dynamisk senere
-    container.setAttribute('style', `
-      width: 100% !important;
-      margin: 20px 0 !important;
-      position: relative !important;
-      display: none;
-      opacity: 0;
-      transition: opacity 0.3s ease, height 0.3s ease !important;
-      overflow: visible !important;
-      min-height: ${config.minHeight}px !important;
-      height: auto !important;
-      max-height: none !important;
-      box-sizing: border-box !important;
-      resize: none !important;
-      flex: 1 1 auto !important;
-      z-index: 100 !important;
-      border: 1px solid transparent !important;
-    `);
-    
-    container.scrollIntoView = function() {};
-    container.focus = function() {};
-    
-    // Sett inn containeren etter target-elementet
-    targetElement.insertAdjacentElement('afterend', container);
-    log('Widget container created and inserted into page');
-    
-    // Sett containerens bredde én gang ved oppstart
-    // Vi beholder denne enkle oppdateringen ved første oppstart
-    updateContainerMaxWidth();
-    
-    // Sett opp lytter for orientering/rotasjon av enhet - men kun for høydejusteringer, ikke bredde
-    if ('orientation' in window) {
-      window.addEventListener('orientationchange', () => {
-        log('Orientation changed, updating container height only');
-        // Gi enheten tid til å fullføre rotasjonen før vi måler på nytt
-        setTimeout(() => {
-          // Vi kaller IKKE updateContainerMaxWidth() her lenger
-          checkAndUpdateHeight();
-        }, 300);
-      });
-    }
-    
-    // Fjern ResizeObserver-oppsett som oppdaterer bredden dynamisk
-    // Vi trenger ikke dette siden bredden nå låses ved oppstart
-    
-    return true;
-  }
 
-  // Håndter vindusendringer - flytt widget ved behov
-  function handleWindowResize() {
-    const currentSelector = getTargetSelector();
-    const container = document.getElementById(config.containerID);
-    
-    // Siden bredden er låst, fjerner vi kallet til updateContainerMaxWidth()
-    // Vi beholder flytt-logikken hvis widget-containeren ikke er hvor den skal være
-    if (container && isWidgetInitialized) {
-      const targetElement = document.querySelector(currentSelector);
-      
-      // Sjekk om containeren er plassert etter riktig element
-      if (targetElement && container.previousElementSibling !== targetElement) {
-        log(`Flytter widget til ny posisjon (${currentSelector})`);
-        
-        // Lagre containerens innhold og tilstand
-        const containerContent = container.innerHTML;
-        const containerHeight = container.style.height;
-        const containerMinHeight = container.style.minHeight;
-        const containerDisplay = container.style.display;
-        const containerOpacity = container.style.opacity;
-        const containerVisible = container.getAttribute('data-visible');
-        
-        // Flytt containeren til ny posisjon
-        targetElement.insertAdjacentElement('afterend', container);
-        
-        // Vi kaller ikke updateContainerMaxWidth() lenger
-        log('Widget flyttet til ny posisjon');
-      }
-    }
-  }
-  
-  // Last inn nødvendige stilark
-  function loadStyles() {
-    log('Loading widget styles');
-    return new Promise((resolve) => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = config.cssPath;
-      
-      link.onload = () => {
-        log('Widget stylesheet loaded');
-        resolve();
-      };
-      
-      link.onerror = () => {
-        log('Failed to load widget stylesheet');
-        resolve();
-      };
-      
-      document.head.appendChild(link);
-    });
-  }
-  
-  // Funksjon for å måle faktisk høyde av widget
-  function measureWidgetHeight() {
-    const container = document.getElementById(config.containerID);
-    if (!container) return 0;
-    let measuredHeight = 0;
-    
-    if (canUseShadowDOM && container.shadowRoot) {
-      try {
-        const shadowContainer = container.shadowRoot.getElementById('chat-widget-shadow-container');
-        if (shadowContainer) {
-          measuredHeight = Math.max(measuredHeight, shadowContainer.scrollHeight);
-          measuredHeight = Math.max(measuredHeight, container.shadowRoot.host.scrollHeight);
+    // --- 2. State Variables ---
+    let widgetContainer = null;
+    let currentTargetType = null;
+    let isInitialized = false;
+    let isWidgetInstanceReady = false;
+    let hasAddedScrapeListener = false;
+    let scrapeFallbackTimer = null;
+    let heightObserver = null;
+    let heightDebounceTimer = null;
+    const HEIGHT_DEBOUNCE_DELAY = 150;
+    let conversionListenerActive = false;
+    let originalFetch = null;
+
+
+    // --- 3. DOM Utilities ---
+    function getTargetSelector() {
+        const isMobile = window.innerWidth < config.breakpoint;
+        const targetType = isMobile ? 'mobile' : 'desktop';
+        if (targetType !== currentTargetType) {
+            log(`Screen size changed to ${targetType} (${window.innerWidth}px)`);
+            currentTargetType = targetType;
         }
-        const selectors = [
-          '#chat-widget-shadow-container',
-          '.chat-interface',
-          '.chat-messages-container',
-          '.chat-messages-scroll-container',
-          '.messages-list'
-        ];
-        selectors.forEach(selector => {
-          const elements = container.shadowRoot.querySelectorAll(selector);
-          elements.forEach(el => {
-            if (el) {
-              measuredHeight = Math.max(
-                measuredHeight, 
-                el.scrollHeight || 0, 
-                el.offsetHeight || 0, 
-                el.clientHeight || 0
-              );
+        return isMobile ? config.targetSelectorMobile : config.targetSelectorDesktop;
+    }
+
+    function findTargetElement(selector) {
+        let targetElement = document.querySelector(selector);
+        if (!targetElement) {
+            log(`Could not find target element: ${selector}. Trying alternatives...`);
+            const fallbacks = [
+                config.targetSelectorDesktop, config.targetSelectorMobile,
+                '.product-accordion', '.product-description', '.product-info',
+                '.product-details', 'main', '.main-content', 'body'
+            ].filter(s => s !== selector);
+
+            for (const fbSelector of fallbacks) {
+                targetElement = document.querySelector(fbSelector);
+                if (targetElement) {
+                    log(`Found alternative target: ${fbSelector}`);
+                    break;
+                }
             }
-          });
-        });
-      } catch (e) {
-        log(`Error measuring Shadow DOM height: ${e.message}`);
-      }
+            if (!targetElement) {
+                log('Using document.body as final fallback container.');
+                targetElement = document.body;
+            }
+        }
+        return targetElement;
     }
-    
-    if (measuredHeight <= 0) {
-      try {
-        measuredHeight = Math.max(
-          measuredHeight, 
-          container.scrollHeight || 0,
-          container.offsetHeight || 0,
-          container.clientHeight || 0
-        );
-        
-        const calculateMaxChildHeight = (element) => {
-          if (!element) return 0;
-          let height = element.offsetHeight || element.scrollHeight || element.clientHeight || 0;
-          Array.from(element.children || []).forEach(child => {
-            const childHeight = calculateMaxChildHeight(child);
-            height = Math.max(height, childHeight);
-          });
-          return height;
+
+    function applyContainerStyles(containerElement) {
+        const styles = {
+            display: 'block', position: 'relative', width: '100%',
+            overflow: 'visible', margin: '20px 0', padding: '0', border: 'none',
+            minHeight: `${config.minHeight}px`, height: 'auto', maxHeight: 'none',
+            boxSizing: 'border-box', opacity: '0', visibility: 'hidden',
+            transition: 'opacity 0.3s ease',
         };
-        
-        const childrenHeight = calculateMaxChildHeight(container);
-        measuredHeight = Math.max(measuredHeight, childrenHeight);
-      } catch (e) {
-        log(`Error measuring DOM height: ${e.message}`);
-      }
+        Object.assign(containerElement.style, styles);
     }
-    
-    const finalHeight = Math.max(measuredHeight, config.minHeight);
-    if (Math.abs(finalHeight - lastMeasuredHeight) > 10) {
-      lastMeasuredHeight = finalHeight;
-      log(`Measured new height: ${finalHeight}px`);
-    }
-    
-    return finalHeight;
-  }
-  
-  // Funksjon for å sette container høyde
-  function setContainerHeight(height) {
-    const container = document.getElementById(config.containerID);
-    if (!container) return;
-    
-    const currentStyle = container.getAttribute('style') || '';
-    const updatedStyle = currentStyle
-      .replace(/min-height:[^;]+;/g, '')
-      .replace(/height:[^;]+;/g, '')
-      .replace(/max-height:[^;]+;/g, '') +
-      `min-height: ${height}px !important; height: auto !important; max-height: none !important;`;
-    
-    container.setAttribute('style', updatedStyle);
-    container.style.minHeight = `${height}px !important`;
-    container.style.height = 'auto !important';
-    container.style.maxHeight = 'none !important';
-    container.setAttribute('data-height', height.toString());
-    
-    if (!canUseShadowDOM) {
-      removeHeightRestrictions(container);
-    }
-    
-    if (canUseShadowDOM && container.shadowRoot) {
-      try {
-        const shadowContainer = container.shadowRoot.getElementById('chat-widget-shadow-container');
-        if (shadowContainer) {
-          shadowContainer.style.minHeight = `${height}px`;
-          shadowContainer.style.height = 'auto';
-          shadowContainer.style.maxHeight = 'none';
-          shadowContainer.style.overflow = 'visible';
+
+    function createWidgetContainer(targetElement) {
+        const existingContainer = document.getElementById(config.containerID);
+        if (existingContainer) {
+            log('Removing existing widget container during creation.');
+            existingContainer.remove();
         }
-        removeHeightRestrictions(container.shadowRoot);
-      } catch (e) {
-        log(`Error modifying Shadow DOM styles: ${e.message}`);
-      }
+
+        widgetContainer = document.createElement('div');
+        widgetContainer.id = config.containerID;
+        widgetContainer.setAttribute('data-ask-widget', 'true');
+        applyContainerStyles(widgetContainer);
+
+        widgetContainer.scrollIntoView = function() {}; // Prevent unwanted scrolls
+        widgetContainer.focus = function() {};       // Prevent unwanted focus
+
+        targetElement.insertAdjacentElement('afterend', widgetContainer);
+        log(`Widget container created and inserted after target: ${targetElement.tagName}${targetElement.id ? '#' + targetElement.id : ''}${targetElement.className ? '.' + targetElement.className.split(' ').join('.') : ''}`);
+        return widgetContainer;
     }
-  }
-  
-  // Fjern alle høydebegrensninger fra en DOM-struktur
-  function removeHeightRestrictions(rootElement) {
-    if (!rootElement) return;
-    const elementsToFix = rootElement.querySelectorAll(
-      '.chat-interface, .chat-messages-container, .messages-list, .message-item, .chat-messages-scroll-container'
-    );
-    
-    elementsToFix.forEach(el => {
-      if (el) {
-        el.style.height = 'auto !important';
-        el.style.maxHeight = 'none !important';
-        el.style.overflow = 'visible !important';
-        el.setAttribute('style', (el.getAttribute('style') || '') + 
-          'height: auto !important; max-height: none !important; overflow: visible !important;');
-      }
-    });
-  }
-  
-  // Vis widgeten - optimalisert for ytelse
-  function showWidget() {
-    log('Showing widget');
-    const container = document.getElementById(config.containerID);
-    if (!container) {
-      log('ERROR: Container not found when trying to show widget');
-      return;
-    }
-    
-    container.style.display = 'block';
-    container.style.visibility = 'visible';
-    container.style.opacity = '1';
-    container.style.height = 'auto';
-    
-    const initialHeight = measureWidgetHeight() || config.minHeight;
-    setContainerHeight(initialHeight);
-    
-    container.setAttribute('data-visible', 'true');
-    
-    // Vi oppdaterer kun høyden, ikke bredden som nå er låst
-    createTimeout(() => {
-      const newHeight = measureWidgetHeight();
-      if (newHeight > initialHeight) {
-        setContainerHeight(newHeight);
-      }
-    }, 300);
-  }
-  
-  // Kontinuerlig høydejustering - optimalisert for ytelse
-  function setupHeightMonitoring() {
-    const container = document.getElementById(config.containerID);
-    if (!container) return;
-    
-    log('Setting up height monitoring (optimized)');
-    addGlobalStyles();
-    checkAndUpdateHeight();
-    
-    if (resizeIntervalId) {
-      clearInterval(resizeIntervalId);
-    }
-    
-    const intervalTime = config.performanceMode ? config.resizeInterval * 2 : config.resizeInterval;
-    
-    resizeIntervalId = setInterval(() => {
-      checkAndUpdateHeight();
-      if (!document.getElementById('ask-widget-global-overrides') && Math.random() < 0.2) {
-        addGlobalStyles();
-      }
-    }, intervalTime);
-    
-    const intervals = config.performanceMode 
-      ? [500, 2000, 5000] 
-      : [100, 300, 600, 1000, 2000, 3000, 5000];
-    
-    intervals.forEach(delay => {
-      createTimeout(checkAndUpdateHeight, delay);
-    });
-    
-    // Oppdatert MutationObserver: lytter nå også på data-visible for endringer (f.eks. ved minimering)
-    if (window.MutationObserver) {
-      try {
-        const observer = new MutationObserver((mutations) => {
-          if (observer._debounceTimer) {
-            clearTimeout(observer._debounceTimer);
-          }
-          observer._debounceTimer = setTimeout(() => {
-            checkAndUpdateHeight();
-          }, 100);
-        });
-        
-        observer.observe(container, { 
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['style', 'class', 'data-visible'],
-          characterData: false
-        });
-        activeMutationObservers.push(observer);
-        
-        if (canUseShadowDOM && container.shadowRoot && !config.performanceMode) {
-          try {
-            const shadowObserver = new MutationObserver(() => {
-              if (shadowObserver._debounceTimer) {
-                clearTimeout(shadowObserver._debounceTimer);
-              }
-              shadowObserver._debounceTimer = setTimeout(() => {
-                checkAndUpdateHeight();
-              }, 100);
-            });
-            
-            shadowObserver.observe(container.shadowRoot, { 
-              childList: true, 
-              subtree: true,
-              attributes: true,
-              attributeFilter: ['style', 'class'],
-              characterData: false
-            });
-            
-            activeMutationObservers.push(shadowObserver);
-            log('Monitoring Shadow DOM for changes (optimized)');
-          } catch (e) {
-            log(`Could not observe Shadow DOM: ${e.message}`);
-          }
+
+    function getWidgetContainer() {
+        if (widgetContainer && document.body.contains(widgetContainer)) {
+            return widgetContainer;
         }
-      } catch (e) {
-        log(`Error setting up MutationObserver: ${e.message}`);
-      }
+        // Attempt to find or recreate if detached
+        let container = document.getElementById(config.containerID);
+        if (container) {
+             widgetContainer = container; // Re-assign if found
+             return widgetContainer;
+        }
+
+        log('Widget container not found or detached, attempting recreation.');
+        const selector = getTargetSelector();
+        const target = findTargetElement(selector);
+        if (target) {
+            return createWidgetContainer(target);
+        }
+        log('ERROR: Could not find target element to create container.');
+        return null;
     }
-    
-    window.addEventListener('resize', () => {
-      checkAndUpdateHeight();
-      handleWindowResize();
-    });
-    
-    if (!config.performanceMode) {
-      document.addEventListener('click', function() {
-        createTimeout(checkAndUpdateHeight, 100);
-      });
+
+    function showWidgetContainer() {
+        const container = getWidgetContainer();
+        if (!container) {
+            log('ERROR: Cannot show widget, container not found.');
+            return;
+        }
+        log('Showing widget container.');
+        container.style.opacity = '1';
+        container.style.visibility = 'visible';
+        // Height is managed by heightManager
+        checkAndUpdateHeight(); // Initial height check after show
     }
-  }
-  
-  // Mer effektiv sjekk og oppdatering av høyde
-  function checkAndUpdateHeight() {
-    if (checkAndUpdateHeight._lastRun && 
-        Date.now() - checkAndUpdateHeight._lastRun < 100) {
-      return;
+
+
+    // --- 4. Height Management ---
+    function checkAndUpdateHeight() {
+        const container = getWidgetContainer();
+        if (!container || !document.body.contains(container)) return; // Exit if container is gone
+
+        try {
+            // Ensure container is actually visible before measuring scrollHeight
+            const styles = window.getComputedStyle(container);
+            if (styles.display === 'none' || styles.visibility === 'hidden') {
+                 // log('Container not visible, skipping height check.');
+                 return;
+            }
+
+            const newHeight = Math.max(container.scrollHeight, config.minHeight);
+            const currentMinHeight = parseInt(container.style.minHeight, 10) || 0;
+
+            if (Math.abs(newHeight - currentMinHeight) > 5) {
+                log(`Updating container min-height to: ${newHeight}px (was ${currentMinHeight}px). scrollHeight: ${container.scrollHeight}`);
+                container.style.minHeight = `${newHeight}px`;
+                // Reset other height properties if necessary
+                 if (container.style.height !== 'auto') container.style.height = 'auto';
+                 if (container.style.maxHeight !== 'none') container.style.maxHeight = 'none';
+            }
+        } catch (error) {
+             log(`Error during height check: ${error.message}`);
+        }
     }
-    
-    checkAndUpdateHeight._lastRun = Date.now();
-    
-    const height = measureWidgetHeight();
-    if (height > 0) {
-      if (Math.abs(height - lastMeasuredHeight) < 5) {
-        return;
-      }
-      
-      lastMeasuredHeight = height;
-      setContainerHeight(height);
+
+    function handleHeightMutations(mutationsList) {
+        let needsCheck = false;
+        for (const mutation of mutationsList) {
+             // Check if the mutation target is within our container OR the container itself
+             if (widgetContainer && (widgetContainer.contains(mutation.target) || mutation.target === widgetContainer)) {
+                 if (mutation.type === 'childList' || mutation.type === 'attributes' || mutation.type === 'characterData') {
+                     needsCheck = true;
+                     break;
+                 }
+             }
+        }
+
+        if (needsCheck) {
+            clearTimeout(heightDebounceTimer);
+            heightDebounceTimer = setTimeout(checkAndUpdateHeight, HEIGHT_DEBOUNCE_DELAY);
+        }
     }
-  }
-  
-  // Håndter scrapeComplete-hendelsen
-  function handleScrapeComplete(event) {
-    if (isWidgetInitialized) {
-      log('Widget already initialized, ignoring duplicate scrapeComplete event');
-      return;
+
+    function startHeightMonitoring() {
+        const container = getWidgetContainer();
+         if (!container) {
+             log("Cannot start height monitoring: container not found.");
+             return;
+         }
+        if (heightObserver) {
+             log("Height monitoring already started.");
+             return;
+        }
+
+        if (!window.MutationObserver) {
+            log("MutationObserver not supported. Dynamic height adjustments will be limited.");
+            // Fallback (less efficient): setInterval(checkAndUpdateHeight, 1000);
+            return;
+        }
+
+        log("Starting height monitoring with MutationObserver.");
+        checkAndUpdateHeight(); // Initial check
+
+        heightObserver = new MutationObserver(handleHeightMutations);
+        heightObserver.observe(container, {
+            childList: true, subtree: true, attributes: true, characterData: true,
+            // Consider attributeFilter: ['style', 'class', 'id'] if performance is an issue
+        });
     }
-    
-    log('Received scrapeComplete event');
-    const { side_innhold, browser_url, produkt_navn } = event.detail || {};
-     
-    // Logg bruker-ID info (alltid, uavhengig av debug-flagg)
-    if (produkt_navn) {
-      console.log(`Produktnavn for bruker-ID: "${produkt_navn}"`);
-    } else {
-      console.log('Ingen produktnavn tilgjengelig for bruker-ID');
+
+    function stopHeightMonitoring() {
+        if (heightObserver) {
+            log("Stopping height monitoring.");
+            heightObserver.disconnect();
+            heightObserver = null;
+        }
+        clearTimeout(heightDebounceTimer);
     }
-    
-    if (!side_innhold || side_innhold.length === 0) {
-      log('No content extracted from page');
-      return;
+
+    // --- 5. Resource Loading ---
+    function loadResource(elementType, attributes) {
+        return new Promise((resolve, reject) => {
+            const element = document.createElement(elementType);
+            Object.assign(element, attributes);
+            element.onload = () => {
+                log(`${elementType.toUpperCase()} loaded: ${attributes.src || attributes.href}`);
+                resolve(element);
+            };
+            element.onerror = (error) => {
+                log(`Failed to load ${elementType}: ${attributes.src || attributes.href}`);
+                reject(error);
+            };
+            (document.head || document.body).appendChild(element);
+        });
     }
-    
-    // Forsikre oss om at ChatWidget er lastet før vi initialiserer
-    if (window.ChatWidget && typeof window.ChatWidget.init === 'function') {
-      log('Initializing ChatWidget with options');
-      
-      try {
-        const originalFetch = window.fetch;
-        if (!window.fetch._patched) {
-          window.fetch = function(url, options) {
-            const isVoiceflowRequest = typeof url === 'string' && (
-              url.includes('voiceflow.com') || 
-              url.includes('vfre') || 
-              url.includes('vf.to')
-            );
-            
-            if (isVoiceflowRequest) {
-              log('Detected Voiceflow API request, adding timeout');
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => {
-                controller.abort();
-                log('Voiceflow request timed out after ' + config.voiceflowTimeout + 'ms');
-              }, config.voiceflowTimeout);
-              
-              const fetchOptions = options || {};
-              fetchOptions.signal = controller.signal;
-              
-              return originalFetch(url, fetchOptions)
-                .then(response => {
-                  clearTimeout(timeoutId);
-                  return response;
-                })
-                .catch(error => {
-                  clearTimeout(timeoutId);
-                  log('Voiceflow request error: ' + error.message);
-                  throw error;
-                });
+
+    function loadStyles() {
+        return loadResource('link', { rel: 'stylesheet', href: config.cssPath });
+    }
+
+    function loadWidgetScript() {
+        return loadResource('script', { src: config.jsPath, async: true });
+    }
+
+    function loadScrapeScript() {
+        return loadResource('script', { src: config.scrapePath, async: true });
+    }
+
+    // --- 6. Voiceflow Integration ---
+    function patchFetch() {
+        if (originalFetch || typeof window.fetch === 'undefined') return;
+        originalFetch = window.fetch;
+        log("Patching window.fetch for Voiceflow API calls.");
+        window.fetch = function(url, options) {
+            const isVf = typeof url === 'string' && (url.includes('voiceflow.com') || url.includes('vfre') || url.includes('vf.to'));
+            if (isVf && config.voiceflowTimeout > 0) {
+                log('Adding timeout to Voiceflow request.');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                    log(`Voiceflow request timed out: ${url}`);
+                }, config.voiceflowTimeout);
+                const fetchOptions = { ...(options || {}), signal: controller.signal };
+                return originalFetch(url, fetchOptions).finally(() => clearTimeout(timeoutId));
             }
             return originalFetch(url, options);
-          };
-          window.fetch._patched = true;
-        }
-        
-        // Initialiser widgeten med konfigurasjonen
-        window.ChatWidget.init({
-          containerId: config.containerID,
-          apiKey: config.apiKey,
-          projectID: config.projectID,
-          apiEndpoint: 'https://general-runtime.voiceflow.com',
-          disableAutoScroll: true,
-          launchConfig: {
-            event: {
-              type: "launch",
-              payload: {
-                browser_url: browser_url || window.location.href,
-                side_innhold: side_innhold.substring(0, 5000),
-                produkt_navn: produkt_navn || ''
-              }
-            }
-          }
-        });
-        
-        log(`Widget successfully initialized (${canUseShadowDOM ? 'with' : 'without'} Shadow DOM)`);
-        // Merk at widgeten er initialisert
-        isWidgetInitialized = true;
-        
-        let voiceflowStatusCheckCount = 0;
-        const maxStatusChecks = 10;
-        
-        const checkVoiceflowStatus = () => {
-          voiceflowStatusCheckCount++;
-          
-          const widgetInitializedProperly = (
-            window.ChatWidget && 
-            window.ChatWidget.isInitialized && 
-            document.getElementById(config.containerID)
-          );
-          
-          if (widgetInitializedProperly) {
-            log('ChatWidget fully initialized');
-            widgetFullyInitialized = true;
-            
-            createTimeout(() => {
-              addGlobalStyles();
-              showWidget();
-              setupHeightMonitoring();
-              
-              // Kun oppdater høyden, ikke bredden
-              createTimeout(checkAndUpdateHeight, 1000);
-              createTimeout(checkAndUpdateHeight, 2000);
-            }, 300);
-          } else if (voiceflowStatusCheckCount < maxStatusChecks) {
-            const delay = 500 * Math.pow(1.5, voiceflowStatusCheckCount - 1);
-            createTimeout(checkVoiceflowStatus, delay);
-          } else {
-            log('WARNING: ChatWidget initialization status could not be confirmed');
-            widgetFullyInitialized = false;
-            createTimeout(() => {
-              addGlobalStyles();
-              showWidget();
-              setupHeightMonitoring();
-            }, 500);
-          }
         };
-        
-        createTimeout(checkVoiceflowStatus, 500);
-      } catch (error) {
-        log(`Error initializing widget: ${error.message}`);
-        
-        // Hvis vi bruker Shadow DOM og det feiler, prøv igjen uten
-        if (canUseShadowDOM) {
-          log('Retrying widget initialization without Shadow DOM');
-          canUseShadowDOM = false;
-          isWidgetInitialized = false;
-          handleScrapeComplete(event);
+    }
+
+    function unpatchFetch() {
+        if (originalFetch) {
+            log("Restoring original window.fetch.");
+            window.fetch = originalFetch;
+            originalFetch = null;
         }
-      }
-    } else {
-      log('Failed to initialize widget: window.ChatWidget.init is not a function');
-      
-      // Legg til en sjekk som prøver å finne faktisk type av window.ChatWidget
-      if (window.ChatWidget) {
-        log(`window.ChatWidget er av typen: ${typeof window.ChatWidget}`);
-        if (typeof window.ChatWidget === 'object') {
-          const keys = Object.keys(window.ChatWidget);
-          log(`window.ChatWidget har følgende egenskaper: ${keys.join(', ')}`);
-          
-          // Hvis det ser ut som window.ChatWidget er et objekt med default-egenskap som har init
-          if (window.ChatWidget.default && typeof window.ChatWidget.default.init === 'function') {
-            log('Trying to use window.ChatWidget.default.init instead');
+    }
+
+     function getCurrentTranscriptId() {
+         try {
+             let transcriptId = sessionStorage.getItem('vf_transcript_id') ||
+                                document.querySelector('[data-transcript-id]')?.getAttribute('data-transcript-id') ||
+                                window._vfTranscriptId ||
+                                localStorage.getItem('vf_transcript_id');
+             if (!transcriptId) {
+                 log('Transcript ID not found in common locations.');
+             }
+             return transcriptId;
+         } catch (error) {
+             log(`Error retrieving transcript ID: ${error.message}`);
+             return null;
+         }
+     }
+
+    async function tagTranscript(transcriptId) {
+        if (!config.reportTagId || !transcriptId) {
+            log('Cannot tag transcript: Missing transcriptID or reportTagID.'); return false;
+        }
+        if (!config.apiKey || !config.projectID) {
+             log('Cannot tag transcript: Missing apiKey or projectID.'); return false;
+         }
+
+        log(`Attempting to tag transcript ${transcriptId} with tag ID ${config.reportTagId}`);
+        const url = `https://api.voiceflow.com/v2/transcripts/${config.projectID}/${transcriptId}/report_tag/${config.reportTagId}`;
+        try {
+            const response = await fetch(url, { method: 'PUT', headers: { Authorization: config.apiKey } }); // Uses patched fetch
+            if (response.ok) {
+                log(`Successfully tagged transcript ${transcriptId} as "${config.conversionTagLabel}"`); return true;
+            } else {
+                log(`Failed to tag transcript ${transcriptId}: ${response.status} ${response.statusText}`);
+                response.text().then(txt => log(`Error response body: ${txt}`)).catch(()=>{}); // Log error body if possible
+                return false;
+            }
+        } catch (error) {
+            log(`Error tagging transcript ${transcriptId}: ${error.name === 'AbortError' ? 'Request timed out/aborted' : error.message}`);
+            return false;
+        }
+    }
+
+    // --- 7. Conversion Tracking ---
+    function handleAddToCartClick(event) {
+        let isMatch = false;
+        let matchedSelector = '';
+        for (const selector of config.addToCartSelectors) {
             try {
-              window.ChatWidget.default.init({
-                containerId: config.containerID,
-                apiKey: config.apiKey,
-                projectID: config.projectID,
-                apiEndpoint: 'https://general-runtime.voiceflow.com',
-                disableAutoScroll: true,
-                launchConfig: {
-                  event: {
-                    type: "launch",
-                    payload: {
-                      browser_url: browser_url || window.location.href,
-                      side_innhold: side_innhold.substring(0, 5000),
-                      produkt_navn: produkt_navn || ''
+                if (selector.includes(':contains(')) { // Basic contains check
+                    const text = selector.match(/:contains\("(.+?)"\)/i)?.[1];
+                    if (text && event.target.textContent?.toLowerCase().includes(text.toLowerCase())) {
+                        isMatch = true; matchedSelector = selector; break;
                     }
-                  }
+                } else if (event.target.closest(selector)) {
+                    isMatch = true; matchedSelector = selector; break;
                 }
-              });
-              
-              isWidgetInitialized = true;
-              log(`Widget successfully initialized using default export (${canUseShadowDOM ? 'with' : 'without'} Shadow DOM)`);
-              
-              setTimeout(() => {
-                showWidget();
-                setupHeightMonitoring();
-              }, 100);
-              
-              return; // Vi har lykkes, avslutt funksjonen
+            } catch (err) { log(`Error checking selector "${selector}": ${err.message}`); }
+        }
+        if (!isMatch && (event.target.classList.contains('buy-button') || event.target.closest('.buy-button'))) {
+            isMatch = true; matchedSelector = '.buy-button';
+        }
+
+        if (!isMatch) return;
+        log(`Add to Cart button clicked (matched: ${matchedSelector})`);
+        const transcriptId = getCurrentTranscriptId();
+        if (transcriptId) { tagTranscript(transcriptId); }
+        else { log('Could not tag conversion: Transcript ID not found.'); }
+    }
+
+    function setupConversionListener() {
+        if (conversionListenerActive) { log("Conversion listener already active."); return; }
+        if (!config.reportTagId) { log("Conversion tracking disabled: No reportTagId."); return; }
+        log('Setting up Add to Cart click listener.');
+        document.addEventListener('click', handleAddToCartClick, true); // Use capture
+        conversionListenerActive = true;
+    }
+
+    function removeConversionListener() {
+        if (!conversionListenerActive) return;
+        log('Removing Add to Cart click listener.');
+        document.removeEventListener('click', handleAddToCartClick, true);
+        conversionListenerActive = false;
+    }
+
+    // --- 8. Initialization and Event Handling ---
+    function handleWindowResize() {
+        const container = document.getElementById(config.containerID);
+        if (!container || !isInitialized) return; // Only move if initialized
+
+        const currentSelector = getTargetSelector(); // Updates type
+        const targetElement = findTargetElement(currentSelector);
+
+        if (targetElement && container.previousElementSibling !== targetElement) {
+            log(`Target element changed on resize. Moving widget container.`);
+            targetElement.insertAdjacentElement('afterend', container);
+        }
+         // Height check is handled by mutation observer reacting to potential layout shifts
+         // but trigger one check just in case observer misses something subtle.
+         checkAndUpdateHeight();
+    }
+
+    function handleScrapeComplete(event) {
+        if (isWidgetInstanceReady) {
+            log('Widget already initialized, ignoring duplicate scrapeComplete.'); return;
+        }
+        clearTimeout(scrapeFallbackTimer);
+
+        log('Received scrapeComplete event.');
+        const detail = event.detail || {};
+        const { side_innhold, browser_url, produkt_navn } = detail;
+
+        console.log(`[AskWidget] Produktnavn for bruker-ID: "${produkt_navn || 'Ikke funnet'}"`);
+
+        if (!side_innhold) log('No content extracted from page by scrape script.');
+
+        const container = getWidgetContainer();
+        if (!container) { log("ERROR: Cannot initialize widget, container is missing!"); return; }
+
+        if (window.ChatWidget && typeof window.ChatWidget.init === 'function') {
+            try {
+                log('Initializing ChatWidget instance...');
+                window.ChatWidget.init({
+                    containerId: config.containerID,
+                    apiKey: config.apiKey,
+                    projectID: config.projectID,
+                    apiEndpoint: 'https://general-runtime.voiceflow.com',
+                    disableAutoScroll: true, // Let the container handle scroll/height
+                    launchConfig: {
+                        event: {
+                            type: "launch",
+                            payload: {
+                                browser_url: browser_url || window.location.href,
+                                side_innhold: side_innhold ? side_innhold.substring(0, 10000) : '', // Limit payload size
+                                produkt_navn: produkt_navn || ''
+                            }
+                        }
+                    }
+                });
+                log('ChatWidget init called successfully.');
+                isWidgetInstanceReady = true; // Mark instance as initialized
+
+                // Wait a moment for the widget to render before showing and monitoring
+                setTimeout(() => {
+                    showWidgetContainer();
+                    startHeightMonitoring();
+                    setupConversionListener(); // Start tracking after widget is ready
+                }, 300); // Delay might need adjustment
+
             } catch (error) {
-              log(`Error initializing with default export: ${error.message}`);
+                log(`Error initializing ChatWidget instance: ${error.message}`);
+                isWidgetInstanceReady = false;
+                // Potentially try to show container anyway or display an error message
             }
-          }
+        } else {
+            log('ERROR: window.ChatWidget.init not found after script load.');
+             // Try to find init on default export (common module pattern)
+             if (window.ChatWidget && window.ChatWidget.default && typeof window.ChatWidget.default.init === 'function') {
+                 log('Found init on window.ChatWidget.default, attempting to use that.');
+                 // Re-dispatch event (or re-call this handler) to try again with default
+                 // This recursive call might be risky, better to refactor init call
+                  window.ChatWidget.init = window.ChatWidget.default.init;
+                  handleScrapeComplete(event); // Try again now that init is assigned
+             }
         }
-      }
-      
-      // Hvis vi bruker Shadow DOM og det feiler, prøv igjen uten
-      if (canUseShadowDOM) {
-        log('Retrying widget initialization without Shadow DOM');
-        canUseShadowDOM = false;
-        isWidgetInitialized = false;
-        handleScrapeComplete(event);
-      } else {
-        isWidgetInitialized = false;
-        log('Could not initialize ChatWidget after retry, giving up');
-      }
     }
-  }
-  
-  // Last inn chat widget-kjernen
-  function loadWidgetScript() {
-    log('Loading widget script');
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = config.jsPath;
-      
-      script.onload = () => {
-        log('Widget script loaded successfully');
-        resolve(true);
-      };
-      
-      script.onerror = () => {
-        log('Failed to load widget script');
-        resolve(false);
-      };
-      
-      document.body.appendChild(script);
-    });
-  }
-  
-  // Last inn skrapeskriptet
-  function loadScrapeScript() {
-    log('Loading scrape script');
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = config.scrapePath;
-      
-      script.onload = () => {
-        log('Scrape script loaded successfully');
-        resolve(true);
-      };
-      
-      script.onerror = () => {
-        log('Failed to load scrape script');
-        resolve(false);
-      };
-      
-      document.body.appendChild(script);
-    });
-  }
 
-  // Hjelpefunksjon for å opprette forsinkelser
-  function createTimeout(callback, delay) {
-    const timerId = setTimeout(() => {
-      callback();
-      const index = activeTimers.indexOf(timerId);
-      if (index > -1) {
-        activeTimers.splice(index, 1);
-      }
-    }, delay);
-    activeTimers.push(timerId);
-    return timerId;
-  }
-  
-  // Opprydd i ressurser
-  function cleanupResources() {
-    activeTimers.forEach(timerId => {
-      clearTimeout(timerId);
-    });
-    activeTimers = [];
-    
-    if (resizeIntervalId) {
-      clearInterval(resizeIntervalId);
-      resizeIntervalId = null;
-    }
-    
-    activeMutationObservers.forEach(observer => {
-      observer.disconnect();
-    });
-    activeMutationObservers = [];
-    
-    if (overrideStyleElement && overrideStyleElement.parentNode) {
-      overrideStyleElement.parentNode.removeChild(overrideStyleElement);
-    }
-    
-    log('Cleaned up all resources');
-  }
-  
-  // Registrer for cleanup ved side-navigering
-  function setupCleanup() {
-    window.addEventListener('beforeunload', cleanupResources);
-    window.addEventListener('unload', cleanupResources);
-  }
-  
-  // Registrer lyttere for widget-minimering og lukking
-  function setupWidgetCloseListeners() {
-    document.addEventListener('widgetMinimized', handleWidgetMinimize);
-    document.addEventListener('widgetClosed', handleWidgetMinimize);
-  }
-  
-  // Funksjon for å sjekke om "conversion"-tag eksisterer og opprette den hvis den ikke finnes
-  async function ensureProjectTag() {
-    if (!config.apiKey || !config.projectID) {
-      log('Mangler API-nøkkel eller prosjekt-ID for tag-håndtering');
-      return null;
-    }
-    
-    try {
-      // 1. Hent gjeldende tag-liste
-      const base = `https://api.voiceflow.com/v2/projects/${config.projectID}/tags`;
-      const listRes = await fetch(base, {
-        headers: { Authorization: config.apiKey }
-      });
-      
-      if (!listRes.ok) {
-        log(`Feil ved henting av tags: ${listRes.status}`);
-        return null;
-      }
-      
-      const tagsResponse = await listRes.json();
-      
-      // Sjekk om tagsResponse er en array
-      if (!Array.isArray(tagsResponse)) {
-        log(`Uventet respons-format fra API: tags er ikke en array: ${typeof tagsResponse}`);
-        // Forsøk å håndtere tilfeller der tags kan være i en annen struktur
-        const tags = Array.isArray(tagsResponse.tags) ? tagsResponse.tags : [];
-        log(`Prøver å bruke alternativ tagsstruktur, fant ${tags.length} tags`);
-        let tag = tags.find(t => t.label === config.conversionTagLabel);
-        
-        if (!tag) {
-          return await createTag(base);
-        }
-        
-        log(`Tag "${config.conversionTagLabel}" eksisterer allerede med ID: ${tag._id}`);
-        return tag._id;
-      }
-      
-      let tag = tagsResponse.find(t => t.label === config.conversionTagLabel);
+    function attemptManualScrape() {
+         if (isWidgetInstanceReady || !isInitialized) return; // Don't run if already initialized or initialization failed
+         // Also check if scrape listener was added and might still fire
+         if(hasAddedScrapeListener && document.readyState !== 'complete') {
+             log('Manual scrape deferred, page still loading or scrape listener active.');
+             // Reschedule slightly later if needed, but avoid infinite loops
+             // scrapeFallbackTimer = setTimeout(attemptManualScrape, 1000);
+             return;
+         }
 
-      // 2. Opprett tag hvis den ikke finnes
-      if (!tag) {
-        return await createTag(base);
-      } else {
-        log(`Tag "${config.conversionTagLabel}" eksisterer allerede med ID: ${tag._id}`);
-        return tag._id;
-      }
-    } catch (error) {
-      log(`Feil ved håndtering av prosjekt-tag: ${error.message}`);
-      return null;
-    }
-  }
-  
-  // Hjelpefunksjon for å opprette tag
-  async function createTag(base) {
-    log(`Oppretter "${config.conversionTagLabel}" tag for prosjektet...`);
-    
-    try {
-      const createRes = await fetch(base, {
-        method: 'PUT',
-        headers: {
-          Authorization: config.apiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ label: config.conversionTagLabel })
-      });
-      
-      if (!createRes.ok) {
-        log(`Feil ved opprettelse av tag: ${createRes.status}`);
-        return null;
-      }
-      
-      const tag = await createRes.json();
-      log(`Tag "${config.conversionTagLabel}" opprettet med ID: ${tag._id}`);
-      return tag._id;
-    } catch (error) {
-      log(`Feil ved opprettelse av tag: ${error.message}`);
-      return null;
-    }
-  }
+         log('Scrape script likely failed or timed out. Attempting manual content extraction.');
 
-  // Funksjon for å tagge et transcript med "conversion"-tag
-  async function tagTranscript(transcriptId) {
-    if (!reportTagId || !transcriptId) {
-      log('Mangler transcriptID eller reportTagID for tagging');
-      return false;
-    }
-    
-    try {
-      const url = `https://api.voiceflow.com/v2/transcripts/${config.projectID}/${transcriptId}/report_tag/${reportTagId}`;
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: { Authorization: config.apiKey }
-      });
-      
-      if (response.ok) {
-        log(`Transcript ${transcriptId} er tagget med "${config.conversionTagLabel}"`);
-        return true;
-      } else {
-        log(`Feil ved tagging av transcript: ${response.status}`);
-        return false;
-      }
-    } catch (error) {
-      log(`Feil ved tagging av transcript: ${error.message}`);
-      return false;
-    }
-  }
-
-  // Funksjon for å håndtere klikk på handlekurvknappen
-  function handleAddToCartClick(event) {
-    // Logg hver hendelse for feilsøking
-    log(`Click detected on element: ${event.target.tagName}, class: ${event.target.className}`);
-    
-    // Bruk flere potensielle knappselektorer
-    const addToCartSelectors = [
-      '.actions__add-to-cart',
-      '.add-to-cart',
-      '.single_add_to_cart_button',
-      'button[name="add"]',
-      '[data-action="add-to-cart"]',
-      'button.cart-button',
-      'input[value="Add to cart"]',
-      'button:contains("Add to Cart")',
-      'button:contains("Legg i handlekurv")',
-      '.woocommerce-loop-add-to-cart-link'
-    ];
-    
-    // Sjekk om klikket traff en av handlekurvknappene
-    let isAddToCartButton = false;
-    let matchedSelector = '';
-    
-    for (const selector of addToCartSelectors) {
-      try {
-        if (selector.includes(':contains(')) {
-          // Spesialhåndtering for innholdsbaserte selektorer
-          const textToMatch = selector.match(/:contains\("(.+?)"\)/)[1];
-          if (event.target.textContent && event.target.textContent.includes(textToMatch)) {
-            isAddToCartButton = true;
-            matchedSelector = selector;
-            break;
-          }
-        } else if (event.target.closest(selector)) {
-          isAddToCartButton = true;
-          matchedSelector = selector;
-          break;
-        }
-      } catch (err) {
-        log(`Feil ved sjekk av selektor ${selector}: ${err.message}`);
-      }
-    }
-    
-    // Spesifikk sjekk for "buy-button" containere
-    if (!isAddToCartButton && 
-        (event.target.classList.contains('buy-button') || 
-         event.target.closest('.buy-button') ||
-         event.target.closest('.actions__add-to-cart'))) {
-      isAddToCartButton = true;
-      matchedSelector = '.buy-button eller .actions__add-to-cart';
-    }
-    
-    if (!isAddToCartButton) return;
-    
-    log(`Handlekurvknapp klikket (matcher: ${matchedSelector})`);
-    
-    try {
-      // Prøv først å hente transcript-ID fra sessionStorage
-      let transcriptId = sessionStorage.getItem('vf_transcript_id');
-      
-      // Hvis ikke funnet, prøv å finne det fra dokumentet
-      if (!transcriptId) {
-        // Sjekk om ID er lagret i et dataelement
-        transcriptId = document.querySelector('[data-transcript-id]')?.getAttribute('data-transcript-id');
-        
-        // Sjekk om window._vfTranscriptId er definert (ofte satt av chatwidget)
-        if (!transcriptId && window._vfTranscriptId) {
-          transcriptId = window._vfTranscriptId;
-        }
-        
-        // Sjekk lokalt lager
-        if (!transcriptId && localStorage.getItem('vf_transcript_id')) {
-          transcriptId = localStorage.getItem('vf_transcript_id');
-        }
-      }
-      
-      if (!transcriptId) {
-        log('TranscriptID mangler – tagger ikke konvertering.');
-        return;
-      }
-
-      log(`Forsøker å tagge transcript: ${transcriptId}`);
-      tagTranscript(transcriptId)
-        .then(success => {
-          if (success) {
-            log('Konvertering registrert: handlekurv-klikk');
-          } else {
-            log('Kunne ikke tagge konvertering: Server returnerte feil');
-          }
-        })
-        .catch(err => {
-          log(`Kunne ikke tagge konvertering: ${err.message}`);
-        });
-    } catch (err) {
-      log(`Feil ved tagging av konvertering: ${err.message}`);
-    }
-  }
-
-  // Funksjon for å sette opp lytter for handlekurvklikk
-  function setupConversionListener() {
-    log('Setter opp lytter for handlekurvklikk');
-    
-    // Fjern eksisterende lytter først for å unngå duplikater
-    document.removeEventListener('click', handleAddToCartClick, true);
-    document.addEventListener('click', handleAddToCartClick, true);
-    
-    // Legg til i aktive lyttere for cleanup
-    const cleanup = () => {
-      document.removeEventListener('click', handleAddToCartClick, true);
-    };
-    
-    if (typeof window.__widgetCleanupHandlers === 'undefined') {
-      window.__widgetCleanupHandlers = [];
-    }
-    
-    window.__widgetCleanupHandlers.push(cleanup);
-  }
-
-  // Funksjon for å initialisere konverteringssporing
-  async function initConversionTracking() {
-    try {
-      log('Initialiserer konverteringssporing');
-      // Her bruker vi den faste tag-ID-en i stedet for å kalle ensureProjectTag
-      
-      if (reportTagId) {
-        log(`Konverteringssporing initialisert med fast tag-ID: ${reportTagId}`);
-        setupConversionListener();
-      } else {
-        log('Kunne ikke initialisere konverteringssporing pga. manglende tag-ID');
-      }
-    } catch (err) {
-      log(`Feil ved initialisering av konverteringssporing: ${err.message}`);
-    }
-  }
-
-  // Hovedfunksjon for å initialisere alt - optimalisert for ytelse
-  async function initialize() {
-    log('Ask widget initialization started');
-    setupCleanup();
-    setupWidgetCloseListeners(); // Registrer nye lyttere for lukking/minimering
-    
-    canUseShadowDOM = testShadowDOMSupport();
-    log(`Shadow DOM support: ${canUseShadowDOM ? 'Detected' : 'Not available'}`);
-    
-    addGlobalStyles();
-    
-    // Registrer resize-lytter for å håndtere endringer i skjermstørrelse
-    window.addEventListener('resize', () => {
-      handleWindowResize();
-    });
-    
-    if (!setupContainer()) {
-      log('Failed to set up container, aborting initialization');
-      return;
-    }
-    
-    await loadStyles();
-    
-    // Unngå doble lyttere for scrapeComplete
-    if (!hasAddedScrapeListener) {
-      window.addEventListener('scrapeComplete', handleScrapeComplete);
-      hasAddedScrapeListener = true;
-      log('Added scrapeComplete event listener');
-    }
-    
-    const widgetLoaded = await loadWidgetScript();
-    if (!widgetLoaded) {
-      log('Widget script failed to load, aborting initialization');
-      return;
-    }
-    
-    // Initialiser konverteringssporing ETTER at widget er lastet
-    initConversionTracking().catch(err => {
-      log(`Feil ved initialisering av konverteringssporing: ${err.message}`);
-    });
-    
-    loadScrapeScript().then(scrapeLoaded => {
-      if (!scrapeLoaded) {
-        log('Scrape script failed to load, will try manual fallback');
-      }
-    });
-    
-    log('Initialization complete, waiting for content to be scraped');
-    
-    createTimeout(() => {
-      if (!isWidgetInitialized) {
-        log('No scrapeComplete event received, trying to initialize manually');
-        let content = '';
-        const targetElement = document.querySelector(getTargetSelector());
-        if (targetElement) {
-          content = targetElement.innerText || targetElement.textContent || '';
-        }
-        
-        if (!content || content.length < 100) {
-          const possibleSources = [
-            document.querySelector('main'),
-            document.querySelector('.product-description'),
-            document.querySelector('.product-details'),
-            document.querySelector('article'),
-            document.body
-          ];
-          
-          for (const source of possibleSources) {
-            if (source) {
-              const sourceContent = source.innerText || source.textContent || '';
-              if (sourceContent.length > content.length) {
-                content = sourceContent;
+         let content = '';
+         let productName = document.title || ''; // Basic fallback for product name
+         try {
+              // Prioritize specific semantic elements or areas likely containing product info
+              const mainContent = document.querySelector('main') || document.querySelector('.main-content') || document.querySelector('.product-details') || document.querySelector('.product-info') || document.body;
+              if(mainContent) {
+                   content = mainContent.innerText || mainContent.textContent || '';
               }
-            }
-          }
-        }
-        
-        if (content && content.length > 0) {
-          log('Dispatching manual scrapeComplete event');
-          window.dispatchEvent(new CustomEvent('scrapeComplete', {
-            detail: {
-              side_innhold: content.substring(0, 10000),
-              browser_url: window.location.href
-            }
-          }));
-        }
-      }
-    }, 5000);
-  }
-  
-  function monitorLoadState() {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initialize);
-    } else {
-      initialize();
+              // Try to get a more specific product name
+              const titleElement = document.querySelector('h1') || document.querySelector('.product-title') || document.querySelector('.product_title');
+              if(titleElement) productName = titleElement.textContent.trim();
+
+         } catch(e) { log(`Error during manual scrape: ${e.message}`); }
+
+
+         if (content && content.length > 50) { // Require some minimal content
+             log('Dispatching manual scrapeComplete event.');
+             window.dispatchEvent(new CustomEvent('scrapeComplete', {
+                 detail: {
+                     side_innhold: content.substring(0, 10000), // Limit size
+                     browser_url: window.location.href,
+                     produkt_navn: productName
+                 }
+             }));
+         } else {
+              log('Manual scrape did not yield sufficient content. Initializing widget without page context.');
+               // Dispatch event with minimal info so widget still loads
+               window.dispatchEvent(new CustomEvent('scrapeComplete', {
+                 detail: {
+                     side_innhold: '',
+                     browser_url: window.location.href,
+                     produkt_navn: productName
+                 }
+             }));
+         }
     }
-    
-    window.addEventListener('load', () => {
-      if (!isWidgetInitialized) {
+
+    function initialize() {
+        if (isInitialized) {
+            log("Initialization already run.");
+            return;
+        }
+        log('Ask widget initialization started.');
+        isInitialized = true; // Mark as started to prevent duplicates
+
+        patchFetch(); // Patch fetch early
+
+        // --- Setup Container ---
+        const selector = getTargetSelector();
+        const target = findTargetElement(selector);
+        if (!target) {
+            log("ERROR: Could not find any target element. Aborting.");
+            isInitialized = false; // Allow retry if state changes
+            return;
+        }
+        const container = createWidgetContainer(target);
+        if (!container) {
+             log("ERROR: Failed to create widget container. Aborting.");
+             isInitialized = false;
+             return;
+        }
+
+        // --- Load Resources --- 
+        Promise.all([
+            loadStyles(),
+            loadWidgetScript() // Load main widget logic
+        ])
+        .then(() => {
+             log("Core styles and widget script loaded.");
+             // Now load the scraper, which should dispatch 'scrapeComplete'
+             return loadScrapeScript(); // Return promise here
+        })
+        .then(() => {
+             log("Scrape script loaded (or started loading). Setting up timeout fallback.");
+             // Set timeout after attempting load, in case load succeeds but script doesn't dispatch
+              clearTimeout(scrapeFallbackTimer);
+              scrapeFallbackTimer = setTimeout(attemptManualScrape, config.manualScrapeFallbackTimeout);
+        })
+        .catch(error => {
+            log(`ERROR loading resources: ${error}. Attempting manual scrape fallback.`);
+             // If core scripts failed OR scrape script failed to load
+             isInitialized = false; // Allow retry? Or proceed with manual?
+             // Decide if you want to proceed with manual scrape even if core scripts failed
+             clearTimeout(scrapeFallbackTimer);
+             scrapeFallbackTimer = setTimeout(attemptManualScrape, 500); // Faster fallback if load failed
+        });
+
+        // --- Setup Event Listeners ---
+        if (!hasAddedScrapeListener) {
+            window.addEventListener('scrapeComplete', handleScrapeComplete);
+            hasAddedScrapeListener = true;
+            log('Added scrapeComplete event listener.');
+        }
+        window.addEventListener('resize', handleWindowResize);
+        window.addEventListener('beforeunload', widgetCleanup); // Cleanup resources on page leave
+    }
+
+    function widgetCleanup() {
+        log("Cleaning up AskWidget resources.");
+        stopHeightMonitoring();
+        removeConversionListener();
+        unpatchFetch(); // Restore original fetch
+        window.removeEventListener('resize', handleWindowResize);
+        if(hasAddedScrapeListener) window.removeEventListener('scrapeComplete', handleScrapeComplete);
+        window.removeEventListener('beforeunload', widgetCleanup);
+        clearTimeout(scrapeFallbackTimer);
+        clearTimeout(heightDebounceTimer);
+
+        // Reset state flags
+        isInitialized = false;
+        isWidgetInstanceReady = false;
+        hasAddedScrapeListener = false;
+        conversionListenerActive = false;
+        originalFetch = null;
+        heightObserver = null;
+
+        // Optionally remove the container? Generally better to leave it unless re-injecting.
+        // const container = document.getElementById(config.containerID);
+        // if (container) container.remove();
+         widgetContainer = null; // Clear reference
+    }
+
+
+    // --- Start Initialization ---
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+    } else {
         initialize();
-      }
-    });
-  }
-  
-  monitorLoadState();
+    }
 
-  // Legg til en lytter for orientering-endringer
-  window.addEventListener('orientationchange', function() {
-    // Vent litt før oppdatering ved orientering-endringer for å gi nettleseren tid til å fullføre endringen
-    setTimeout(checkAndUpdateHeight, 300); // Kun oppdater høyden, ikke bredden
-  });
+    // Optional: Add a re-init check on window.load for very late-loading scenarios
+    // window.addEventListener('load', () => { if (!isInitialized) { initialize(); }});
 
-  // Forbedret ResizeObserver implementasjon
-  function setupResizeObserver() {
-    if (!activeWidget || !activeWidget.parentElement) return;
-    
-    // Vi trenger ikke denne funksjonen lenger siden bredden er låst
-    // Denne funksjonen kan enten fjernes helt eller tømmes
-    log('ResizeObserver ikke brukt - widget bredde er låst');
-  }
-})();
+})(); // End IIFE
